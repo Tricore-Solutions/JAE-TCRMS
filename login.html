@@ -8,44 +8,50 @@
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body class="login-page">
-    <div class="prototype-banner">
-        <span class="banner-warning">⚠️ PROTOTYPE — For Walkthrough and Approval Only — All Data is Static</span>
-        <span class="banner-purpose">Purpose: Track trainings from hire • Monitor compliance • Alerts • Reports</span>
-    </div>
-    
-    <div class="login-container">
-        <div class="login-box">
-            <div class="logo-section">
-                <h1>TCRMS</h1>
-                <p>Training and Certification Record Management System</p>
-            </div>
-            
-            <form id="loginForm" action="javascript:void(0)" onsubmit="return window.handleLogin(event)">
-                <div class="form-group">
-                    <label for="username">Username</label>
-                    <input type="text" id="username" name="username" required>
+    <div class="login-page-bg">
+        <header class="login-header">
+            <h1 class="login-title">Training & Certification Management System</h1>
+            <p class="login-subtitle">Track, Monitor, and Manage Employee Training Compliance</p>
+        </header>
+
+        <div class="login-card">
+            <span class="login-dept-badge">Training Department</span>
+            <h2 class="login-heading">Login</h2>
+            <p class="login-instruction">Enter your credentials to access the system</p>
+
+            <form id="loginForm" action="javascript:void(0)" onsubmit="return window.handleLogin(event)" class="login-form">
+                <div class="login-input-wrap">
+                    <i data-lucide="user" class="login-input-icon"></i>
+                    <input type="text" id="username" name="username" placeholder="Username or Email" required>
                 </div>
-                
-                <div class="form-group">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" name="password" required>
+                <div class="login-input-wrap">
+                    <i data-lucide="lock" class="login-input-icon"></i>
+                    <input type="password" id="password" name="password" placeholder="Password" required>
                 </div>
-                
-                <button type="submit" class="btn-primary">Login</button>
+                <div class="login-options">
+                    <label class="login-remember">
+                        <input type="checkbox" name="remember" checked>
+                        <span>Remember me</span>
+                    </label>
+                    <a href="#" class="login-forgot" onclick="event.preventDefault(); alert('Forgot password – prototype.');">Forgot password?</a>
+                </div>
+                <button type="submit" class="login-btn-signin">
+                    Sign In <i data-lucide="arrow-right"></i>
+                </button>
             </form>
-            
-            <p class="login-back-link"><a href="index.html">← Back to Employee Certifications (view without login)</a></p>
-            
-            <div class="test-accounts">
-                <h4>Test Accounts (Static):</h4>
-                <ul>
-                    <li><strong>Admin:</strong> admin / admin123</li>
-                    <li><strong>Encoder:</strong> encoder / encoder123</li>
-                </ul>
-            </div>
+
+            <footer class="login-card-footer">
+                <p>Training & Certification Management System © 2026</p>
+                <p>Secure Login | v2.1.4</p>
+            </footer>
+        </div>
+
+        <p class="login-back-link"><a href="index.html">← Back to Employee Certifications (view without login)</a></p>
+        <div class="login-test-accounts">
+            <strong>Test:</strong> admin / admin123 &nbsp;|&nbsp; encoder / encoder123
         </div>
     </div>
-    
+
     <script src="js/data.js"></script>
     <script>
         window.handleLogin = function(event) {
