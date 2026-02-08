@@ -89,12 +89,12 @@
                     </div>
                 </div>
                 
-                <div class="card stat-card-modern stat-card-danger">
+                <div class="card stat-card-modern stat-card-danger stat-card-clickable" onclick="showExpiredCertificationsModal()" role="button" tabindex="0" title="Click to view all expired certifications">
                     <span class="stat-card-bg-icon" aria-hidden="true"><i data-lucide="calendar-x"></i></span>
                     <div class="stat-details">
                         <h3 class="stat-card-label">Expired Certification</h3>
                         <p class="stat-number">23</p>
-                        <small class="stat-card-sub">For last 60 days</small>
+                        <small class="stat-card-sub">For last 60 days — Click to view</small>
                     </div>
                 </div>
             </div>
@@ -179,6 +179,17 @@
                 <div class="notification-item">
                     <strong>Overdue:</strong> 2 employees have overdue training assignments
                 </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="expiredCertificationsModal" class="modal">
+        <div class="modal-content modal-large">
+            <span class="close" onclick="closeExpiredCertificationsModal()">&times;</span>
+            <h2>Expired & Expiring Soon</h2>
+            <p class="modal-subtitle">All expired certifications and those expiring within 10 days</p>
+            <div id="expiredCertificationsList" class="expired-cert-list">
+                <!-- Populated by showExpiredCertificationsModal() -->
             </div>
         </div>
     </div>

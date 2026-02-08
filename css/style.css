@@ -2128,6 +2128,18 @@ body:not(.login-page) {
     max-width: 900px;
 }
 
+.expired-cert-list { margin-top: 1rem; }
+.expired-cert-list .data-table { width: 100%; margin-bottom: 1.25rem; }
+.expired-cert-list .no-expired-msg { color: #666; padding: 1rem 0; }
+.expired-cert-list .expired-section-title { font-size: 1rem; margin: 0 0 0.5rem; color: #333; }
+.expired-cert-list .expired-section-title:not(:first-child) { margin-top: 1.25rem; }
+.cert-status { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.85em; font-weight: 500; }
+.cert-status-expired { background: #fee2e2; color: #b91c1c; }
+.cert-status-expiring-soon { background: #fef3c7; color: #b45309; }
+
+.stat-card-clickable { cursor: pointer; }
+.stat-card-clickable:hover { opacity: 0.95; }
+
 .close {
     color: #aaa;
     float: right;
