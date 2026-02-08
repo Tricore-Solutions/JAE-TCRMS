@@ -5,11 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TCRMS - Reports</title>
     <link rel="stylesheet" href="css/style.css">
+    <script>
+        window.logout = function() {
+            if (confirm('Are you sure you want to logout?')) {
+                sessionStorage.removeItem('currentUser');
+                window.location.href = 'index.html';
+            }
+        };
+    </script>
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
     <div class="prototype-banner">
-        ⚠️ PROTOTYPE SYSTEM - For Walkthrough and Approval Only - All Data is Static
+        <span class="banner-warning">⚠️ PROTOTYPE — For Walkthrough and Approval Only — All Data is Static</span>
+        <span class="banner-purpose">Purpose: Track trainings from hire • Monitor compliance • Alerts • Reports</span>
     </div>
     
     <div class="sidebar">
@@ -35,7 +44,7 @@
         </nav>
         
         <div class="sidebar-footer">
-            <button onclick="logout()" class="btn-logout">Logout</button>
+            <button type="button" onclick="window.logout()" class="btn-logout">Logout</button>
         </div>
     </div>
     
@@ -55,6 +64,7 @@
             <div class="reports-grid">
                 <div class="card chart-panel">
                     <h3 class="chart-panel-title"><i data-lucide="chart-line"></i> Training Completion History</h3>
+                    <p class="chart-desc">Analytical report — training/certification completed per month in the year.</p>
                     <div class="line-chart-container">
                         <svg class="line-chart" viewBox="0 0 400 180" preserveAspectRatio="none">
                             <defs>
@@ -98,6 +108,7 @@
                 
                 <div class="card chart-panel">
                     <h3 class="chart-panel-title"><i data-lucide="bar-chart-2"></i> Number of Certifications per Month</h3>
+                    <p class="chart-desc">No. of training/certification completed per month in a year.</p>
                     <p class="chart-subtitle">Target Value In Units</p>
                     <div class="vertical-bar-chart">
                         <div class="vbar-wrap">
@@ -144,6 +155,7 @@
                 
                 <div class="card chart-panel">
                     <h3 class="chart-panel-title"><i data-lucide="trending-up"></i> Trainees vs. Separated</h3>
+                    <p class="chart-desc">Separated vs. Certified per month (analytical).</p>
                     <p class="chart-subtitle">Target Value In Units</p>
                     <div class="multiline-chart-container">
                         <svg class="multiline-chart" viewBox="0 0 400 160" preserveAspectRatio="none">
@@ -169,10 +181,11 @@
                 <h3 class="section-title"><i data-lucide="file-bar-chart"></i> Additional Reports You Can Generate</h3>
                 <p class="section-desc">Based on filters and training data, the system can also produce:</p>
                 <ul class="report-options-list">
+                    <li><i data-lucide="calendar-clock"></i> <strong>Who will expire on specific months</strong> — List or count of certifications expiring by chosen month</li>
                     <li><i data-lucide="calendar-clock"></i> <strong>Expiring certifications</strong> — Count by month (next 3–6 months) or list of employees with expiring certs</li>
                     <li><i data-lucide="building-2"></i> <strong>By factory / line</strong> — Certifications or training completion per 1st Factory, 2nd Factory, or by production line</li>
                     <li><i data-lucide="tags"></i> <strong>By training category or title</strong> — No. of employees trained on a specific topic (e.g. Soldering, Quality Control, Safety)</li>
-                    <li><i data-lucide="layers"></i> <strong>By process classification</strong> — Easy, Difficult, Critical/Special, Sensing, Non-sensing counts or trends</li>
+                    <li><i data-lucide="layers"></i> <strong>By process classification</strong> — Easy, Difficult, Critical / Special, Sensing, Non sensing counts or trends</li>
                     <li><i data-lucide="user-check"></i> <strong>By trainer</strong> — Sessions delivered and headcount trained per trainer</li>
                     <li><i data-lucide="user-minus"></i> <strong>Trainees vs. separated</strong> — Trend over time (already shown above) or export for audit</li>
                     <li><i data-lucide="award"></i> <strong>Certification rate</strong> — % of active employees certified (overall or by factory/line)</li>

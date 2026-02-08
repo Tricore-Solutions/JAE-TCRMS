@@ -5,11 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TCRMS - Training and Certification Records</title>
     <link rel="stylesheet" href="css/style.css">
+    <script>
+        window.logout = function() {
+            if (confirm('Are you sure you want to logout?')) {
+                sessionStorage.removeItem('currentUser');
+                window.location.href = 'index.html';
+            }
+        };
+    </script>
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
     <div class="prototype-banner">
-        ⚠️ PROTOTYPE SYSTEM - For Walkthrough and Approval Only - All Data is Static
+        <span class="banner-warning">⚠️ PROTOTYPE — For Walkthrough and Approval Only — All Data is Static</span>
+        <span class="banner-purpose">Purpose: Track trainings from hire • Monitor compliance • Alerts • Reports</span>
     </div>
     
     <div class="sidebar">
@@ -35,7 +44,7 @@
         </nav>
         
         <div class="sidebar-footer">
-            <button onclick="logout()" class="btn-logout">Logout</button>
+            <button type="button" onclick="window.logout()" class="btn-logout">Logout</button>
         </div>
     </div>
     
@@ -109,9 +118,9 @@
                         <option value="">All Classifications</option>
                         <option value="Easy">Easy</option>
                         <option value="Difficult">Difficult</option>
-                        <option value="Critical/Special">Critical/Special</option>
+                        <option value="Critical / Special">Critical / Special</option>
                         <option value="Sensing">Sensing</option>
-                        <option value="Non-sensing">Non-sensing</option>
+                        <option value="Non sensing">Non sensing</option>
                     </select>
                 </div>
                 <div class="training-actions">
@@ -126,6 +135,7 @@
                     <h3 class="table-section-title">Training / Certification Records</h3>
                     <span id="trainingRecordCount" class="table-section-count">Showing 6 of 6 training records.</span>
                 </div>
+                <p class="table-section-note">Note: Records shall be removed from the system 2 years after separation.</p>
                 <table class="data-table training-records-table">
                     <thead>
                         <tr>
@@ -195,7 +205,7 @@
                             <td>Safety Officer Juan Santos</td>
                             <td>6 months</td>
                             <td>2026-02-28</td>
-                            <td><span class="tag tag-sensing">Non-sensing</span></td>
+                            <td><span class="tag tag-sensing">Non sensing</span></td>
                             <td><button class="btn-link" onclick="simulateEdit('EMP-2024-003')">Edit</button></td>
                         </tr>
                         <tr>
@@ -212,7 +222,7 @@
                             <td>Engr. Carlos Diaz</td>
                             <td>6 months</td>
                             <td>2026-03-05</td>
-                            <td><span class="tag tag-sensing">Non-sensing</span></td>
+                            <td><span class="tag tag-sensing">Non sensing</span></td>
                             <td><button class="btn-link" onclick="simulateEdit('EMP-2023-045')">Edit</button></td>
                         </tr>
                         <tr>

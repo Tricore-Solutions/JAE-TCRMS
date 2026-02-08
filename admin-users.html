@@ -5,11 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TCRMS - Users Management</title>
     <link rel="stylesheet" href="css/style.css">
+    <script>
+        window.logout = function() {
+            if (confirm('Are you sure you want to logout?')) {
+                sessionStorage.removeItem('currentUser');
+                window.location.href = 'index.html';
+            }
+        };
+    </script>
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
     <div class="prototype-banner">
-        ⚠️ PROTOTYPE SYSTEM - For Walkthrough and Approval Only - All Data is Static
+        <span class="banner-warning">⚠️ PROTOTYPE — For Walkthrough and Approval Only — All Data is Static</span>
+        <span class="banner-purpose">Purpose: Track trainings from hire • Monitor compliance • Alerts • Reports</span>
     </div>
     
     <div class="sidebar">
@@ -35,7 +44,7 @@
         </nav>
         
         <div class="sidebar-footer">
-            <button onclick="logout()" class="btn-logout">Logout</button>
+            <button type="button" onclick="window.logout()" class="btn-logout">Logout</button>
         </div>
     </div>
     

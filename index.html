@@ -3,51 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TCRMS - Login</title>
+    <title>TCRMS - Employee Certifications Directory</title>
+    <meta http-equiv="refresh" content="0;url=viewer-dashboard.html">
     <link rel="stylesheet" href="css/style.css">
-    <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body class="login-page">
     <div class="prototype-banner">
-        ⚠️ PROTOTYPE SYSTEM - For Walkthrough and Approval Only - All Data is Static
+        <span class="banner-warning">⚠️ PROTOTYPE — For Walkthrough and Approval Only — All Data is Static</span>
+        <span class="banner-purpose">Purpose: Track trainings from hire • Monitor compliance • Alerts • Reports</span>
     </div>
-    
-    <div class="login-container">
-        <div class="login-box">
-            <div class="logo-section">
-                <h1>TCRMS</h1>
-                <p>Training and Certification Record Management System</p>
-            </div>
-            
-            <form id="loginForm" onsubmit="handleLogin(event)">
-                <div class="form-group">
-                    <label for="username">Username</label>
-                    <input type="text" id="username" name="username" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" name="password" required>
-                </div>
-                
-                <button type="submit" class="btn-primary">Login</button>
-            </form>
-            
-            <div class="test-accounts">
-                <h4>Test Accounts (Static):</h4>
-                <ul>
-                    <li><strong>Admin:</strong> admin / admin123</li>
-                    <li><strong>Encoder:</strong> encoder / encoder123</li>
-                    <li><strong>Outside User:</strong> viewer / viewer123</li>
-                </ul>
-            </div>
-        </div>
+    <div class="login-container" style="text-align: center; padding: 60px 20px;">
+        <p style="margin-bottom: 20px;">Opening Employee Certifications Directory…</p>
+        <p><a href="viewer-dashboard.html" style="color: #2c5282; font-weight: 600;">Click here if you are not redirected</a></p>
     </div>
-    
-    <script src="js/data.js"></script>
-    <script src="js/auth.js"></script>
-    <script>
-        lucide.createIcons();
-    </script>
 </body>
 </html>

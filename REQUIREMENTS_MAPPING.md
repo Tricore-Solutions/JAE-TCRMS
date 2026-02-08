@@ -1,7 +1,7 @@
 # TCRMS Prototype - Requirements Mapping
 
 ## Document Purpose
-This document maps each requirement from the system draft to the implemented features in the static prototype.
+This document maps each requirement from the **Training and Certification Record Management System Draft** (PDF) to the implemented features in the static prototype. Flow and user roles are aligned with the draft.
 
 ---
 
@@ -9,11 +9,11 @@ This document maps each requirement from the system draft to the implemented fea
 
 | Requirement | Implementation Status | Location in Prototype |
 |-------------|----------------------|----------------------|
-| Track all employee trainings and certification from date hires | ✅ Implemented | Training and Certification Records page |
-| Monitor training compliance (validity, expiration dates) | ✅ Implemented | Dashboard shows expiring certifications; Training records show expiration dates |
-| Send alerts for expiring certifications or due trainings | ✅ Implemented | Notification modal (bell icon); Dashboard warnings |
-| Store employee employment information | ✅ Implemented | Employee Info page (Encoder); Training records include employee details |
-| Generate reports | ✅ Implemented | Reports page with multiple report types |
+| Track all employee trainings and certification from date hired | ✅ Implemented | Training and Certification Records (Admin/Encoder); all records from date hired |
+| Monitor training compliance (validity, expiration dates) | ✅ Implemented | Dashboard shows expiring certifications; Training records show validity and expiration |
+| Send alerts for expiring certifications or due trainings | ✅ Implemented | Notification modal (bell icon); Dashboard “Expiring Soon” / “Expired” |
+| Store employee employment information | ✅ Implemented | Employee Info (Encoder); Training records include employment, factory, line, team |
+| Generate reports | ✅ Implemented | Reports page: per month completions, expiring by month, Separated vs Certified, analytical charts |
 
 ---
 
@@ -36,13 +36,15 @@ This document maps each requirement from the system draft to the implemented fea
 | Trainer | Text | ✅ Implemented | Engr. Roberto Cruz |
 | Validity Period | Dropdown | ✅ Implemented | 2 weeks, 1 month, 1.5 months, 2 months, 3 months, 6 months, 1 year |
 | Expiration Date | Date (Auto-calc) | ✅ Implemented | 2026-02-15 |
-| Process Classification | Dropdown | ✅ Implemented | Easy, Difficult, Critical/Special |
-| Sensing Type | Text | ✅ Implemented | Sensing, Non-sensing |
+| Process Classification | Dropdown | ✅ Implemented | Easy, Difficult, Critical/Special, Sensing, Non-sensing (single field per draft) |
 
-### Special Rules Demonstrated:
-- ✅ Different validity periods available (15 days to 1 year)
+### Validity Period (per draft):
+- ✅ 2 weeks (15 days), 1 month, 1.5 months, 2 months, 3 months, 6 months, 1 year — all in Add/Edit forms
+- ✅ Expiration date depends on validity (calculated/displayed)
+
+### Special Rules:
 - ✅ Expiration dates shown based on validity
-- ✅ Note about 2-year record retention mentioned in README
+- ✅ **Record retention:** Note on Training page — *Records shall be removed from the system 2 years after separation.*
 
 ---
 
@@ -84,32 +86,32 @@ This document maps each requirement from the system draft to the implemented fea
 
 ---
 
-## 6. User Roles ✓
+## 6. User Roles (per draft) ✓
 
-| User Type | Access Level | Implementation | Test Account |
-|-----------|--------------|----------------|--------------|
-| Admin | All access | ✅ Fully implemented | admin / admin123 |
-| Outside User | View (Names and certification) | ✅ Fully implemented | viewer / viewer123 |
-| Encoder | Data Entry | ✅ Fully implemented | encoder / encoder123 |
+| User Type | Access Level (Draft) | Implementation | Login Required |
+|-----------|----------------------|----------------|----------------|
+| **Admin** | All access | ✅ Dashboard, Users, Training & Certification, Reports (full CRUD, generate/export) | Yes — login.html |
+| **Encoder** | Data Entry | ✅ Dashboard, Employee Info, Training & Cert (view + input), Reports (view only) | Yes — login.html |
+| **Outside** | View (Names and certification) | ✅ Employee Certifications Directory — names and certifications only | **No** — public (index → viewer-dashboard) |
 
-### Admin Access Details:
-- ✅ Dashboard (full metrics)
-- ✅ User Management (add, view, edit)
-- ✅ Training and Certification (all operations)
-- ✅ Reports (generate and export)
+### Admin (all access):
+- ✅ Dashboard (metrics, alerts)
+- ✅ User Access — Add User, View User
+- ✅ Training and Certification Record — Input details, View details, Print records, Export
+- ✅ Reports — Generate reports (graphs, charts), specify type
 
-### Encoder Access Details:
-- ✅ Dashboard (relevant metrics)
-- ✅ Employee Info (view and input)
-- ✅ Training and Certification (view and input)
-- ✅ Reports (view only)
+### Encoder (Data Entry):
+- ✅ Employee Info — View details, Input details (new employee)
+- ✅ Training and Certification — View details, Input details (training assignment)
+- ✅ Reports — View reports only (no generate)
+- ❌ No User management (Admin only)
 
-### Outside User Access Details:
-- ✅ View employee names
-- ✅ View certifications only
-- ✅ Search functionality
-- ❌ No access to sensitive information
-- ❌ No edit capabilities
+### Outside (View only — no login):
+- ✅ First screen: **Employee Certifications Directory** (index.html redirects to viewer-dashboard.html)
+- ✅ View employee names and certifications only
+- ✅ Search and filter (team, status)
+- ✅ Staff login link to login.html for Admin/Encoder
+- ❌ No login; no edit; no sensitive data
 
 ---
 
@@ -117,42 +119,31 @@ This document maps each requirement from the system draft to the implemented fea
 
 ### Admin Data Flow (Page 4 of Draft):
 ```
-LOGIN → DASHBOARD → Multiple Options:
+LOGIN (login.html) → DASHBOARD → Multiple Options:
   ├─ USER ACCESS → Add User / View User
-  ├─ TRAINING AND CERTIFICATION RECORD → Input Details / View Details / Print Records
+  ├─ TRAINING AND CERTIFICATION RECORD → Input Details / View Details / Print Records / Export
   └─ REPORTS → Generate Reports (graphs, charts, etc.)
 ```
-✅ **Status:** All paths implemented
-
-**Test Path:**
-1. Login as admin/admin123
-2. Navigate to each section
-3. All buttons and actions present (simulated where needed)
+✅ **Status:** All paths implemented. **Test:** admin / admin123
 
 ### Encoder Data Flow (Page 5 of Draft):
 ```
-LOGIN → Multiple Options:
-  ├─ EMPLOYEE INFO → View Details / Input Details
-  ├─ TRAINING AND CERT → View Details / Input Details
-  └─ REPORTS → View Reports
+LOGIN (login.html) → Dashboard / Data Entry / Reports / Employee Info:
+  ├─ EMPLOYEE INFO → View Details / Input Details (New Employee)
+  ├─ TRAINING AND CERT (Data Entry) → View Details / Input Details (Training Assignment)
+  └─ REPORTS → View Reports only
 ```
-✅ **Status:** All paths implemented
-
-**Test Path:**
-1. Login as encoder/encoder123
-2. Navigate through Employee Info, Training, Reports
-3. Input and view actions available
+✅ **Status:** All paths implemented. **Test:** encoder / encoder123
 
 ### Outside User Data Flow (Page 5 of Draft):
 ```
-LOGIN → EMPLOYEE TRAINING AND CERT → View Details
+NO LOGIN → EMPLOYEE TRAINING AND CERT (viewer-dashboard) → View Details
 ```
-✅ **Status:** Fully implemented
-
-**Test Path:**
-1. Login as viewer/viewer123
-2. View-only table of employees and certifications
-3. Search functionality available
+✅ **Status:** Implemented as **public first screen**
+- Open index.html (or site root) → redirects to **viewer-dashboard.html** (Employee Certifications Directory)
+- View names and certifications only; search and filter
+- “Staff login” link for Admin/Encoder access
+- No test account for Outside (no login required)
 
 ---
 
@@ -331,24 +322,24 @@ Before proceeding to production development, please confirm:
 
 ```
 TCRMS/
-├── index.html                  ← Start here (login page)
-├── QUICK_START.txt            ← Quick reference
+├── index.html                  ← Default: redirects to viewer-dashboard (public, no login)
+├── login.html                  ← Staff login (Admin / Encoder only)
 ├── README.md                  ← Full documentation
 ├── REQUIREMENTS_MAPPING.md    ← This document
 │
-├── Admin Pages (4 files)
+├── Admin Pages (4 files)       ← Require login
 │   ├── admin-dashboard.html
 │   ├── admin-users.html
 │   ├── admin-training.html
 │   └── admin-reports.html
 │
-├── Encoder Pages (4 files)
+├── Encoder Pages (4 files)     ← Require login
 │   ├── encoder-dashboard.html
 │   ├── encoder-employee.html
 │   ├── encoder-training.html
 │   └── encoder-reports.html
 │
-├── Viewer Page (1 file)
+├── Viewer Page (1 file)        ← Public (no login)
 │   └── viewer-dashboard.html
 │
 ├── css/
@@ -369,14 +360,15 @@ TCRMS/
 
 ## 15. Summary
 
-**Total Pages:** 10 HTML pages
+**Total Pages:** 11 (index, login, 4 admin, 4 encoder, 1 viewer)
 **Total Scripts:** 8 JavaScript files
 **Total Stylesheets:** 1 CSS file (comprehensive)
 **Sample Employees:** 6
 **Sample Training Records:** 6
-**Sample Users:** 3
+**Test Accounts:** 2 (Admin, Encoder — Outside has no login)
+**User Roles:** 3 — Admin (all access), Encoder (data entry), Outside (view only, public)
+**Default entry:** Public viewer (Employee Certifications Directory)
 **Report Types:** 5+
-**User Roles:** 3
 
 **Requirements Coverage:** 100% of draft specifications
 **Static Data Only:** Yes

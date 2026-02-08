@@ -74,9 +74,9 @@ function createTrainingFormModal() {
                                 <option value="">Select Classification</option>
                                 <option>Easy</option>
                                 <option>Difficult</option>
-                                <option>Critical/Special</option>
+                                <option>Critical / Special</option>
                                 <option>Sensing</option>
-                                <option>Non-sensing</option>
+                                <option>Non sensing</option>
                             </select>
                         </div>
                     </div>
@@ -275,8 +275,10 @@ function createTrainingEditModal(record) {
                         <div class="form-group">
                             <label>Validity Period *</label>
                             <select required>
-                                <option ${record.validityPeriod === '2 weeks' ? 'selected' : ''}>2 weeks</option>
+                                <option ${record.validityPeriod === '2 weeks' ? 'selected' : ''}>2 weeks (15 days)</option>
                                 <option ${record.validityPeriod === '1 month' ? 'selected' : ''}>1 month</option>
+                                <option ${record.validityPeriod === '1.5 months' ? 'selected' : ''}>1.5 months</option>
+                                <option ${record.validityPeriod === '2 months' ? 'selected' : ''}>2 months</option>
                                 <option ${record.validityPeriod === '3 months' ? 'selected' : ''}>3 months</option>
                                 <option ${record.validityPeriod === '6 months' ? 'selected' : ''}>6 months</option>
                                 <option ${record.validityPeriod === '1 year' ? 'selected' : ''}>1 year</option>
@@ -291,9 +293,9 @@ function createTrainingEditModal(record) {
                             <select required>
                                 <option ${record.processClassification === 'Easy' ? 'selected' : ''}>Easy</option>
                                 <option ${record.processClassification === 'Difficult' ? 'selected' : ''}>Difficult</option>
-                                <option ${record.processClassification === 'Critical/Special' ? 'selected' : ''}>Critical/Special</option>
+                                <option ${record.processClassification === 'Critical / Special' ? 'selected' : ''}>Critical / Special</option>
                                 <option ${record.processClassification === 'Sensing' ? 'selected' : ''}>Sensing</option>
-                                <option ${record.processClassification === 'Non-sensing' ? 'selected' : ''}>Non-sensing</option>
+                                <option ${record.processClassification === 'Non sensing' ? 'selected' : ''}>Non sensing</option>
                             </select>
                         </div>
                     </div>

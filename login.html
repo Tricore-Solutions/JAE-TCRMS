@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TCRMS - Login</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="login-page">
+    <div class="prototype-banner">
+        <span class="banner-warning">⚠️ PROTOTYPE — For Walkthrough and Approval Only — All Data is Static</span>
+        <span class="banner-purpose">Purpose: Track trainings from hire • Monitor compliance • Alerts • Reports</span>
+    </div>
+    
+    <div class="login-container">
+        <div class="login-box">
+            <div class="logo-section">
+                <h1>TCRMS</h1>
+                <p>Training and Certification Record Management System</p>
+            </div>
+            
+            <form id="loginForm" action="javascript:void(0)" onsubmit="return window.handleLogin(event)">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                
+                <button type="submit" class="btn-primary">Login</button>
+            </form>
+            
+            <p class="login-back-link"><a href="index.html">← Back to Employee Certifications (view without login)</a></p>
+            
+            <div class="test-accounts">
+                <h4>Test Accounts (Static):</h4>
+                <ul>
+                    <li><strong>Admin:</strong> admin / admin123</li>
+                    <li><strong>Encoder:</strong> encoder / encoder123</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <script src="js/data.js"></script>
+    <script>
+        window.handleLogin = function(event) {
+            if (event && event.preventDefault) event.preventDefault();
+            var u = document.getElementById('username');
+            var p = document.getElementById('password');
+            if (!u || !p) return false;
+            var username = (u.value || '').trim();
+            var password = (p.value || '').trim();
+            var data = window.staticData;
+            var users = (data && data.users) ? data.users : [];
+            var user = null;
+            for (var i = 0; i < users.length; i++) {
+                var us = users[i];
+                if (us && us.username === username && us.password === password) {
+                    user = us;
+                    break;
+                }
+            }
+            if (user) {
+                try { sessionStorage.setItem('currentUser', JSON.stringify(user)); } catch (e) {}
+                if (user.role === 'admin') window.location.replace('admin-dashboard.html');
+                else if (user.role === 'encoder') window.location.replace('encoder-dashboard.html');
+                else alert('Invalid user role.');
+            } else {
+                alert('Invalid username or password.\n\nUse:\n- Admin: admin / admin123\n- Encoder: encoder / encoder123');
+            }
+            return false;
+        };
+    </script>
+    <script src="js/auth.js"></script>
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

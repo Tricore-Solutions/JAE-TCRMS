@@ -30,7 +30,7 @@ The TCRMS is designed to:
 ### Method 1: Double-click to open
 1. Navigate to the TCRMS folder
 2. Double-click `index.html`
-3. The login page will open in your default browser
+3. The **Employee Certifications Directory** (public viewer) opens — no login required. Use **Staff login** in the sidebar to sign in as Admin or Encoder.
 
 ### Method 2: Using VS Code Live Server (Recommended)
 1. Open the TCRMS folder in VS Code
@@ -46,22 +46,17 @@ Then open: http://localhost:8000
 
 ---
 
-## 👥 Test Accounts (Static Login Credentials)
+## 👥 User Roles (per System Draft)
 
-### Administrator Account
-- **Username:** admin
-- **Password:** admin123
-- **Access:** Full system access (Dashboard, Users, Training Records, Reports)
+| Role | Access | Login |
+|------|--------|--------|
+| **Outside (External Viewer)** | View employee names and certifications only | **No** — public; first screen is the Employee Certifications Directory |
+| **Encoder** | Data entry: Employee Info, Training & Certification (view + input); Reports (view only) | Yes — use **Staff login** or open `login.html` |
+| **Admin** | All access: Dashboard, Users, Training & Certification, Reports (full CRUD, generate/export) | Yes — use **Staff login** or open `login.html` |
 
-### Encoder Account
-- **Username:** encoder
-- **Password:** encoder123
-- **Access:** Employee info, Training records (view & input), Reports (view only)
-
-### External Viewer Account
-- **Username:** viewer
-- **Password:** viewer123
-- **Access:** View-only access to employee names and certifications
+### Test Accounts (Staff only)
+- **Admin:** admin / admin123  
+- **Encoder:** encoder / encoder123
 
 ---
 
@@ -70,7 +65,8 @@ Then open: http://localhost:8000
 ```
 TCRMS/
 │
-├── index.html                    # Login page
+├── index.html                    # Default: redirects to viewer-dashboard (public)
+├── login.html                    # Staff login (Admin / Encoder)
 │
 ├── Admin Pages/
 │   ├── admin-dashboard.html     # Admin dashboard with metrics

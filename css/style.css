@@ -30,6 +30,14 @@ body {
     right: 0;
     z-index: 1000;
     border-bottom: 1px solid #ddd;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.prototype-banner .banner-purpose {
+    font-size: 11px;
+    font-weight: 500;
+    color: #666;
 }
 
 /* Login Page - White theme */
@@ -122,6 +130,19 @@ body {
     background: #234a75;
 }
 
+.login-back-link {
+    margin-top: 16px;
+    margin-bottom: 20px;
+    font-size: 13px;
+}
+.login-back-link a {
+    color: #2c5282;
+    text-decoration: none;
+}
+.login-back-link a:hover {
+    text-decoration: underline;
+}
+
 .test-accounts {
     margin-top: 30px;
     padding: 20px;
@@ -148,11 +169,12 @@ body {
 .footer-note {
     position: fixed;
     bottom: 10px;
-    left: 0;
+    left: 260px;
     right: 0;
     text-align: center;
     font-size: 11px;
     color: #888;
+    z-index: 1;
 }
 
 /* Main Layout */
@@ -174,6 +196,7 @@ body:not(.login-page) {
     display: flex;
     flex-direction: column;
     border-right: 1px solid #ddd;
+    z-index: 100;
 }
 
 .sidebar-header {
@@ -319,6 +342,26 @@ body:not(.login-page) {
 .sidebar-footer {
     padding: 20px;
     border-top: 1px solid #e0e0e0;
+    position: relative;
+    z-index: 2;
+    flex-shrink: 0;
+}
+
+.sidebar-staff-login {
+    display: block;
+    text-align: center;
+    padding: 10px;
+    margin-bottom: 10px;
+    color: #2c5282;
+    font-weight: 600;
+    font-size: 13px;
+    text-decoration: none;
+    border: 1px solid #2c5282;
+    border-radius: 4px;
+}
+.sidebar-staff-login:hover {
+    background: #f0f4f8;
+    color: #1a365d;
 }
 
 .btn-logout {
@@ -331,6 +374,9 @@ body:not(.login-page) {
     cursor: pointer;
     font-weight: 600;
     transition: all 0.2s;
+    position: relative;
+    z-index: 3;
+    pointer-events: auto;
 }
 
 .btn-logout:hover {
@@ -1439,6 +1485,13 @@ body:not(.login-page) {
     color: #666;
 }
 
+.table-section-note {
+    font-size: 12px;
+    color: #666;
+    margin: -8px 0 12px 0;
+    font-style: italic;
+}
+
 /* Training table tags */
 .tag {
     display: inline-block;
@@ -1835,6 +1888,11 @@ body:not(.login-page) {
     margin-bottom: 28px;
 }
 
+.chart-desc {
+    font-size: 12px;
+    color: #555;
+    margin: -4px 0 12px 0;
+}
 .chart-subtitle {
     font-size: 12px;
     color: #666;

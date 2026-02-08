@@ -5,11 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TCRMS - Training Records</title>
     <link rel="stylesheet" href="css/style.css">
+    <script>
+        window.logout = function() {
+            if (confirm('Are you sure you want to logout?')) {
+                sessionStorage.removeItem('currentUser');
+                window.location.href = 'index.html';
+            }
+        };
+    </script>
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
     <div class="prototype-banner">
-        ⚠️ PROTOTYPE SYSTEM - For Walkthrough and Approval Only - All Data is Static
+        <span class="banner-warning">⚠️ PROTOTYPE — For Walkthrough and Approval Only — All Data is Static</span>
+        <span class="banner-purpose">Purpose: Track trainings from hire • Monitor compliance • Alerts • Reports</span>
     </div>
     
     <div class="sidebar">
@@ -53,7 +62,7 @@
         </div>
         
         <div class="sidebar-footer">
-            <button onclick="logout()" class="btn-logout">Logout</button>
+            <button type="button" onclick="window.logout()" class="btn-logout">Logout</button>
         </div>
     </div>
     
@@ -83,6 +92,7 @@
                             <th>Training Date</th>
                             <th>Expiration Date</th>
                             <th>Status</th>
+                            <th>Process Classification</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -94,6 +104,7 @@
                             <td>2025-11-15</td>
                             <td class="warning-text">2026-02-15</td>
                             <td><span class="status-expiring">Expiring Soon</span></td>
+                            <td><span class="tag tag-class-difficult">Difficult</span></td>
                             <td>
                                 <button class="btn-icon" onclick="viewTrainingDetails('EMP-2024-001')"><i data-lucide="eye"></i></button>
                                 <button class="btn-icon" onclick="simulateEdit('EMP-2024-001')"><i data-lucide="edit"></i></button>
@@ -106,6 +117,7 @@
                             <td>2025-11-20</td>
                             <td class="warning-text">2026-02-20</td>
                             <td><span class="status-expiring">Expiring Soon</span></td>
+                            <td><span class="tag tag-class-easy">Easy</span></td>
                             <td>
                                 <button class="btn-icon" onclick="viewTrainingDetails('EMP-2024-002')"><i data-lucide="eye"></i></button>
                                 <button class="btn-icon" onclick="simulateEdit('EMP-2024-002')"><i data-lucide="edit"></i></button>
@@ -118,6 +130,7 @@
                             <td>2025-08-28</td>
                             <td>2026-02-28</td>
                             <td><span class="status-active">Active</span></td>
+                            <td><span class="tag tag-sensing">Non sensing</span></td>
                             <td>
                                 <button class="btn-icon" onclick="viewTrainingDetails('EMP-2024-003')"><i data-lucide="eye"></i></button>
                                 <button class="btn-icon" onclick="simulateEdit('EMP-2024-003')"><i data-lucide="edit"></i></button>
@@ -130,6 +143,7 @@
                             <td>2025-09-05</td>
                             <td>2026-03-05</td>
                             <td><span class="status-active">Active</span></td>
+                            <td><span class="tag tag-sensing">Non sensing</span></td>
                             <td>
                                 <button class="btn-icon" onclick="viewTrainingDetails('EMP-2023-045')"><i data-lucide="eye"></i></button>
                                 <button class="btn-icon" onclick="simulateEdit('EMP-2023-045')"><i data-lucide="edit"></i></button>
@@ -142,6 +156,7 @@
                             <td>2026-01-10</td>
                             <td>2026-07-10</td>
                             <td><span class="status-active">Active</span></td>
+                            <td><span class="tag tag-class-difficult">Difficult</span></td>
                             <td>
                                 <button class="btn-icon" onclick="viewTrainingDetails('EMP-2024-015')"><i data-lucide="eye"></i></button>
                                 <button class="btn-icon" onclick="simulateEdit('EMP-2024-015')"><i data-lucide="edit"></i></button>

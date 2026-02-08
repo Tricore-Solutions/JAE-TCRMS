@@ -98,7 +98,7 @@ const staticData = {
             trainer: 'Safety Officer Juan Santos',
             validityPeriod: '6 months',
             expirationDate: '2026-02-28',
-            processClassification: 'Non-sensing',
+            processClassification: 'Non sensing',
             factory: '2ND',
             line: 'MX48',
             team: 'Team A'
@@ -113,7 +113,7 @@ const staticData = {
             trainer: 'Engr. Carlos Diaz',
             validityPeriod: '6 months',
             expirationDate: '2026-03-05',
-            processClassification: 'Non-sensing',
+            processClassification: 'Non sensing',
             factory: '1ST',
             line: 'MX79AC',
             team: 'Team B'
@@ -174,6 +174,7 @@ const staticData = {
         }
     ]
 };
+if (typeof window !== 'undefined') window.staticData = staticData;
 
 // Helper functions
 function getEmployeeById(id) {
