@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TCRMS - Employee Information</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <div class="prototype-banner">
+        ⚠️ PROTOTYPE SYSTEM - For Walkthrough and Approval Only - All Data is Static
+    </div>
+    
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h2>TRMS</h2>
+            <p class="sidebar-subtitle">Training Record Mngt. System</p>
+            <p class="user-role" id="userRole">ENCODER</p>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <a href="encoder-dashboard.html" class="nav-item">
+                <i data-lucide="layout-dashboard" class="nav-icon"></i> DASHBOARD
+            </a>
+            <a href="encoder-training.html" class="nav-item nav-item-with-badge">
+                <i data-lucide="edit-3" class="nav-icon"></i> DATA ENTRY
+                <span class="nav-badge">3</span>
+            </a>
+            <a href="encoder-reports.html" class="nav-item">
+                <i data-lucide="bar-chart-3" class="nav-icon"></i> REPORTS
+            </a>
+            <a href="encoder-employee.html" class="nav-item active">
+                <i data-lucide="user" class="nav-icon"></i> EMPLOYEE INFO
+            </a>
+        </nav>
+        
+        <div class="sidebar-quick-actions">
+            <span class="sidebar-quick-label">Quick Actions</span>
+            <a href="encoder-employee.html" class="nav-item nav-item-quick">
+                <i data-lucide="user-plus" class="nav-icon"></i> Add New Employee
+            </a>
+            <a href="#" class="nav-item nav-item-quick" onclick="event.preventDefault(); alert('Bulk upload – prototype.');">
+                <i data-lucide="upload" class="nav-icon"></i> Bulk Upload
+            </a>
+            <a href="encoder-training.html" class="nav-item nav-item-quick nav-item-with-badge">
+                <i data-lucide="calendar-clock" class="nav-icon"></i> Expiring Certs
+                <span class="nav-badge">5</span>
+            </a>
+            <a href="encoder-dashboard.html" class="nav-item nav-item-quick">
+                <i data-lucide="list" class="nav-icon"></i> Today's Entries
+            </a>
+        </div>
+        
+        <div class="sidebar-footer">
+            <button onclick="logout()" class="btn-logout">Logout</button>
+        </div>
+    </div>
+    
+    <div class="main-content">
+        <div class="top-bar">
+            <h1>Employee Information</h1>
+            <div class="top-bar-right">
+                <span class="user-info"><i data-lucide="user"></i> Encoder User</span>
+            </div>
+        </div>
+        
+        <div class="content-area">
+            <div class="action-bar">
+                <button class="btn-primary" onclick="simulateAddEmployee()">
+                    <i data-lucide="user-plus"></i> Add Employee
+                </button>
+                <input type="text" placeholder="Search employees..." id="employeeSearch">
+            </div>
+            
+            <div class="card">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>ID No.</th>
+                            <th>Full Name</th>
+                            <th>Employment Status</th>
+                            <th>Date Hired</th>
+                            <th>Factory</th>
+                            <th>Line</th>
+                            <th>Team</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>EMP-2024-001</td>
+                            <td>Maria Santos</td>
+                            <td><span class="status-active">Active</span></td>
+                            <td>2024-03-15</td>
+                            <td>1ST</td>
+                            <td>MX68</td>
+                            <td>Team A</td>
+                            <td>
+                                <button class="btn-icon" onclick="viewEmployeeDetails('EMP-2024-001')"><i data-lucide="eye"></i></button>
+                                <button class="btn-icon" onclick="simulateEdit('EMP-2024-001')"><i data-lucide="edit"></i></button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>EMP-2024-002</td>
+                            <td>John Reyes</td>
+                            <td><span class="status-active">Active</span></td>
+                            <td>2024-04-20</td>
+                            <td>1ST</td>
+                            <td>MX68</td>
+                            <td>Team B</td>
+                            <td>
+                                <button class="btn-icon" onclick="viewEmployeeDetails('EMP-2024-002')"><i data-lucide="eye"></i></button>
+                                <button class="btn-icon" onclick="simulateEdit('EMP-2024-002')"><i data-lucide="edit"></i></button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>EMP-2024-003</td>
+                            <td>Ana Cruz</td>
+                            <td><span class="status-active">Active</span></td>
+                            <td>2024-05-10</td>
+                            <td>2ND</td>
+                            <td>MX48</td>
+                            <td>Team A</td>
+                            <td>
+                                <button class="btn-icon" onclick="viewEmployeeDetails('EMP-2024-003')"><i data-lucide="eye"></i></button>
+                                <button class="btn-icon" onclick="simulateEdit('EMP-2024-003')"><i data-lucide="edit"></i></button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>EMP-2023-045</td>
+                            <td>Pedro Garcia</td>
+                            <td><span class="status-active">Active</span></td>
+                            <td>2023-09-05</td>
+                            <td>1ST</td>
+                            <td>MX79AC</td>
+                            <td>Team B</td>
+                            <td>
+                                <button class="btn-icon" onclick="viewEmployeeDetails('EMP-2023-045')"><i data-lucide="eye"></i></button>
+                                <button class="btn-icon" onclick="simulateEdit('EMP-2023-045')"><i data-lucide="edit"></i></button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>EMP-2024-015</td>
+                            <td>Carlos Mendoza</td>
+                            <td><span class="status-active">Active</span></td>
+                            <td>2024-07-10</td>
+                            <td>1ST</td>
+                            <td>MX68</td>
+                            <td>Team A</td>
+                            <td>
+                                <button class="btn-icon" onclick="viewEmployeeDetails('EMP-2024-015')"><i data-lucide="eye"></i></button>
+                                <button class="btn-icon" onclick="simulateEdit('EMP-2024-015')"><i data-lucide="edit"></i></button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <script src="js/data.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/employee.js"></script>
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

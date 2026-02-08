@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TCRMS - Employee Certifications Directory</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <div class="prototype-banner">
+        ⚠️ PROTOTYPE SYSTEM - For Walkthrough and Approval Only - All Data is Static
+    </div>
+    
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h2>TRMS</h2>
+            <p class="sidebar-subtitle">Training Record Mngt. System</p>
+            <p class="user-role" id="userRole">EXTERNAL VIEWER</p>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <a href="viewer-dashboard.html" class="nav-item active">
+                <i data-lucide="eye" class="nav-icon"></i> EMPLOYEE TRAINING AND CERT.
+            </a>
+        </nav>
+        
+        <div class="sidebar-footer">
+            <button onclick="logout()" class="btn-logout">Logout</button>
+        </div>
+    </div>
+    
+    <div class="main-content">
+        <div class="top-bar">
+            <h1><i data-lucide="eye" class="title-icon"></i> Employee Certifications Directory</h1>
+            <div class="top-bar-right">
+                <span class="viewer-role-badge"><i data-lucide="user"></i> EXTERNAL VIEWER</span>
+            </div>
+        </div>
+        
+        <div class="content-area content-area-dashboard">
+            <div class="viewer-summary-cards">
+                <div class="card stat-card-modern viewer-summary-card viewer-card-certified">
+                    <span class="viewer-card-bg-icon" aria-hidden="true"><i data-lucide="settings"></i></span>
+                    <div class="stat-details">
+                        <p class="viewer-stat-number">26</p>
+                        <h3 class="viewer-stat-label">Certified Employees</h3>
+                    </div>
+                </div>
+                <div class="card stat-card-modern viewer-summary-card viewer-card-teams">
+                    <span class="viewer-card-bg-icon" aria-hidden="true"><i data-lucide="users"></i></span>
+                    <div class="stat-details">
+                        <p class="viewer-stat-number">2</p>
+                        <h3 class="viewer-stat-label">Teams (A & B)</h3>
+                    </div>
+                </div>
+                <div class="card stat-card-modern viewer-summary-card viewer-card-active">
+                    <span class="viewer-card-bg-icon" aria-hidden="true"><i data-lucide="graduation-cap"></i></span>
+                    <div class="stat-details">
+                        <p class="viewer-stat-number">24</p>
+                        <h3 class="viewer-stat-label">Active Certifications</h3>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="viewer-toolbar">
+                <div class="viewer-search-wrap">
+                    <i data-lucide="search" class="search-icon"></i>
+                    <input type="text" id="viewerSearch" class="viewer-search-input" placeholder="Search employees..." title="Type to filter the list below">
+                </div>
+                <select id="viewerFilterTeam" class="viewer-filter">
+                    <option value="">All Teams</option>
+                    <option value="Team A">Team A</option>
+                    <option value="Team B">Team B</option>
+                </select>
+                <select id="viewerFilterStatus" class="viewer-filter">
+                    <option value="">All Status</option>
+                    <option value="passed">Passed</option>
+                    <option value="active">Active</option>
+                    <option value="expired">Expired</option>
+                </select>
+                <div class="viewer-view-toggle">
+                    <button type="button" class="btn-view active" title="Grid view"><i data-lucide="layout-grid"></i></button>
+                    <button type="button" class="btn-view" title="List view"><i data-lucide="list"></i></button>
+                </div>
+            </div>
+            
+            <div class="viewer-content-grid">
+                <div class="card viewer-employee-card">
+                    <div class="viewer-employee-avatar">EM</div>
+                    <h3 class="viewer-employee-name">Enilda, Mariafe Bansuelo</h3>
+                    <p class="viewer-employee-meta">Regular - JAE | Team A</p>
+                    <div class="viewer-certs-row">
+                    <div class="viewer-cert-block">
+                        <h4 class="viewer-cert-title">Incoming Inspection Procedure</h4>
+                        <span class="status-badge status-passed">PASSED</span>
+                        <p class="viewer-cert-detail"><span>Exam:</span> Feb 14, 2020</p>
+                        <p class="viewer-cert-detail"><span>Highest Score:</span> 100%</p>
+                        <p class="viewer-cert-detail viewer-recert">
+                            <i data-lucide="calendar"></i> Recertify: Feb 18, 2026
+                        </p>
+                    </div>
+                    <div class="viewer-cert-block">
+                        <h4 class="viewer-cert-title">Quality Control Assessment</h4>
+                        <span class="status-badge status-passed">PASSED</span>
+                        <p class="viewer-cert-detail"><span>Exam:</span> Mar 22, 2021</p>
+                        <p class="viewer-cert-detail"><span>Highest Score:</span> 95%</p>
+                        <p class="viewer-cert-detail viewer-recert">
+                            <i data-lucide="calendar"></i> Recertify: Mar 22, 2026
+                        </p>
+                    </div>
+                    <div class="viewer-cert-block">
+                        <h4 class="viewer-cert-title">Safety Training</h4>
+                        <span class="status-badge status-passed">PASSED</span>
+                        <p class="viewer-cert-detail"><span>Exam:</span> Aug 10, 2022</p>
+                        <p class="viewer-cert-detail"><span>Highest Score:</span> 98%</p>
+                        <p class="viewer-cert-detail viewer-recert">
+                            <i data-lucide="calendar"></i> Recertify: Aug 10, 2025
+                        </p>
+                    </div>
+                    <div class="viewer-cert-block">
+                        <h4 class="viewer-cert-title">Soldering Process Training</h4>
+                        <span class="status-badge status-expiring">Expiring Soon</span>
+                        <p class="viewer-cert-detail"><span>Exam:</span> Nov 15, 2025</p>
+                        <p class="viewer-cert-detail"><span>Highest Score:</span> 92%</p>
+                        <p class="viewer-cert-detail viewer-recert">
+                            <i data-lucide="calendar"></i> Recertify: Feb 15, 2026
+                        </p>
+                    </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card viewer-table-card">
+                <h3 class="card-title">All Certifications (View Only)</h3>
+                <table class="data-table" id="viewerTable">
+                    <thead>
+                        <tr>
+                            <th>Full Name</th>
+                            <th>Training Title</th>
+                            <th>Training Category</th>
+                            <th>Training Date</th>
+                            <th>Expiration Date</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Maria Santos</td>
+                            <td>Soldering Process Training</td>
+                            <td>Hands-on</td>
+                            <td>2025-11-15</td>
+                            <td class="warning-text">2026-02-15</td>
+                            <td><span class="status-expiring">Expiring Soon</span></td>
+                        </tr>
+                        <tr>
+                            <td>John Reyes</td>
+                            <td>Quality Control Assessment</td>
+                            <td>Assessment</td>
+                            <td>2025-11-20</td>
+                            <td class="warning-text">2026-02-20</td>
+                            <td><span class="status-expiring">Expiring Soon</span></td>
+                        </tr>
+                        <tr>
+                            <td>Ana Cruz</td>
+                            <td>Safety Training</td>
+                            <td>Hands-on</td>
+                            <td>2025-08-28</td>
+                            <td>2026-02-28</td>
+                            <td><span class="status-active">Active</span></td>
+                        </tr>
+                        <tr>
+                            <td>Pedro Garcia</td>
+                            <td>Equipment Operation</td>
+                            <td>Hands-on</td>
+                            <td>2025-09-05</td>
+                            <td>2026-03-05</td>
+                            <td><span class="status-active">Active</span></td>
+                        </tr>
+                        <tr>
+                            <td>Carlos Mendoza</td>
+                            <td>SMT Process Training</td>
+                            <td>Hands-on</td>
+                            <td>2026-01-10</td>
+                            <td>2026-07-10</td>
+                            <td><span class="status-active">Active</span></td>
+                        </tr>
+                        <tr>
+                            <td>Lisa Fernandez</td>
+                            <td>Critical Process Sensing</td>
+                            <td>Assessment</td>
+                            <td>2025-01-15</td>
+                            <td class="error-text">2026-01-15</td>
+                            <td><span class="status-expired">Expired</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <script src="js/data.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/viewer.js"></script>
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

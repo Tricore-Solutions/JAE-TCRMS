@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TCRMS - Admin Dashboard</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <div class="prototype-banner">
+        ⚠️ PROTOTYPE SYSTEM - For Walkthrough and Approval Only - All Data is Static
+    </div>
+    
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h2>TRMS</h2>
+            <p class="sidebar-subtitle">Training Record Mngt. System</p>
+            <p class="user-role" id="userRole">ADMIN</p>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <a href="admin-dashboard.html" class="nav-item active">
+                <i data-lucide="layout-dashboard" class="nav-icon"></i> DASHBOARD
+            </a>
+            <a href="admin-users.html" class="nav-item">
+                <i data-lucide="users" class="nav-icon"></i> USERS
+            </a>
+            <a href="admin-training.html" class="nav-item">
+                <i data-lucide="book-open" class="nav-icon"></i> TRAINING AND CERTIFICATION
+            </a>
+            <a href="admin-reports.html" class="nav-item">
+                <i data-lucide="bar-chart-3" class="nav-icon"></i> REPORTS
+            </a>
+        </nav>
+        
+        <div class="sidebar-footer">
+            <button onclick="logout()" class="btn-logout">Logout</button>
+        </div>
+    </div>
+    
+    <div class="main-content">
+        <div class="top-bar">
+            <h1>Dashboard</h1>
+            <div class="top-bar-right">
+                <span class="notification-icon" onclick="showNotifications()">
+                    <i data-lucide="bell"></i>
+                    <span class="badge">3</span>
+                </span>
+                <span class="user-info"><i data-lucide="user"></i> Admin User</span>
+            </div>
+        </div>
+        
+        <div class="content-area content-area-dashboard">
+            <div class="dashboard-cards">
+                <div class="card stat-card-modern">
+                    <span class="stat-card-bg-icon" aria-hidden="true"><i data-lucide="users"></i></span>
+                    <div class="stat-details">
+                        <h3 class="stat-card-label">TOTAL EMPLOYEES</h3>
+                        <p class="stat-number">245</p>
+                        <small class="stat-card-sub">Active: 245 | Separated: 0</small>
+                    </div>
+                </div>
+                
+                <div class="card stat-card-modern">
+                    <span class="stat-card-bg-icon" aria-hidden="true"><i data-lucide="award"></i></span>
+                    <div class="stat-details">
+                        <h3 class="stat-card-label">ACTIVE CERTIFICATIONS</h3>
+                        <p class="stat-number">892</p>
+                        <small class="stat-card-sub">Expiring in 30 days: 15</small>
+                    </div>
+                </div>
+                
+                <div class="card stat-card-modern">
+                    <span class="stat-card-bg-icon" aria-hidden="true"><i data-lucide="check-circle"></i></span>
+                    <div class="stat-details">
+                        <h3 class="stat-card-label">Training Completion Rate</h3>
+                        <p class="stat-number">87%</p>
+                        <small class="stat-card-sub">Completed: 24 | Pending: 2</small>
+                    </div>
+                </div>
+                
+                <div class="card stat-card-modern stat-card-danger">
+                    <span class="stat-card-bg-icon" aria-hidden="true"><i data-lucide="calendar-x"></i></span>
+                    <div class="stat-details">
+                        <h3 class="stat-card-label">Expired Certification</h3>
+                        <p class="stat-number">23</p>
+                        <small class="stat-card-sub">For last 60 days</small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="dashboard-charts-row">
+                <div class="card chart-panel">
+                    <h3 class="chart-panel-title"><i data-lucide="chart-line"></i> Training Completion History</h3>
+                    <div class="line-chart-container">
+                        <svg class="line-chart" viewBox="0 0 400 180" preserveAspectRatio="none">
+                            <defs>
+                                <linearGradient id="lineGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                                    <stop offset="0%" style="stop-color:#2c5282;stop-opacity:0.3" />
+                                    <stop offset="100%" style="stop-color:#2c5282;stop-opacity:0" />
+                                </linearGradient>
+                            </defs>
+                            <!-- Grid lines -->
+                            <line x1="40" y1="20" x2="40" y2="140" stroke="#e8e8e8" stroke-width="1"/>
+                            <line x1="40" y1="140" x2="380" y2="140" stroke="#e8e8e8" stroke-width="1"/>
+                            <line x1="80" y1="20" x2="80" y2="140" stroke="#f0f0f0" stroke-width="1"/>
+                            <line x1="120" y1="20" x2="120" y2="140" stroke="#f0f0f0" stroke-width="1"/>
+                            <line x1="160" y1="20" x2="160" y2="140" stroke="#f0f0f0" stroke-width="1"/>
+                            <line x1="200" y1="20" x2="200" y2="140" stroke="#f0f0f0" stroke-width="1"/>
+                            <line x1="240" y1="20" x2="240" y2="140" stroke="#f0f0f0" stroke-width="1"/>
+                            <line x1="280" y1="20" x2="280" y2="140" stroke="#f0f0f0" stroke-width="1"/>
+                            <line x1="320" y1="20" x2="320" y2="140" stroke="#f0f0f0" stroke-width="1"/>
+                            <line x1="360" y1="20" x2="360" y2="140" stroke="#f0f0f0" stroke-width="1"/>
+                            <line x1="40" y1="50" x2="380" y2="50" stroke="#f0f0f0" stroke-width="1"/>
+                            <line x1="40" y1="80" x2="380" y2="80" stroke="#f0f0f0" stroke-width="1"/>
+                            <line x1="40" y1="110" x2="380" y2="110" stroke="#f0f0f0" stroke-width="1"/>
+                            <!-- Area fill -->
+                            <path fill="url(#lineGradient)" d="M 40 95 L 80 88 L 120 82 L 160 70 L 200 55 L 240 48 L 280 65 L 320 75 L 360 85 L 380 82 L 380 140 L 40 140 Z"/>
+                            <!-- Line -->
+                            <path fill="none" stroke="#2c5282" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+                                d="M 40 95 L 80 88 L 120 82 L 160 70 L 200 55 L 240 48 L 280 65 L 320 75 L 360 85 L 380 82"/>
+                            <!-- Data points -->
+                            <circle cx="40" cy="95" r="3" fill="#2c5282"/>
+                            <circle cx="80" cy="88" r="3" fill="#2c5282"/>
+                            <circle cx="120" cy="82" r="3" fill="#2c5282"/>
+                            <circle cx="160" cy="70" r="3" fill="#2c5282"/>
+                            <circle cx="200" cy="55" r="3" fill="#2c5282"/>
+                            <circle cx="240" cy="48" r="3" fill="#2c5282"/>
+                            <circle cx="280" cy="65" r="3" fill="#2c5282"/>
+                            <circle cx="320" cy="75" r="3" fill="#2c5282"/>
+                            <circle cx="360" cy="85" r="3" fill="#2c5282"/>
+                            <circle cx="380" cy="82" r="3" fill="#2c5282"/>
+                        </svg>
+                        <div class="line-chart-labels">
+                            <span>Jan</span><span>Feb</span><span>Mar</span><span>Apr</span><span>May</span><span>Jun</span><span>Jul</span><span>Aug</span><span>Sep</span><span>Oct</span><span>Nov</span><span>Dec</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card chart-panel">
+                    <h3 class="chart-panel-title"><i data-lucide="chart-pie"></i> Employee Status Distribution</h3>
+                    <div class="donut-chart-wrapper">
+                        <div class="donut-chart" style="--d1:40; --d2:30; --d3:20; --d4:10;" aria-label="Employee status donut chart">
+                            <span class="donut-center"><span class="donut-center-value">100%</span></span>
+                        </div>
+                        <div class="donut-legend">
+                            <div class="donut-legend-item"><span class="donut-legend-dot" style="background:#2c5282"></span> Regular - JAE</div>
+                            <div class="donut-legend-item"><span class="donut-legend-dot" style="background:#276749"></span> MDHII - Reg</div>
+                            <div class="donut-legend-item"><span class="donut-legend-dot" style="background:#d69e2e"></span> MDHII - Proby</div>
+                            <div class="donut-legend-item"><span class="donut-legend-dot" style="background:#553c9a"></span> FAMSI - Reg</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="notificationModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeNotifications()">&times;</span>
+            <h2>Notifications</h2>
+            <div class="notification-list">
+                <div class="notification-item urgent">
+                    <strong>Expiring Soon:</strong> 5 certifications expiring in next 7 days
+                </div>
+                <div class="notification-item">
+                    <strong>New Training:</strong> Advanced Sensing Process training scheduled for next week
+                </div>
+                <div class="notification-item">
+                    <strong>Overdue:</strong> 2 employees have overdue training assignments
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="js/data.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/main.js"></script>
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

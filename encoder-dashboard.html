@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TCRMS - Encoder Dashboard</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <div class="prototype-banner">
+        ⚠️ PROTOTYPE SYSTEM - For Walkthrough and Approval Only - All Data is Static
+    </div>
+    
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h2>TRMS</h2>
+            <p class="sidebar-subtitle">Training Record Mngt. System</p>
+            <p class="user-role" id="userRole">ENCODER</p>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <a href="encoder-dashboard.html" class="nav-item active">
+                <i data-lucide="layout-dashboard" class="nav-icon"></i> DASHBOARD
+            </a>
+            <a href="encoder-training.html" class="nav-item nav-item-with-badge">
+                <i data-lucide="edit-3" class="nav-icon"></i> DATA ENTRY
+                <span class="nav-badge">3</span>
+            </a>
+            <a href="encoder-reports.html" class="nav-item">
+                <i data-lucide="bar-chart-3" class="nav-icon"></i> REPORTS
+            </a>
+            <a href="encoder-employee.html" class="nav-item">
+                <i data-lucide="user" class="nav-icon"></i> EMPLOYEE INFO
+            </a>
+        </nav>
+        
+        <div class="sidebar-quick-actions">
+            <span class="sidebar-quick-label">Quick Actions</span>
+            <a href="encoder-employee.html" class="nav-item nav-item-quick">
+                <i data-lucide="user-plus" class="nav-icon"></i> Add New Employee
+            </a>
+            <a href="#" class="nav-item nav-item-quick" onclick="event.preventDefault(); alert('Bulk upload – prototype.');">
+                <i data-lucide="upload" class="nav-icon"></i> Bulk Upload
+            </a>
+            <a href="encoder-training.html" class="nav-item nav-item-quick nav-item-with-badge">
+                <i data-lucide="calendar-clock" class="nav-icon"></i> Expiring Certs
+                <span class="nav-badge">5</span>
+            </a>
+            <a href="#" class="nav-item nav-item-quick" onclick="event.preventDefault(); document.querySelector('.encoder-dashboard-main').scrollIntoView();">
+                <i data-lucide="list" class="nav-icon"></i> Today's Entries
+            </a>
+        </div>
+        
+        <div class="sidebar-footer">
+            <button onclick="logout()" class="btn-logout">Logout</button>
+        </div>
+    </div>
+    
+    <div class="main-content">
+        <div class="top-bar">
+            <h1><i data-lucide="layout-dashboard" class="title-icon"></i> Encoder Dashboard</h1>
+            <div class="top-bar-right">
+                <button type="button" class="btn-secondary btn-sm" onclick="alert('Refresh – prototype.');">
+                    <i data-lucide="refresh-cw"></i> Refresh
+                </button>
+                <button type="button" class="btn-primary btn-sm" onclick="document.getElementById('quickDataEntryForm').scrollIntoView({ behavior: 'smooth' });">
+                    <i data-lucide="plus"></i> New Entry
+                </button>
+                <span class="user-info"><i data-lucide="user"></i> Encoder User</span>
+            </div>
+        </div>
+        
+        <div class="content-area content-area-dashboard encoder-dashboard-main">
+            <div class="dashboard-cards encoder-dashboard-cards">
+                <div class="card stat-card-modern">
+                    <span class="stat-card-bg-icon" aria-hidden="true"><i data-lucide="users"></i></span>
+                    <div class="stat-details">
+                        <h3 class="stat-card-label">TOTAL EMPLOYEES</h3>
+                        <p class="stat-number">26</p>
+                        <small class="stat-card-sub">Active: 26 | Separated: 0</small>
+                    </div>
+                </div>
+                <div class="card stat-card-modern">
+                    <span class="stat-card-bg-icon" aria-hidden="true"><i data-lucide="award"></i></span>
+                    <div class="stat-details">
+                        <h3 class="stat-card-label">ACTIVE CERTIFICATIONS</h3>
+                        <p class="stat-number">24</p>
+                        <small class="stat-card-sub">Passed: 24 | Failed: 0</small>
+                    </div>
+                </div>
+                <div class="card stat-card-modern stat-card-danger">
+                    <span class="stat-card-bg-icon" aria-hidden="true"><i data-lucide="calendar-clock"></i></span>
+                    <div class="stat-details">
+                        <h3 class="stat-card-label">EXPIRING SOON</h3>
+                        <p class="stat-number">5</p>
+                        <small class="stat-card-sub">Next 30 days</small>
+                    </div>
+                </div>
+                <div class="card stat-card-modern">
+                    <span class="stat-card-bg-icon" aria-hidden="true"><i data-lucide="file-text"></i></span>
+                    <div class="stat-details">
+                        <h3 class="stat-card-label">TODAY'S ENTRIES</h3>
+                        <p class="stat-number">3</p>
+                        <small class="stat-card-sub">Last updated: Today</small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="encoder-dashboard-grid">
+                <div class="card encoder-quick-entry-card">
+                    <h3 class="card-title"><i data-lucide="edit-3"></i> Quick Data Entry</h3>
+                    <form id="quickDataEntryForm" class="encoder-quick-entry-form" onsubmit="return handleQuickEntrySubmit(event);">
+                        <div class="form-group">
+                            <label>Employee Name *</label>
+                            <input type="text" placeholder="Last Name, First Name" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Employment Status *</label>
+                            <select required>
+                                <option value="">Select status</option>
+                                <option selected>Regular - JAE</option>
+                                <option>MDHB - Reg</option>
+                                <option>MDHB - Proby</option>
+                                <option>FAMSI - Reg</option>
+                                <option>FAMSI - Proby</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Team *</label>
+                            <select required>
+                                <option value="">Select team</option>
+                                <option>Team A</option>
+                                <option selected>Team B</option>
+                                <option>Team C</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Certification / Process *</label>
+                            <input type="text" placeholder="e.g. Incoming Inspection Procedure" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Exam Date *</label>
+                            <input type="date" value="2026-02-04" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Scores</label>
+                            <div class="scores-buttons">
+                                <button type="button" class="btn-score active">1st</button>
+                                <button type="button" class="btn-score">2nd</button>
+                                <button type="button" class="btn-score">3rd</button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Remarks</label>
+                            <input type="text" value="PENDING" placeholder="Remarks">
+                        </div>
+                        <div class="form-group">
+                            <label>Recertification Date *</label>
+                            <input type="date" value="2026-08-04" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Status *</label>
+                            <select required id="entryStatus">
+                                <option value="">Select status</option>
+                                <option value="PASSED" selected>PASSED</option>
+                                <option value="FAILED">FAILED</option>
+                                <option value="PENDING">PENDING</option>
+                            </select>
+                        </div>
+                        <div class="form-actions">
+                            <button type="button" class="btn-secondary" onclick="clearQuickEntryForm()">Clear</button>
+                            <button type="submit" class="btn-primary"><i data-lucide="save"></i> Save Entry</button>
+                        </div>
+                    </form>
+                </div>
+                
+                <div class="card encoder-recent-entries-card">
+                    <h3 class="card-title"><i data-lucide="list"></i> Recent Entries</h3>
+                    <div class="table-responsive">
+                        <table class="data-table encoder-recent-table">
+                            <thead>
+                                <tr>
+                                    <th>Employee</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Torio, Geraldine Herrera</td>
+                                    <td><span class="status-badge status-passed">PASSED</span></td>
+                                    <td>2024-11-12</td>
+                                    <td class="cell-actions">
+                                        <button type="button" class="btn-icon" title="Edit"><i data-lucide="pencil"></i></button>
+                                        <button type="button" class="btn-icon btn-icon-danger" title="Delete"><i data-lucide="trash-2"></i></button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Gavin, Bernadette Campana</td>
+                                    <td><span class="status-badge status-passed">PASSED</span></td>
+                                    <td>2025-01-27</td>
+                                    <td class="cell-actions">
+                                        <button type="button" class="btn-icon" title="Edit"><i data-lucide="pencil"></i></button>
+                                        <button type="button" class="btn-icon btn-icon-danger" title="Delete"><i data-lucide="trash-2"></i></button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Moreno, Marygrace Candelaria</td>
+                                    <td><span class="status-badge status-passed">PASSED</span></td>
+                                    <td>2025-01-22</td>
+                                    <td class="cell-actions">
+                                        <button type="button" class="btn-icon" title="Edit"><i data-lucide="pencil"></i></button>
+                                        <button type="button" class="btn-icon btn-icon-danger" title="Delete"><i data-lucide="trash-2"></i></button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Sango, Carlo Pedragosa</td>
+                                    <td><span class="status-badge status-passed">PASSED</span></td>
+                                    <td>2025-03-25</td>
+                                    <td class="cell-actions">
+                                        <button type="button" class="btn-icon" title="Edit"><i data-lucide="pencil"></i></button>
+                                        <button type="button" class="btn-icon btn-icon-danger" title="Delete"><i data-lucide="trash-2"></i></button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Opiz, Mholie Fajutagana</td>
+                                    <td><span class="status-badge status-passed">PASSED</span></td>
+                                    <td>2025-03-31</td>
+                                    <td class="cell-actions">
+                                        <button type="button" class="btn-icon" title="Edit"><i data-lucide="pencil"></i></button>
+                                        <button type="button" class="btn-icon btn-icon-danger" title="Delete"><i data-lucide="trash-2"></i></button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="js/data.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/main.js"></script>
+    <script>
+        lucide.createIcons();
+        
+        function handleQuickEntrySubmit(e) {
+            e.preventDefault();
+            if (typeof showSuccessMessage === 'function') {
+                showSuccessMessage('Entry saved successfully! (Simulated)');
+            } else {
+                alert('Entry saved (Simulated).');
+            }
+            return false;
+        }
+        function clearQuickEntryForm() {
+            var form = document.getElementById('quickDataEntryForm');
+            if (form) form.reset();
+        }
+        document.querySelectorAll('.btn-score').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.btn-score').forEach(function(b) { b.classList.remove('active'); });
+                this.classList.add('active');
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TCRMS - Reports</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <div class="prototype-banner">
+        ⚠️ PROTOTYPE SYSTEM - For Walkthrough and Approval Only - All Data is Static
+    </div>
+    
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h2>TRMS</h2>
+            <p class="sidebar-subtitle">Training Record Mngt. System</p>
+            <p class="user-role" id="userRole">ENCODER</p>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <a href="encoder-dashboard.html" class="nav-item">
+                <i data-lucide="layout-dashboard" class="nav-icon"></i> DASHBOARD
+            </a>
+            <a href="encoder-training.html" class="nav-item nav-item-with-badge">
+                <i data-lucide="edit-3" class="nav-icon"></i> DATA ENTRY
+                <span class="nav-badge">3</span>
+            </a>
+            <a href="encoder-reports.html" class="nav-item active">
+                <i data-lucide="bar-chart-3" class="nav-icon"></i> REPORTS
+            </a>
+            <a href="encoder-employee.html" class="nav-item">
+                <i data-lucide="user" class="nav-icon"></i> EMPLOYEE INFO
+            </a>
+        </nav>
+        
+        <div class="sidebar-quick-actions">
+            <span class="sidebar-quick-label">Quick Actions</span>
+            <a href="encoder-employee.html" class="nav-item nav-item-quick">
+                <i data-lucide="user-plus" class="nav-icon"></i> Add New Employee
+            </a>
+            <a href="#" class="nav-item nav-item-quick" onclick="event.preventDefault(); alert('Bulk upload – prototype.');">
+                <i data-lucide="upload" class="nav-icon"></i> Bulk Upload
+            </a>
+            <a href="encoder-training.html" class="nav-item nav-item-quick nav-item-with-badge">
+                <i data-lucide="calendar-clock" class="nav-icon"></i> Expiring Certs
+                <span class="nav-badge">5</span>
+            </a>
+            <a href="encoder-dashboard.html" class="nav-item nav-item-quick">
+                <i data-lucide="list" class="nav-icon"></i> Today's Entries
+            </a>
+        </div>
+        
+        <div class="sidebar-footer">
+            <button onclick="logout()" class="btn-logout">Logout</button>
+        </div>
+    </div>
+    
+    <div class="main-content">
+        <div class="top-bar">
+            <h1>Reports (View Only)</h1>
+            <div class="top-bar-right">
+                <span class="user-info"><i data-lucide="user"></i> Encoder User</span>
+            </div>
+        </div>
+        
+        <div class="content-area">
+            <div class="card">
+                <h3>Number of Certifications per Month (2026)</h3>
+                <div class="chart-container">
+                    <div class="bar-chart-horizontal">
+                        <div class="bar-row">
+                            <span class="bar-label">January</span>
+                            <div class="bar-wrapper">
+                                <div class="bar-fill" style="width: 75%">75</div>
+                            </div>
+                        </div>
+                        <div class="bar-row">
+                            <span class="bar-label">February</span>
+                            <div class="bar-wrapper">
+                                <div class="bar-fill" style="width: 60%">60</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3>Recent Reports</h3>
+                <div class="info-message">
+                    View only access. Contact administrator for custom reports.
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="js/data.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/reports.js"></script>
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

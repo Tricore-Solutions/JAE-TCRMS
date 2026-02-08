@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TCRMS - Users Management</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <div class="prototype-banner">
+        ⚠️ PROTOTYPE SYSTEM - For Walkthrough and Approval Only - All Data is Static
+    </div>
+    
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h2>TRMS</h2>
+            <p class="sidebar-subtitle">Training Record Mngt. System</p>
+            <p class="user-role" id="userRole">ADMIN</p>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <a href="admin-dashboard.html" class="nav-item">
+                <i data-lucide="layout-dashboard" class="nav-icon"></i> DASHBOARD
+            </a>
+            <a href="admin-users.html" class="nav-item active">
+                <i data-lucide="users" class="nav-icon"></i> USERS
+            </a>
+            <a href="admin-training.html" class="nav-item">
+                <i data-lucide="book-open" class="nav-icon"></i> TRAINING AND CERTIFICATION
+            </a>
+            <a href="admin-reports.html" class="nav-item">
+                <i data-lucide="bar-chart-3" class="nav-icon"></i> REPORTS
+            </a>
+        </nav>
+        
+        <div class="sidebar-footer">
+            <button onclick="logout()" class="btn-logout">Logout</button>
+        </div>
+    </div>
+    
+    <div class="main-content">
+        <div class="top-bar">
+            <h1>Users</h1>
+            <div class="top-bar-right">
+                <span class="notification-icon" onclick="showNotifications()">
+                    <i data-lucide="bell"></i>
+                    <span class="badge">3</span>
+                </span>
+                <span class="user-info"><i data-lucide="user"></i> Admin User</span>
+            </div>
+        </div>
+        
+        <div class="content-area">
+            <div class="users-toolbar">
+                <div class="users-filters">
+                    <span class="filters-label">Filters:</span>
+                    <select class="filter-select" id="filterRole">
+                        <option>All Roles</option>
+                        <option>Admin</option>
+                        <option>Encoder</option>
+                        <option>Outside User</option>
+                    </select>
+                    <select class="filter-select" id="filterStatus">
+                        <option>All Status</option>
+                        <option>Active</option>
+                        <option>Inactive</option>
+                    </select>
+                </div>
+                <div class="users-search-sort">
+                    <div class="search-input-wrap">
+                        <i data-lucide="search" class="search-icon"></i>
+                        <input type="text" placeholder="Search users..." id="userSearch" class="search-input">
+                    </div>
+                    <select class="sort-select">
+                        <option>Name A-Z</option>
+                        <option>Name Z-A</option>
+                        <option>Last Login</option>
+                    </select>
+                    <button class="btn-primary" onclick="simulateAddUser()">
+                        <i data-lucide="user-plus"></i> + Add User
+                    </button>
+                </div>
+            </div>
+            
+            <div class="card card-table-wrap">
+                <table class="data-table users-table">
+                    <thead>
+                        <tr>
+                            <th class="th-checkbox"><input type="checkbox" id="selectAllUsers" onclick="toggleSelectAll(this)"></th>
+                            <th>Profile</th>
+                            <th>Full Name</th>
+                            <th>Email Address</th>
+                            <th>ID No.</th>
+                            <th>Role</th>
+                            <th>Status</th>
+                            <th>Last Login</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTableBody">
+                        <tr>
+                            <td><input type="checkbox" class="row-checkbox"></td>
+                            <td><span class="profile-initials">JC</span></td>
+                            <td>Juan Dela Cruz</td>
+                            <td>juan.delacruz@jae.com</td>
+                            <td>+63-555-0101</td>
+                            <td><span class="badge-role admin">Admin</span></td>
+                            <td><label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label></td>
+                            <td>2026-02-08 13:10</td>
+                            <td class="td-actions">
+                                <button class="btn-icon" onclick="simulateEditUser('admin')"><i data-lucide="pencil"></i></button>
+                                <button class="btn-icon btn-icon-red" onclick="simulateDeleteUser('admin')"><i data-lucide="trash-2"></i></button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><input type="checkbox" class="row-checkbox"></td>
+                            <td><span class="profile-initials">MS</span></td>
+                            <td>Maria Santos</td>
+                            <td>maria.santos@jae.com</td>
+                            <td>+63-555-0102</td>
+                            <td><span class="badge-role encoder">Encoder</span></td>
+                            <td><label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label></td>
+                            <td>2026-02-07 08:30</td>
+                            <td class="td-actions">
+                                <button class="btn-icon" onclick="simulateEditUser('encoder01')"><i data-lucide="pencil"></i></button>
+                                <button class="btn-icon btn-icon-red" onclick="simulateDeleteUser('encoder01')"><i data-lucide="trash-2"></i></button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><input type="checkbox" class="row-checkbox"></td>
+                            <td><span class="profile-initials">AR</span></td>
+                            <td>Ana Reyes</td>
+                            <td>ana.reyes@jae.com</td>
+                            <td>+63-555-0103</td>
+                            <td><span class="badge-role encoder">Encoder</span></td>
+                            <td><label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label></td>
+                            <td>2026-02-08 09:15</td>
+                            <td class="td-actions">
+                                <button class="btn-icon" onclick="simulateEditUser('encoder02')"><i data-lucide="pencil"></i></button>
+                                <button class="btn-icon btn-icon-red" onclick="simulateDeleteUser('encoder02')"><i data-lucide="trash-2"></i></button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><input type="checkbox" class="row-checkbox"></td>
+                            <td><span class="profile-initials">EA</span></td>
+                            <td>External Auditor</td>
+                            <td>auditor@external.com</td>
+                            <td>+63-555-0104</td>
+                            <td><span class="badge-role viewer">Outside User</span></td>
+                            <td><label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label></td>
+                            <td>2026-02-06 14:20</td>
+                            <td class="td-actions">
+                                <button class="btn-icon" onclick="simulateEditUser('viewer01')"><i data-lucide="pencil"></i></button>
+                                <button class="btn-icon btn-icon-red" onclick="simulateDeleteUser('viewer01')"><i data-lucide="trash-2"></i></button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><input type="checkbox" class="row-checkbox"></td>
+                            <td><span class="profile-initials">CR</span></td>
+                            <td>Client Representative</td>
+                            <td>client@company.com</td>
+                            <td>+63-555-0105</td>
+                            <td><span class="badge-role viewer">Outside User</span></td>
+                            <td><label class="toggle-switch"><input type="checkbox"><span class="toggle-slider"></span></label></td>
+                            <td>2026-02-05 11:40</td>
+                            <td class="td-actions">
+                                <button class="btn-icon" onclick="simulateEditUser('viewer02')"><i data-lucide="pencil"></i></button>
+                                <button class="btn-icon btn-icon-red" onclick="simulateDeleteUser('viewer02')"><i data-lucide="trash-2"></i></button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <div class="pagination-bar">
+                    <span class="pagination-info">Showing 1-5 of 5 users</span>
+                    <div class="pagination-controls">
+                        <button type="button" class="pagination-btn" disabled>Previous</button>
+                        <button type="button" class="pagination-btn active">1</button>
+                        <button type="button" class="pagination-btn">2</button>
+                        <button type="button" class="pagination-btn">Next</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="userModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeUserModal()">&times;</span>
+            <h2 id="modalTitle">Add User</h2>
+            <form id="userForm" onsubmit="handleUserSubmit(event)">
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" required>
+                </div>
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" required>
+                </div>
+                <div class="form-group">
+                    <label>Role</label>
+                    <select required>
+                        <option value="">Select Role</option>
+                        <option value="admin">Admin</option>
+                        <option value="encoder">Encoder</option>
+                        <option value="viewer">Outside User</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" required>
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="btn-primary">Save (Simulated)</button>
+                    <button type="button" class="btn-secondary" onclick="closeUserModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script src="js/data.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/users.js"></script>
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>
