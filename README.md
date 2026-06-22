@@ -1,371 +1,267 @@
-# Training and Certification Record Management System (TCRMS)
-## STATIC PROTOTYPE - For Client Walkthrough and Approval
+# JAE TCRMS — Training and Certification Record Management System
+
+**JAE Philippines, Inc. — Internal Warehouse Application**
+
+A production desktop application for managing employee training and certification records. Runs completely **offline** on the company's local area network (LAN). No internet connection required.
 
 ---
 
-## ⚠️ IMPORTANT NOTICE
+## How to Run
 
-**This is a STATIC PROTOTYPE system for demonstration and approval purposes only.**
+### Running the Server
 
-- **NO DATABASE** - All data is hardcoded in JavaScript files
-- **NO BACKEND** - Pure HTML/CSS/JavaScript frontend only
-- **NO DATA PERSISTENCE** - Nothing is saved, all changes are simulated
-- **FOR WALKTHROUGH ONLY** - To demonstrate workflows and UI/UX design
+The server must be running on one dedicated machine before any client can connect.
+
+**Step 1 — Install Node.js** (one-time, server machine only)
+
+Download and install Node.js from [https://nodejs.org](https://nodejs.org). Version 18 or newer is required.
+
+**Step 2 — Install server dependencies** (one-time)
+
+Open Command Prompt, navigate to the `server/` folder, and run:
+
+```
+cd server
+npm install
+```
+
+**Step 3 — Start the server**
+
+Double-click `server/start-server.bat`
+
+Or from Command Prompt:
+
+```
+cd server
+node src/index.js
+```
+
+The console will show:
+```
+JAE-TCRMS Server running on port 3000
+```
+It will also display the machine's IP address (e.g., `192.168.1.10`). Note this IP — all client machines need it.
+
+**Step 4 — Allow the port through Windows Firewall** (one-time, if blocked)
+
+Run this in Command Prompt as Administrator:
+
+```
+netsh advfirewall firewall add rule name="JAE TCRMS Server" dir=in action=allow protocol=TCP localport=3000
+```
 
 ---
 
-## 📋 System Overview
+### Running the Desktop Client
 
-The TCRMS is designed to:
-- Track all employee trainings and certifications from date of hire
-- Monitor training compliance (validity, expiration dates)
-- Send alerts for expiring certifications or due trainings
-- Store employee employment information
-- Generate reports
+**Step 1 — Install the app**
+
+Run the `JAE TCRMS Setup.exe` installer on each warehouse PC.
+
+**Step 2 — First launch: enter the server IP**
+
+When the app opens for the first time, a setup screen will appear. Enter the server machine's IP address (e.g., `192.168.1.10`) and port `3000`, then click **Connect to Server**.
+
+**Step 3 — Log in**
+
+Use the default admin account on first login:
+
+| Username | Password | Role |
+|----------|----------|------|
+| `admin` | `admin123` | Administrator |
+
+> **Important:** Go to User Management immediately after first login and change the admin password. Then create accounts for your encoders and viewers.
 
 ---
 
-## 🚀 How to Run the Prototype
+### Auto-Start the Server on Windows Boot (Recommended)
 
-### Method 1: Double-click to open
-1. Navigate to the TCRMS folder
-2. Double-click `index.html`
-3. The **Employee Certifications Directory** (public viewer) opens — no login required. Use **Staff login** in the sidebar to sign in as Admin or Encoder.
+So the server starts automatically whenever the server machine is turned on:
 
-### Method 2: Using VS Code Live Server (Recommended)
-1. Open the TCRMS folder in VS Code
-2. Right-click on `index.html`
-3. Select "Open with Live Server"
+1. Right-click `start-server.bat` → **Create shortcut**
+2. Press `Win + R`, type `shell:startup`, press Enter
+3. Move the shortcut into the Startup folder that opens
 
-### Method 3: Using Python HTTP Server
+---
+
+## Running in Development Mode
+
+Use this if you are a developer setting up or testing the application on your own machine.
+
+**Prerequisites:** Node.js 18+, Git
+
+**Step 1 — Install all dependencies**
+
 ```bash
-cd TCRMS
-python -m http.server 8000
-```
-Then open: http://localhost:8000
+# Install server dependencies
+cd server
+npm install
 
----
-
-## 👥 User Roles (per System Draft)
-
-| Role | Access | Login |
-|------|--------|--------|
-| **Outside (External Viewer)** | View employee names and certifications only | **No** — public; first screen is the Employee Certifications Directory |
-| **Encoder** | Data entry: Employee Info, Training & Certification (view + input); Reports (view only) | Yes — use **Staff login** or open `login.html` |
-| **Admin** | All access: Dashboard, Users, Training & Certification, Reports (full CRUD, generate/export) | Yes — use **Staff login** or open `login.html` |
-
-### Test Accounts (Staff only)
-- **Admin:** admin / admin123  
-- **Encoder:** encoder / encoder123
-
----
-
-## 📁 System Structure
-
-```
-TCRMS/
-│
-├── index.html                    # Default: redirects to viewer-dashboard (public)
-├── login.html                    # Staff login (Admin / Encoder)
-│
-├── Admin Pages/
-│   ├── admin-dashboard.html     # Admin dashboard with metrics
-│   ├── admin-users.html         # User management
-│   ├── admin-training.html      # Training records management
-│   └── admin-reports.html       # Reports and analytics
-│
-├── Encoder Pages/
-│   ├── encoder-dashboard.html   # Encoder dashboard
-│   ├── encoder-employee.html    # Employee information
-│   ├── encoder-training.html    # Training records
-│   └── encoder-reports.html     # View reports
-│
-├── External Viewer Pages/
-│   └── viewer-dashboard.html    # View-only certification list
-│
-├── css/
-│   └── style.css                # All styling
-│
-└── js/
-    ├── data.js                  # Static data (employees, trainings)
-    ├── auth.js                  # Authentication logic
-    ├── main.js                  # Common functions
-    ├── users.js                 # User management functions
-    ├── training.js              # Training management functions
-    ├── employee.js              # Employee management functions
-    ├── reports.js               # Report generation functions
-    └── viewer.js                # Viewer-specific functions
+# Install client dependencies
+cd ../client
+npm install
 ```
 
----
+**Step 2 — Start the server** (Terminal 1)
 
-## 📊 Features Demonstrated
+```bash
+cd server
+node src/index.js
+```
 
-### 1. Dashboard (Admin & Encoder)
-- Total employees count
-- Active certifications count
-- Training completion rate (last 60 days)
-- Expired certifications alert
-- Upcoming expirations table
-- Recent activities feed
-- Training by factory chart
+Or from the root folder:
 
-### 2. User Management (Admin Only)
-- View all system users
-- Add new users (simulated)
-- Edit user details (simulated)
-- Role-based access control display
-- User roles: Admin, Encoder, Outside User
+```bash
+npm run server
+```
 
-### 3. Training and Certification Records
-**Data fields displayed:**
-- ID No.
-- Full Name
-- Employment Status
-- Date Hired
-- Factory (1ST, 2ND)
-- Line (MX68, MX48, MX79AC, MX68)
-- Team (Team A, Team B)
-- Training Title
-- Training Category (Hands-on, Assessment)
-- Training Date
-- Trainer
-- Validity Period (2 weeks, 1 month, 1.5 months, 2 months, 3 months, 6 months, 1 year)
-- Expiration Date (auto-calculated based on validity)
-- Process Classification (Easy, Difficult, Critical/Special)
-- Sensing Type (Sensing, Non-sensing)
+**Step 3 — Start the Electron client in dev mode** (Terminal 2)
 
-**Features:**
-- Add training record (simulated)
-- View detailed record
-- Edit record (simulated)
-- Print record (simulated)
-- Filter by factory, line
-- Search functionality
-- Export to CSV/Excel (simulated)
+```bash
+cd client
+npm run dev
+```
 
-### 4. Employee Information (Encoder)
-- View all employees
-- Add new employee (simulated)
-- Edit employee details (simulated)
-- View employee training history
-- Search and filter
+Or from the root folder:
 
-### 5. Reports (Admin & Encoder View)
-**Report Types:**
-- Number of certifications per month
-- Certifications expiring (next 3 months)
-- Separated vs. Certified employees
-- Training by category
-- Training by process classification
+```bash
+npm run dev
+```
 
-**Visualizations:**
-- Bar charts (horizontal & vertical)
-- Data tables
-- Pie chart legends
-- Graphical presentations
-
-### 6. External Viewer Access
-- View-only access
-- Employee names and certifications visible
-- No sensitive employee information
-- Search capability
+This opens the Electron window connected to the local server at `http://localhost:3000`.
 
 ---
 
-## 🎨 Static Sample Data
+## Building the Windows Installer
 
-### Employees (6 sample records)
-1. Maria Santos - EMP-2024-001
-2. John Reyes - EMP-2024-002
-3. Ana Cruz - EMP-2024-003
-4. Pedro Garcia - EMP-2023-045
-5. Carlos Mendoza - EMP-2024-015
-6. Lisa Fernandez - EMP-2023-089
+Run this to produce `client/dist-electron/JAE TCRMS Setup.exe`:
 
-### Training Records (6 sample records)
-- Various training types (Soldering, Quality Control, Safety, Equipment Operation, SMT Process, Critical Process Sensing)
-- Different validity periods (3 months, 6 months, 1 year)
-- Different statuses (Active, Expiring Soon, Expired)
-- Different classifications (Easy, Difficult, Critical/Special)
+```bash
+cd client
+npm run dist
+```
+
+Requirements: Node.js 18+, Windows machine (or Wine on macOS/Linux).
 
 ---
 
-## 🔔 Simulated Features
+## User Roles
 
-The following actions are **simulated** with alerts/messages:
+| Role | What They Can Do |
+|------|-----------------|
+| **Admin** | Full access — manage users, employees, training records, and reports |
+| **Encoder** | Add and edit employees and training records |
+| **Viewer** | Read-only public directory (no login required) |
 
-1. **Add/Edit/Delete Operations**
-   - Adding new employee
-   - Adding new training record
-   - Editing records
-   - Adding/editing users
-
-2. **Data Export**
-   - Export to CSV
-   - Export to Excel
-   - Print records
-
-3. **Notifications**
-   - Expiring certifications
-   - Overdue trainings
-   - New assignments
-
-4. **Approvals**
-   - Training assignment approval workflow
+Only the `admin` account is created automatically on first run. The admin must create additional Encoder and Viewer accounts from the User Management page.
 
 ---
 
-## 🎯 Workflows Demonstrated
+## Architecture
 
-### 1. New Employee Workflow
-1. Login as Admin/Encoder
-2. Navigate to Employee Info
-3. Click "Add Employee"
-4. See simulated form (all fields as per requirements)
+```
+Company LAN (192.168.x.x)
+│
+├── SERVER MACHINE (1 dedicated PC)
+│   ├── Node.js + Express REST API  →  port 3000
+│   └── SQLite Database  →  server/data/tcrms.db
+│
+├── WAREHOUSE PC 1  →  Electron Desktop App
+├── WAREHOUSE PC 2  →  Electron Desktop App
+└── WAREHOUSE PC N  →  Electron Desktop App
+```
 
-### 2. Training Assignment Workflow
-1. Login as Admin/Encoder
-2. Navigate to Training and Certification
-3. Click "Add Training Record"
-4. See simulated form with all required fields
-5. Expiration date auto-calculated based on validity period
-
-### 3. Notification System
-1. Bell icon shows notification count
-2. Click to view notifications:
-   - Expiring certifications
-   - Overdue trainings
-   - New assignments
-
-### 4. Report Generation
-1. Navigate to Reports
-2. Select report type and parameters
-3. View static sample reports
-4. Simulate export functionality
+All client machines connect to the server over HTTP on the local network. No data leaves the building.
 
 ---
 
-## 📱 Responsive Design
+## File Structure
 
-The prototype is responsive and works on:
-- Desktop (1920x1080 and above)
-- Laptop (1366x768)
-- Tablet (768x1024)
-- Mobile (375x667)
-
----
-
-## 🔐 Security Features (Simulated)
-
-1. **Role-based access control**
-   - Admin: Full access
-   - Encoder: Data entry and view
-   - Outside User: View only (names and certifications)
-
-2. **Session management**
-   - Login required
-   - Role-based page redirects
-   - Logout functionality
-
----
-
-## 📝 Notes for Client Review
-
-### What to Review:
-1. ✅ **UI/UX Design** - Layout, colors, navigation
-2. ✅ **Data Fields** - All required fields are displayed
-3. ✅ **Workflows** - Login → Dashboard → Features
-4. ✅ **Reports** - Report types and visualizations
-5. ✅ **User Roles** - Different access levels
-6. ✅ **Page Structure** - Navigation and organization
-
-### What is NOT in this Prototype:
-1. ❌ Database integration
-2. ❌ Backend server
-3. ❌ Actual data persistence
-4. ❌ Email notifications
-5. ❌ PDF generation
-6. ❌ Advanced filtering/sorting
-7. ❌ File uploads
-8. ❌ API integrations
-9. ❌ Automated expiration calculations
-10. ❌ Audit logs
+```
+JAE-TCRMS/
+├── server/                    ← Copy this to the server machine
+│   ├── src/
+│   │   ├── index.js           ← Server entry point
+│   │   ├── db.js              ← Database schema and initialization
+│   │   ├── middleware/
+│   │   │   └── auth.js        ← JWT authentication middleware
+│   │   └── routes/
+│   │       ├── auth.js        ← Login / logout
+│   │       ├── employees.js   ← Employee CRUD
+│   │       ├── trainings.js   ← Training records CRUD
+│   │       ├── users.js       ← User management (admin only)
+│   │       └── reports.js     ← Reports and CSV export
+│   ├── data/
+│   │   └── tcrms.db           ← SQLite database (created automatically)
+│   ├── start-server.bat       ← Double-click to start the server
+│   └── package.json
+│
+├── client/                    ← Electron desktop application
+│   ├── electron/
+│   │   ├── main.js            ← Electron main process
+│   │   └── preload.js         ← Secure IPC bridge
+│   ├── src/
+│   │   ├── App.jsx            ← App router and role guards
+│   │   ├── api/index.js       ← API client (Axios)
+│   │   ├── context/           ← Auth context and state
+│   │   ├── pages/             ← All application pages
+│   │   └── components/        ← Shared UI components
+│   └── package.json
+│
+└── README.md
+```
 
 ---
 
-## 🛠 Technical Details
+## Database Backup
 
-### Technologies Used:
-- **HTML5** - Page structure
-- **CSS3** - Styling and responsive design
-- **Vanilla JavaScript** - Interactivity and logic
-- **No frameworks** - Pure web technologies for simplicity
+The entire database is a single file:
 
-### Browser Compatibility:
-- Chrome (recommended)
-- Firefox
-- Edge
-- Safari
+```
+server/data/tcrms.db
+```
+
+To back up all data, copy this file to a USB drive or network share. It is recommended to do this at the end of every shift.
+
+To restore, stop the server, replace `tcrms.db` with the backup copy, then restart the server.
 
 ---
 
-## 📞 Next Steps After Approval
+## Troubleshooting
 
-Once this prototype is approved, the production system will include:
-
-1. **Backend Development**
-   - Database design and implementation
-   - API development
-   - Server setup on JAE main server
-
-2. **Features Implementation**
-   - Real CRUD operations
-   - Automated expiration calculation
-   - Email notifications
-   - Report generation with real data
-   - Data export functionality
-   - Audit logging
-   - Advanced search and filters
-
-3. **Integration**
-   - Main server JAE storage integration
-   - Email server integration
-   - Active Directory integration (if needed)
-
-4. **Testing**
-   - Unit testing
-   - Integration testing
-   - User acceptance testing
-   - Security testing
-
-5. **Deployment**
-   - Production environment setup
-   - Data migration
-   - User training
-   - Documentation
+| Problem | Solution |
+|---------|----------|
+| "Cannot connect to server" | Check that the server machine is on and `start-server.bat` is running |
+| "Invalid username or password" | Check caps lock; ask the admin to reset your password |
+| Client shows blank / loading screen | Restart the app; verify the server IP in the settings screen |
+| Port 3000 blocked | Run the firewall command above on the server machine |
+| Forgot admin password | Stop the server, delete `server/data/tcrms.db`, restart — this resets all data |
+| Database corrupted | Stop the server, restore `tcrms.db` from backup, restart |
 
 ---
 
-## 📄 Copyright
+## Security Notes
 
-**JAE Philippines, Inc. Proprietary**  
-Copyright ©2026, JAE Philippines, Inc.  
-Confidential
-
----
-
-## 🎯 Prototype Purpose
-
-This prototype serves to:
-1. Visualize the proposed system design
-2. Validate data fields and requirements
-3. Confirm workflows and user journeys
-4. Approve UI/UX design
-5. Establish a foundation for production development
-
-**All feedback and change requests should be provided before production development begins.**
+- All passwords are stored as bcrypt hashes — never in plain text
+- JWT login sessions expire after 8 hours
+- Every data change is recorded in the audit log
+- The server only listens on the local network — no external access
+- No internet connection is used at any point
 
 ---
 
-*Last Updated: February 8, 2026*
+## Tech Stack
+
+| Layer | Technology |
+|-------|------------|
+| Desktop shell | Electron |
+| Frontend | React 18 + Tailwind CSS |
+| Build tool | Vite |
+| Backend | Node.js + Express 4 |
+| Database | SQLite via better-sqlite3 |
+| Authentication | JWT + bcrypt |
+| Packaging | electron-builder (NSIS installer) |
+
+---
+
+*JAE Philippines, Inc. — For internal use only. Version 1.0.0*

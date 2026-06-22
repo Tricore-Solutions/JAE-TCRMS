@@ -1,0 +1,326 @@
+import { useState, useEffect, useCallback } from 'react';
+import { Plus, Search, Edit2, Trash2, Eye } from 'lucide-react';
+import Layout from '../components/Layout';
+import DataTable from '../components/DataTable';
+import Modal from '../components/Modal';
+import StatusBadge from '../components/StatusBadge';
+import { employeesApi } from '../api';
+import { useAuth } from '../context/AuthContext';
+import { useToast } from '../components/Toast';
+
+const STATUSES = ['active', 'inactive', 'resigned'];
+const emptyForm = {
+  employee_id: '', full_name: '', factory: '', line: '',
+  team: '', position: '', status: 'active', hire_date: '',
+};
+
+export default function Employees() {
+  const { isAdmin, isEncoder } = useAuth();
+  const { show: toast } = useToast();
+  const canEdit = isAdmin || isEncoder;
+
+  const [employees, setEmployees] = useState([]);
+  const [filters, setFilters] = useState({ factories: [], lines: [], teams: [] });
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [filterStatus, setFilterStatus] = useState('active');
+  const [filterFactory, setFilterFactory] = useState('');
+
+  const [modalOpen, setModalOpen] = useState(false);
+  const [viewModal, setViewModal] = useState(false);
+  const [selected, setSelected] = useState(null);
+  const [form, setForm] = useState(emptyForm);
+  const [saving, setSaving] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params = {};
+      if (filterStatus) params.status = filterStatus;
+      if (filterFactory) params.factory = filterFactory;
+      if (search) params.search = search;
+      const [empRes, filRes] = await Promise.all([
+        employeesApi.list(params),
+        employeesApi.filters(),
+      ]);
+      setEmployees(empRes.data);
+      setFilters(filRes.data);
+    } catch {
+      toast('Failed to load employees.', 'error');
+    } finally {
+      setLoading(false);
+    }
+  }, [search, filterStatus, filterFactory]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const openCreate = () => {
+    setSelected(null);
+    setForm(emptyForm);
+    setModalOpen(true);
+  };
+
+  const openEdit = (emp) => {
+    setSelected(emp);
+    setForm({
+      employee_id: emp.employee_id,
+      full_name: emp.full_name,
+      factory: emp.factory,
+      line: emp.line,
+      team: emp.team,
+      position: emp.position,
+      status: emp.status,
+      hire_date: emp.hire_date || '',
+    });
+    setModalOpen(true);
+  };
+
+  const openView = (emp) => {
+    setSelected(emp);
+    setViewModal(true);
+  };
+
+  const handleSave = async () => {
+    if (!form.employee_id || !form.full_name) {
+      toast('Employee ID and full name are required.', 'warning');
+      return;
+    }
+    setSaving(true);
+    try {
+      if (selected) {
+        await employeesApi.update(selected.id, form);
+        toast('Employee updated.', 'success');
+      } else {
+        await employeesApi.create(form);
+        toast('Employee added.', 'success');
+      }
+      setModalOpen(false);
+      load();
+    } catch (err) {
+      toast(err.response?.data?.error || 'Failed to save employee.', 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (emp) => {
+    try {
+      await employeesApi.remove(emp.id);
+      toast('Employee deactivated.', 'success');
+      setDeleteConfirm(null);
+      load();
+    } catch (err) {
+      toast(err.response?.data?.error || 'Failed to deactivate employee.', 'error');
+    }
+  };
+
+  const columns = [
+    { key: 'employee_id', label: 'Employee ID', render: v => <span className="font-mono text-xs text-blue-400">{v}</span> },
+    { key: 'full_name', label: 'Full Name', render: v => <span className="font-medium text-white text-sm">{v}</span> },
+    { key: 'factory', label: 'Factory' },
+    { key: 'line', label: 'Line' },
+    { key: 'team', label: 'Team' },
+    { key: 'position', label: 'Position', render: v => <span className="text-sm text-slate-400">{v || '—'}</span> },
+    { key: 'status', label: 'Status', render: v => <StatusBadge status={v} /> },
+    { key: 'actions', label: '', sortable: false, render: (_, row) => (
+      <div className="flex items-center gap-1">
+        <button onClick={e => { e.stopPropagation(); openView(row); }} className="p-1.5 text-slate-400 hover:text-blue-400 hover:bg-blue-900/30 rounded-lg transition-colors">
+          <Eye size={14} />
+        </button>
+        {canEdit && (
+          <>
+            <button onClick={e => { e.stopPropagation(); openEdit(row); }} className="p-1.5 text-slate-400 hover:text-amber-400 hover:bg-amber-900/30 rounded-lg transition-colors">
+              <Edit2 size={14} />
+            </button>
+            {isAdmin && (
+              <button onClick={e => { e.stopPropagation(); setDeleteConfirm(row); }} className="p-1.5 text-slate-400 hover:text-red-400 hover:bg-red-900/30 rounded-lg transition-colors">
+                <Trash2 size={14} />
+              </button>
+            )}
+          </>
+        )}
+      </div>
+    )},
+  ];
+
+  return (
+    <Layout
+      title="Employees"
+      actions={canEdit && (
+        <button onClick={openCreate} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
+          <Plus size={16} /> Add Employee
+        </button>
+      )}
+    >
+      <div className="flex flex-wrap gap-3 mb-6">
+        <div className="relative flex-1 min-w-48">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+          <input
+            type="text"
+            placeholder="Search by name or employee ID..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="w-full bg-slate-800 border border-slate-700 rounded-lg pl-9 pr-4 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+        <select
+          value={filterStatus}
+          onChange={e => setFilterStatus(e.target.value)}
+          className="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="">All Status</option>
+          {STATUSES.map(s => <option key={s} value={s} className="capitalize">{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
+        </select>
+        <select
+          value={filterFactory}
+          onChange={e => setFilterFactory(e.target.value)}
+          className="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="">All Factories</option>
+          {filters.factories.map(f => <option key={f} value={f}>{f}</option>)}
+        </select>
+      </div>
+
+      <DataTable columns={columns} data={employees} loading={loading} emptyMessage="No employees found." />
+
+      {/* Add/Edit Modal */}
+      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={selected ? 'Edit Employee' : 'Add Employee'} size="lg">
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1.5">Employee ID *</label>
+            <input
+              type="text"
+              value={form.employee_id}
+              onChange={e => setForm(f => ({ ...f, employee_id: e.target.value }))}
+              disabled={!!selected}
+              className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
+              placeholder="e.g. EMP-011"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1.5">Full Name *</label>
+            <input
+              type="text"
+              value={form.full_name}
+              onChange={e => setForm(f => ({ ...f, full_name: e.target.value }))}
+              className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Employee full name"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1.5">Factory</label>
+            <input
+              type="text"
+              value={form.factory}
+              onChange={e => setForm(f => ({ ...f, factory: e.target.value }))}
+              list="factories-list"
+              className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="e.g. Factory A"
+            />
+            <datalist id="factories-list">
+              {filters.factories.map(f => <option key={f} value={f} />)}
+            </datalist>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1.5">Line</label>
+            <input
+              type="text"
+              value={form.line}
+              onChange={e => setForm(f => ({ ...f, line: e.target.value }))}
+              list="lines-list"
+              className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="e.g. Line 1"
+            />
+            <datalist id="lines-list">
+              {filters.lines.map(l => <option key={l} value={l} />)}
+            </datalist>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1.5">Team</label>
+            <input
+              type="text"
+              value={form.team}
+              onChange={e => setForm(f => ({ ...f, team: e.target.value }))}
+              list="teams-list"
+              className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="e.g. Team Alpha"
+            />
+            <datalist id="teams-list">
+              {filters.teams.map(t => <option key={t} value={t} />)}
+            </datalist>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1.5">Position</label>
+            <input
+              type="text"
+              value={form.position}
+              onChange={e => setForm(f => ({ ...f, position: e.target.value }))}
+              className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="e.g. Machine Operator"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1.5">Hire Date</label>
+            <input
+              type="date"
+              value={form.hire_date}
+              onChange={e => setForm(f => ({ ...f, hire_date: e.target.value }))}
+              className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1.5">Status</label>
+            <select
+              value={form.status}
+              onChange={e => setForm(f => ({ ...f, status: e.target.value }))}
+              className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {STATUSES.map(s => <option key={s} value={s} className="capitalize">{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
+            </select>
+          </div>
+        </div>
+        <div className="flex justify-end gap-3 mt-6">
+          <button onClick={() => setModalOpen(false)} className="px-4 py-2 text-sm text-slate-400 hover:text-white bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors">Cancel</button>
+          <button onClick={handleSave} disabled={saving} className="px-4 py-2 text-sm text-white bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 disabled:text-slate-500 rounded-lg transition-colors">
+            {saving ? 'Saving...' : selected ? 'Update Employee' : 'Add Employee'}
+          </button>
+        </div>
+      </Modal>
+
+      {/* View Modal */}
+      <Modal open={viewModal} onClose={() => setViewModal(false)} title="Employee Details" size="md">
+        {selected && (
+          <dl className="space-y-0 divide-y divide-slate-700/50">
+            {[
+              { label: 'Employee ID', value: selected.employee_id },
+              { label: 'Full Name', value: selected.full_name },
+              { label: 'Factory', value: selected.factory || '—' },
+              { label: 'Line', value: selected.line || '—' },
+              { label: 'Team', value: selected.team || '—' },
+              { label: 'Position', value: selected.position || '—' },
+              { label: 'Hire Date', value: selected.hire_date || '—' },
+              { label: 'Status', value: <StatusBadge status={selected.status} /> },
+            ].map(({ label, value }) => (
+              <div key={label} className="flex justify-between gap-4 py-3">
+                <dt className="text-sm text-slate-400">{label}</dt>
+                <dd className="text-sm text-white">{value}</dd>
+              </div>
+            ))}
+          </dl>
+        )}
+      </Modal>
+
+      {/* Delete Confirm */}
+      <Modal open={!!deleteConfirm} onClose={() => setDeleteConfirm(null)} title="Deactivate Employee" size="sm">
+        <p className="text-slate-300 text-sm">
+          Deactivate <span className="text-white font-medium">{deleteConfirm?.full_name}</span>? Their training records will be preserved.
+        </p>
+        <div className="flex justify-end gap-3 mt-6">
+          <button onClick={() => setDeleteConfirm(null)} className="px-4 py-2 text-sm text-slate-400 hover:text-white bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors">Cancel</button>
+          <button onClick={() => handleDelete(deleteConfirm)} className="px-4 py-2 text-sm text-white bg-red-600 hover:bg-red-500 rounded-lg transition-colors">Deactivate</button>
+        </div>
+      </Modal>
+    </Layout>
+  );
+}

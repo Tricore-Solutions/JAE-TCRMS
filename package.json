@@ -1,0 +1,16 @@
+{
+  "name": "jae-tcrms",
+  "version": "1.0.0",
+  "description": "JAE TCRMS — Training and Certification Record Management System",
+  "private": true,
+  "scripts": {
+    "dev": "cd client && npm run dev",
+    "server": "cd server && node src/index.js",
+    "server:dev": "cd server && npx nodemon src/index.js",
+    "build": "cd client && npm run build",
+    "dist": "cd client && npm run dist",
+    "install:all": "cd server && npm install && cd ../client && npm install"
+  },
+  "author": "JAE Philippines, Inc.",
+  "license": "ISC"
+}
