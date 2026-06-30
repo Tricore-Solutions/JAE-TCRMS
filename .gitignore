@@ -2,12 +2,18 @@
 node_modules/
 npm-debug.log*
 
+# Python
+backend/venv/
+backend/__pycache__/
+backend/**/__pycache__/
+*.pyc
+*.pyo
+
 # Build output
 client/dist/
 client/dist-electron/
 
 # Database (do not commit real data)
-server/data/
 *.db
 *.db-shm
 *.db-wal
@@ -15,6 +21,7 @@ server/data/
 # Environment
 .env
 !.env.example
+backend/.env
 
 # OS
 .DS_Store
