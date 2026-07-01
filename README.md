@@ -32,7 +32,7 @@ Company LAN (192.168.x.x)
 └── WINDOWS LAPTOP N  →  Electron Desktop App  ──HTTP API──┘
 ```
 
-The desktop app is **not** accessed through a browser. Each laptop runs the Electron client, which connects to the central Django API over HTTP.
+Staff use the **Electron desktop app**, not a browser. The app connects to the central Django API over HTTP on the LAN.
 
 ---
 
@@ -41,14 +41,21 @@ The desktop app is **not** accessed through a browser. Each laptop runs the Elec
 ```bash
 npm run install:all
 chmod +x deployment/setup-mysql.command
+export MYSQL_ROOT_PASSWORD='your_mysql_root_password'   # if needed
 ./deployment/setup-mysql.command
 
-# Terminal 1
+# Terminal 1 — API
 npm run server
 
-# Terminal 2
+# Terminal 2 — desktop app
 npm run dev
 ```
+
+- API health check: http://localhost:3000/health
+- App UI: Electron window (or http://localhost:5173 during dev)
+- Login: `admin` / `admin123`
+
+In dev, the app auto-connects to `localhost:3000` — no Server Setup screen needed if the backend is running.
 
 Full guide: [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)
 
@@ -65,7 +72,7 @@ Full guide: [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)
 **Each warehouse laptop:**
 
 1. Install `JAE TCRMS Setup.exe`
-2. Enter server IP + port `3000`
+2. On first launch: enter server IP + port `3000`
 3. Log in
 
 Full guide: [deployment/README.md](deployment/README.md)
@@ -74,7 +81,7 @@ Full guide: [deployment/README.md](deployment/README.md)
 
 ## Building the Windows Installer
 
-Build on a **Windows machine** (recommended):
+Build on a **Windows machine**:
 
 ```bash
 npm run install:client
@@ -82,8 +89,6 @@ npm run dist:win
 ```
 
 Output: `client/dist-electron/JAE TCRMS Setup.exe`
-
-Mac dev (`npm run dev`) is for development only — staff receive the Windows installer.
 
 ---
 
@@ -94,8 +99,6 @@ Mac dev (`npm run dev`) is for development only — staff receive the Windows in
 | **Admin** | Full access — users, employees, training, reports |
 | **Encoder** | Add and edit employees and training records |
 | **Viewer** | Read-only public directory (no login required) |
-
-Default login after setup: `admin` / `admin123`
 
 ---
 
@@ -111,6 +114,15 @@ JAE-TCRMS/
 │   └── DEVELOPMENT.md    Developer guide (macOS)
 └── package.json
 ```
+
+---
+
+## Documentation
+
+| Document | Audience | Contents |
+|----------|----------|----------|
+| [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) | Mac developers | Setup, daily workflow, ports, API, troubleshooting |
+| [deployment/README.md](deployment/README.md) | Windows IT / admin | Server install, client deploy, backups |
 
 ---
 
