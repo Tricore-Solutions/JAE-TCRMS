@@ -40,6 +40,13 @@ function AppRoutes() {
       return;
     }
 
+    // In production with a known backend URL, use it directly
+    if (import.meta.env.VITE_API_URL) {
+      configureServer(import.meta.env.VITE_API_URL);
+      setBootState('ready');
+      return;
+    }
+
     if (!import.meta.env.DEV) {
       setBootState('setup');
       return;

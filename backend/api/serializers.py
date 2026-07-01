@@ -28,7 +28,8 @@ class EmployeeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Employee
         fields = [
-            'id', 'employee_id', 'full_name', 'factory', 'line', 'team',
+            'id', 'employee_id', 'last_name', 'first_name', 'middle_initial',
+            'full_name', 'factory', 'line', 'team',
             'position', 'status', 'hire_date', 'created_at', 'updated_at',
         ]
 
@@ -39,7 +40,7 @@ class TrainingSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'employee_id', 'title', 'category', 'training_date', 'trainer',
             'validity_months', 'expiration_date', 'process_classification',
-            'remarks', 'created_by', 'created_at', 'updated_at',
+            'remarks', 'worker_line_status', 'take', 'created_by', 'created_at', 'updated_at',
         ]
 
 
@@ -55,7 +56,7 @@ class TrainingListSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'employee_id', 'title', 'category', 'training_date', 'trainer',
             'validity_months', 'expiration_date', 'process_classification',
-            'remarks', 'created_by', 'created_at', 'updated_at',
+            'remarks', 'worker_line_status', 'take', 'created_by', 'created_at', 'updated_at',
             'employee_name', 'emp_code', 'factory', 'line', 'team',
         ]
 

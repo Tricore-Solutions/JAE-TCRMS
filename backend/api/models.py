@@ -35,6 +35,9 @@ class Employee(models.Model):
     ]
 
     employee_id = models.CharField(max_length=50, unique=True)
+    last_name = models.CharField(max_length=100, default='')
+    first_name = models.CharField(max_length=100, default='')
+    middle_initial = models.CharField(max_length=10, default='', blank=True)
     full_name = models.CharField(max_length=255)
     factory = models.CharField(max_length=100, default='')
     line = models.CharField(max_length=100, default='')
@@ -56,6 +59,11 @@ class Employee(models.Model):
 
 
 class Training(models.Model):
+    WORKER_LINE_STATUS_CHOICES = [
+        ('Floating', 'Floating'),
+        ('Original', 'Original'),
+    ]
+
     employee = models.ForeignKey(
         Employee,
         on_delete=models.CASCADE,
@@ -70,6 +78,8 @@ class Training(models.Model):
     expiration_date = models.DateField(null=True, blank=True)
     process_classification = models.CharField(max_length=255, default='')
     remarks = models.TextField(default='')
+    worker_line_status = models.CharField(max_length=50, choices=WORKER_LINE_STATUS_CHOICES, default='On Line')
+    take = models.PositiveIntegerField(default=1)
     created_by = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,

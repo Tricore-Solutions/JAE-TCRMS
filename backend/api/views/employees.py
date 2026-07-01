@@ -1,3 +1,4 @@
+import json
 from django.db.models import Q
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
@@ -8,6 +9,14 @@ from api.models import Employee
 from api.permissions import IsAdmin, IsAdminOrEncoder
 from api.serializers import EmployeeSerializer, TrainingSerializer
 from api.utils import log_audit, today
+
+
+def _build_full_name(last_name, first_name, middle_initial):
+    name = f"{last_name}, {first_name}"
+    if middle_initial:
+        mi = middle_initial.rstrip('.')
+        name += f" {mi}."
+    return name
 
 
 @api_view(['GET'])
@@ -54,18 +63,26 @@ def employee_list_create(request):
         return Response({'error': 'Insufficient permissions'}, status=status.HTTP_403_FORBIDDEN)
 
     employee_id = (request.data.get('employee_id') or '').strip()
-    full_name = (request.data.get('full_name') or '').strip()
-    if not employee_id or not full_name:
+    last_name = (request.data.get('last_name') or '').strip()
+    first_name = (request.data.get('first_name') or '').strip()
+    middle_initial = (request.data.get('middle_initial') or '').strip()
+
+    if not employee_id or not last_name or not first_name:
         return Response(
-            {'error': 'employee_id and full_name are required'},
+            {'error': 'employee_id, last_name, and first_name are required'},
             status=status.HTTP_400_BAD_REQUEST,
         )
 
     if Employee.objects.filter(employee_id=employee_id).exists():
         return Response({'error': 'Employee ID already exists'}, status=status.HTTP_409_CONFLICT)
 
+    full_name = _build_full_name(last_name, first_name, middle_initial)
+
     employee = Employee.objects.create(
         employee_id=employee_id,
+        last_name=last_name,
+        first_name=first_name,
+        middle_initial=middle_initial,
         full_name=full_name,
         factory=request.data.get('factory') or '',
         line=request.data.get('line') or '',
@@ -96,7 +113,26 @@ def employee_detail(request, pk):
         if not IsAdminOrEncoder().has_permission(request, None):
             return Response({'error': 'Insufficient permissions'}, status=status.HTTP_403_FORBIDDEN)
 
-        employee.full_name = request.data.get('full_name') or employee.full_name
+        # Capture before state
+        before = {
+            'full_name': employee.full_name,
+            'factory': employee.factory,
+            'line': employee.line,
+            'team': employee.team,
+            'position': employee.position,
+            'hire_date': str(employee.hire_date) if employee.hire_date else None,
+            'status': employee.status,
+        }
+
+        last_name = (request.data.get('last_name') or employee.last_name).strip()
+        first_name = (request.data.get('first_name') or employee.first_name).strip()
+        middle_initial = request.data.get('middle_initial', employee.middle_initial).strip()
+
+        employee.last_name = last_name
+        employee.first_name = first_name
+        employee.middle_initial = middle_initial
+        employee.full_name = _build_full_name(last_name, first_name, middle_initial)
+
         for field in ('factory', 'line', 'team', 'position', 'hire_date'):
             if field in request.data:
                 setattr(employee, field, request.data[field])
@@ -104,9 +140,20 @@ def employee_detail(request, pk):
             employee.status = request.data['status']
         employee.save()
 
+        after = {
+            'full_name': employee.full_name,
+            'factory': employee.factory,
+            'line': employee.line,
+            'team': employee.team,
+            'position': employee.position,
+            'hire_date': str(employee.hire_date) if employee.hire_date else None,
+            'status': employee.status,
+        }
+        changes = {k: {'before': before[k], 'after': after[k]} for k in before if before[k] != after[k]}
+
         log_audit(
             request.user, 'UPDATE', 'employees', employee.id,
-            f'Updated employee: {employee.full_name}',
+            json.dumps({'summary': f'Updated employee: {employee.full_name}', 'changes': changes}),
         )
         return Response(EmployeeSerializer(employee).data)
 

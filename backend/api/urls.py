@@ -24,7 +24,10 @@ urlpatterns = [
     path('reports/by-factory', reports.by_factory),
     path('reports/expiring', reports.expiring),
     path('reports/audit-logs', reports.audit_logs),
+    path('reports/audit-logs/<str:table_name>/<int:record_id>', reports.record_audit_logs),
     path('reports/export/trainings', reports.export_trainings),
+    path('reports/takes-per-month', reports.takes_per_month),
 
     path('public/employees', public.public_employees),
+    path('public/employees/<int:pk>/trainings', public.public_employee_trainings),
 ]

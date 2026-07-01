@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-export const DEFAULT_SERVER = 'http://localhost:3000';
+export const DEFAULT_SERVER = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 function getServerUrl() {
   try {
@@ -85,12 +85,15 @@ export const reportsApi = {
   byFactory: () => api.get('/reports/by-factory'),
   expiring: () => api.get('/reports/expiring'),
   auditLogs: (limit) => api.get('/reports/audit-logs', { params: { limit } }),
+  recordLogs: (table, id) => api.get(`/reports/audit-logs/${table}/${id}`),
   exportTrainings: (params) => api.get('/reports/export/trainings', { params }),
+  takesPerMonth: () => api.get('/reports/takes-per-month'),
 };
 
 // Public (no auth)
 export const publicApi = {
   employees: (params) => axios.get(getServerUrl() + '/api/public/employees', { params }),
+  employeeTrainings: (id) => axios.get(getServerUrl() + `/api/public/employees/${id}/trainings`),
 };
 
 // Health check

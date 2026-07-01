@@ -1,3 +1,4 @@
+import json
 from django.db.models import Q
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
@@ -68,6 +69,9 @@ def training_list_create(request):
             qs = qs.filter(employee_id=employee_id)
         if category:
             qs = qs.filter(category=category)
+        worker_line_status = request.query_params.get('worker_line_status')
+        if worker_line_status:
+            qs = qs.filter(worker_line_status=worker_line_status)
         if search:
             qs = qs.filter(
                 Q(employee__full_name__icontains=search)
@@ -121,6 +125,8 @@ def training_list_create(request):
         expiration_date=expiration_date,
         process_classification=request.data.get('process_classification') or '',
         remarks=request.data.get('remarks') or '',
+        worker_line_status=request.data.get('worker_line_status') or 'Floating',
+        take=request.data.get('take') or 1,
         created_by_id=request.user.id,
     )
     log_audit(request.user, 'CREATE', 'trainings', training.id, f'Created training: {title}')
@@ -145,6 +151,20 @@ def training_detail(request, pk):
         if not IsAdminOrEncoder().has_permission(request, None):
             return Response({'error': 'Insufficient permissions'}, status=status.HTTP_403_FORBIDDEN)
 
+        # Capture before state
+        before = {
+            'title': training.title,
+            'category': training.category,
+            'training_date': str(training.training_date),
+            'trainer': training.trainer,
+            'validity_months': training.validity_months,
+            'expiration_date': str(training.expiration_date) if training.expiration_date else None,
+            'process_classification': training.process_classification,
+            'worker_line_status': training.worker_line_status,
+            'take': training.take,
+            'remarks': training.remarks,
+        }
+
         new_date = request.data.get('training_date') or training.training_date
         new_validity = (
             request.data['validity_months']
@@ -164,11 +184,30 @@ def training_detail(request, pk):
             training.process_classification = request.data['process_classification']
         if 'remarks' in request.data:
             training.remarks = request.data['remarks']
+        if 'worker_line_status' in request.data:
+            training.worker_line_status = request.data['worker_line_status']
+        if 'take' in request.data:
+            training.take = request.data['take']
         training.save()
+
+        after = {
+            'title': training.title,
+            'category': training.category,
+            'training_date': str(training.training_date),
+            'trainer': training.trainer,
+            'validity_months': training.validity_months,
+            'expiration_date': str(training.expiration_date) if training.expiration_date else None,
+            'process_classification': training.process_classification,
+            'worker_line_status': training.worker_line_status,
+            'take': training.take,
+            'remarks': training.remarks,
+        }
+        # Only keep changed fields
+        changes = {k: {'before': before[k], 'after': after[k]} for k in before if before[k] != after[k]}
 
         log_audit(
             request.user, 'UPDATE', 'trainings', training.id,
-            f'Updated training: {training.title}',
+            json.dumps({'summary': f'Updated training: {training.title}', 'changes': changes}),
         )
         return Response(TrainingSerializer(training).data)
 

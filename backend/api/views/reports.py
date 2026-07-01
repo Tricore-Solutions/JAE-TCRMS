@@ -1,4 +1,5 @@
 from django.db.models import Count, Q
+from django.db.models.functions import TruncMonth
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -117,6 +118,36 @@ def audit_logs(request):
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
+def record_audit_logs(request, table_name, record_id):
+    import json as _json
+    logs = (
+        AuditLog.objects
+        .filter(table_name=table_name, record_id=record_id)
+        .order_by('-created_at')
+    )
+    result = []
+    for log in logs:
+        entry = {
+            'action': log.action,
+            'username': log.username,
+            'created_at': log.created_at.strftime('%b %d, %Y %I:%M %p'),
+            'summary': log.details or '',
+            'changes': {},
+        }
+        # Try parsing JSON details for before/after
+        if log.details:
+            try:
+                parsed = _json.loads(log.details)
+                entry['summary'] = parsed.get('summary', log.details)
+                entry['changes'] = parsed.get('changes', {})
+            except (ValueError, TypeError):
+                entry['summary'] = log.details
+        result.append(entry)
+    return Response(result)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def export_trainings(request):
     qs = Training.objects.select_related('employee').all()
     factory = request.query_params.get('factory')
@@ -153,3 +184,46 @@ def export_trainings(request):
         })
 
     return Response(rows)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def takes_per_month(request):
+    """
+    Returns data grouped by month (Y) and take number (X).
+    Each entry: { month, takes: [{take, count}, ...] }
+    """
+    MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+    rows = (
+        Training.objects
+        .annotate(month=TruncMonth('training_date'))
+        .values('month', 'take')
+        .annotate(count=Count('id'))
+        .order_by('month', 'take')
+    )
+
+    # Build month → {take: count} map
+    from collections import defaultdict
+    month_map = defaultdict(dict)
+    month_order = []
+    for row in rows:
+        if not row['month']:
+            continue
+        label = MONTH_NAMES[row['month'].month - 1] + ' ' + str(row['month'].year)
+        if label not in month_map:
+            month_order.append(label)
+        month_map[label][row['take']] = row['count']
+
+    # All take numbers that appear
+    all_takes = sorted({t for m in month_map.values() for t in m})
+
+    return Response({
+        'months': month_order,
+        'takes': all_takes,
+        'data': {
+            month: {str(t): month_map[month].get(t, 0) for t in all_takes}
+            for month in month_order
+        },
+    })

@@ -4,14 +4,14 @@ import Layout from '../components/Layout';
 import DataTable from '../components/DataTable';
 import Modal from '../components/Modal';
 import StatusBadge from '../components/StatusBadge';
-import { employeesApi } from '../api';
+import { employeesApi, reportsApi } from '../api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/Toast';
 
 const STATUSES = ['active', 'inactive', 'resigned'];
 const emptyForm = {
-  employee_id: '', full_name: '', factory: '', line: '',
-  team: '', position: '', status: 'active', hire_date: '',
+  employee_id: '', last_name: '', first_name: '', middle_initial: '',
+  factory: '', line: '', team: '', position: '', status: 'active', hire_date: '',
 };
 
 export default function Employees() {
@@ -32,6 +32,9 @@ export default function Employees() {
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [viewTab, setViewTab] = useState('details');
+  const [recordLogs, setRecordLogs] = useState([]);
+  const [logsLoading, setLogsLoading] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -65,7 +68,9 @@ export default function Employees() {
     setSelected(emp);
     setForm({
       employee_id: emp.employee_id,
-      full_name: emp.full_name,
+      last_name: emp.last_name || '',
+      first_name: emp.first_name || '',
+      middle_initial: emp.middle_initial || '',
       factory: emp.factory,
       line: emp.line,
       team: emp.team,
@@ -76,14 +81,23 @@ export default function Employees() {
     setModalOpen(true);
   };
 
-  const openView = (emp) => {
+  const openView = async (emp) => {
     setSelected(emp);
+    setViewTab('details');
+    setRecordLogs([]);
     setViewModal(true);
+    setLogsLoading(true);
+    try {
+      const res = await reportsApi.recordLogs('employees', emp.id);
+      setRecordLogs(res.data);
+    } catch { /* ignore */ } finally {
+      setLogsLoading(false);
+    }
   };
 
   const handleSave = async () => {
-    if (!form.employee_id || !form.full_name) {
-      toast('Employee ID and full name are required.', 'warning');
+    if (!form.employee_id || !form.last_name || !form.first_name) {
+      toast('Employee ID, last name, and first name are required.', 'warning');
       return;
     }
     setSaving(true);
@@ -117,7 +131,14 @@ export default function Employees() {
 
   const columns = [
     { key: 'employee_id', label: 'Employee ID', render: v => <span className="font-mono text-xs text-blue-400">{v}</span> },
-    { key: 'full_name', label: 'Full Name', render: v => <span className="font-medium text-white text-sm">{v}</span> },
+    { key: 'full_name', label: 'Name', render: (v, row) => (
+      <div>
+        <p className="font-medium text-white text-sm">{v}</p>
+        {(row.first_name || row.last_name) && (
+          <p className="text-xs text-slate-500">{row.first_name} {row.middle_initial ? row.middle_initial + '. ' : ''}{row.last_name}</p>
+        )}
+      </div>
+    )},
     { key: 'factory', label: 'Factory' },
     { key: 'line', label: 'Line' },
     { key: 'team', label: 'Team' },
@@ -199,13 +220,34 @@ export default function Employees() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">Full Name *</label>
+            <label className="block text-sm font-medium text-slate-300 mb-1.5">Last Name *</label>
             <input
               type="text"
-              value={form.full_name}
-              onChange={e => setForm(f => ({ ...f, full_name: e.target.value }))}
+              value={form.last_name}
+              onChange={e => setForm(f => ({ ...f, last_name: e.target.value }))}
               className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Employee full name"
+              placeholder="e.g. Dela Cruz"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1.5">First Name *</label>
+            <input
+              type="text"
+              value={form.first_name}
+              onChange={e => setForm(f => ({ ...f, first_name: e.target.value }))}
+              className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="e.g. Juan"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1.5">Middle Initial</label>
+            <input
+              type="text"
+              value={form.middle_initial}
+              onChange={e => setForm(f => ({ ...f, middle_initial: e.target.value }))}
+              maxLength={5}
+              className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="e.g. S"
             />
           </div>
           <div>
@@ -291,23 +333,77 @@ export default function Employees() {
       {/* View Modal */}
       <Modal open={viewModal} onClose={() => setViewModal(false)} title="Employee Details" size="md">
         {selected && (
-          <dl className="space-y-0 divide-y divide-slate-700/50">
-            {[
-              { label: 'Employee ID', value: selected.employee_id },
-              { label: 'Full Name', value: selected.full_name },
-              { label: 'Factory', value: selected.factory || '—' },
-              { label: 'Line', value: selected.line || '—' },
-              { label: 'Team', value: selected.team || '—' },
-              { label: 'Position', value: selected.position || '—' },
-              { label: 'Hire Date', value: selected.hire_date || '—' },
-              { label: 'Status', value: <StatusBadge status={selected.status} /> },
-            ].map(({ label, value }) => (
-              <div key={label} className="flex justify-between gap-4 py-3">
-                <dt className="text-sm text-slate-400">{label}</dt>
-                <dd className="text-sm text-white">{value}</dd>
+          <>
+            {/* Tabs */}
+            <div className="flex gap-1 mb-4 bg-slate-700/40 rounded-lg p-1">
+              {['details', 'history'].map(tab => (
+                <button
+                  key={tab}
+                  onClick={() => setViewTab(tab)}
+                  className={`flex-1 py-1.5 text-sm font-medium rounded-md capitalize transition-colors ${
+                    viewTab === tab ? 'bg-slate-600 text-white' : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  {tab === 'history' ? `History (${recordLogs.length})` : 'Details'}
+                </button>
+              ))}
+            </div>
+
+            {viewTab === 'details' ? (
+              <dl className="space-y-0 divide-y divide-slate-700/50">
+                {[
+                  { label: 'Employee ID', value: selected.employee_id },
+                  { label: 'Full Name', value: selected.full_name },
+                  { label: 'Last Name', value: selected.last_name || '—' },
+                  { label: 'First Name', value: selected.first_name || '—' },
+                  { label: 'Middle Initial', value: selected.middle_initial || '—' },
+                  { label: 'Factory', value: selected.factory || '—' },
+                  { label: 'Line', value: selected.line || '—' },
+                  { label: 'Team', value: selected.team || '—' },
+                  { label: 'Position', value: selected.position || '—' },
+                  { label: 'Hire Date', value: selected.hire_date || '—' },
+                  { label: 'Status', value: <StatusBadge status={selected.status} /> },
+                ].map(({ label, value }) => (
+                  <div key={label} className="flex justify-between gap-4 py-3">
+                    <dt className="text-sm text-slate-400">{label}</dt>
+                    <dd className="text-sm text-white">{value}</dd>
+                  </div>
+                ))}
+              </dl>
+            ) : (
+              <div className="space-y-2 max-h-72 overflow-y-auto">
+                {logsLoading ? (
+                  <p className="text-slate-500 text-sm text-center py-6">Loading history...</p>
+                ) : recordLogs.length === 0 ? (
+                  <p className="text-slate-500 text-sm text-center py-6">No history available.</p>
+                ) : recordLogs.map((log, i) => (
+                  <div key={i} className="p-3 bg-slate-700/40 rounded-lg space-y-2">
+                    <div className="flex items-center gap-2">
+                      <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                        log.action === 'CREATE' ? 'bg-green-400' :
+                        log.action === 'UPDATE' ? 'bg-amber-400' : 'bg-red-400'
+                      }`} />
+                      <p className="text-sm text-white font-medium flex-1">{log.username}</p>
+                      <span className="text-xs text-slate-500">{log.created_at}</span>
+                    </div>
+                    <p className="text-xs text-slate-400 ml-4">{log.summary}</p>
+                    {log.changes && Object.keys(log.changes).length > 0 && (
+                      <div className="ml-4 space-y-1 border-l-2 border-slate-600 pl-3">
+                        {Object.entries(log.changes).map(([field, { before, after }]) => (
+                          <div key={field} className="text-xs">
+                            <span className="text-slate-500 capitalize">{field.replace(/_/g, ' ')}:</span>
+                            <span className="text-red-400 line-through ml-1">{before ?? '—'}</span>
+                            <span className="text-slate-400 mx-1">→</span>
+                            <span className="text-green-400">{after ?? '—'}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
-            ))}
-          </dl>
+            )}
+          </>
         )}
       </Modal>
 

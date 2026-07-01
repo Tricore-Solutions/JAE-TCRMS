@@ -26,6 +26,8 @@ function exportToCSV(data, filename) {
   URL.revokeObjectURL(url);
 }
 
+const TAKE_COLORS = ['bg-purple-500', 'bg-blue-500', 'bg-green-500', 'bg-amber-500', 'bg-red-500', 'bg-cyan-500'];
+
 function SimpleBar({ label, value, max, color = 'bg-blue-500' }) {
   const pct = max > 0 ? Math.round((value / max) * 100) : 0;
   return (
@@ -45,6 +47,7 @@ export default function Reports() {
   const [byCategory, setByCategory] = useState([]);
   const [byFactory, setByFactory] = useState([]);
   const [expiring, setExpiring] = useState([]);
+  const [takesPerMonth, setTakesPerMonth] = useState({ months: [], takes: [], data: {} });
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
   const [exportFilter, setExportFilter] = useState({ factory: '', category: '' });
@@ -52,16 +55,18 @@ export default function Reports() {
   const load = async () => {
     setLoading(true);
     try {
-      const [ovRes, catRes, facRes, expRes] = await Promise.all([
+      const [ovRes, catRes, facRes, expRes, tpmRes] = await Promise.all([
         reportsApi.overview(),
         reportsApi.byCategory(),
         reportsApi.byFactory(),
         reportsApi.expiring(),
+        reportsApi.takesPerMonth(),
       ]);
       setOverview(ovRes.data);
       setByCategory(catRes.data);
       setByFactory(facRes.data);
       setExpiring(expRes.data);
+      setTakesPerMonth(tpmRes.data);
     } catch {
       toast('Failed to load reports.', 'error');
     } finally {
@@ -87,6 +92,9 @@ export default function Reports() {
 
   const maxCategory = Math.max(...byCategory.map(r => r.count), 1);
   const maxFactory = Math.max(...byFactory.map(r => r.employee_count), 1);
+  const maxTakes = takesPerMonth.data
+    ? Math.max(...Object.values(takesPerMonth.data).flatMap(m => Object.values(m)), 1)
+    : 1;
 
   const categoryColors = ['bg-blue-500', 'bg-green-500', 'bg-amber-500', 'bg-purple-500', 'bg-red-500', 'bg-cyan-500'];
 
@@ -149,6 +157,62 @@ export default function Reports() {
             </div>
           )}
         </div>
+      </div>
+
+      {/* Takes per Month — X: Take number, Y: Month */}
+      <div className="bg-slate-800/60 border border-slate-700 rounded-2xl p-6 mb-6">
+        <h3 className="font-semibold text-white mb-5 flex items-center gap-2">
+          <BarChart3 size={16} className="text-purple-400" /> Takes per Month
+        </h3>
+        {!takesPerMonth.months || takesPerMonth.months.length === 0 ? (
+          <p className="text-slate-500 text-sm text-center py-6">No data available</p>
+        ) : (
+          <div className="overflow-x-auto">
+            {/* Legend */}
+            <div className="flex flex-wrap gap-3 mb-4">
+              {takesPerMonth.takes.map((t, i) => (
+                <div key={t} className="flex items-center gap-1.5">
+                  <div className={`w-3 h-3 rounded-sm ${TAKE_COLORS[i % TAKE_COLORS.length]}`} />
+                  <span className="text-xs text-slate-400">Take {t}</span>
+                </div>
+              ))}
+            </div>
+            {/* Chart rows: Y = Month, X = Take bars */}
+            <div className="space-y-3">
+              {takesPerMonth.months.map(month => (
+                <div key={month} className="flex items-center gap-3">
+                  <span className="text-sm text-slate-300 w-20 flex-shrink-0 text-right">{month}</span>
+                  <div className="flex-1 flex items-center gap-1">
+                    {takesPerMonth.takes.map((t, i) => {
+                      const val = takesPerMonth.data[month]?.[String(t)] || 0;
+                      const pct = maxTakes > 0 ? Math.round((val / maxTakes) * 100) : 0;
+                      return (
+                        <div key={t} className="flex flex-col items-center gap-0.5 flex-1">
+                          <span className="text-xs text-slate-400">{val > 0 ? val : ''}</span>
+                          <div className="w-full bg-slate-700 rounded h-6 overflow-hidden">
+                            <div
+                              className={`h-full ${TAKE_COLORS[i % TAKE_COLORS.length]} rounded transition-all`}
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+            {/* X axis labels */}
+            <div className="flex items-center gap-3 mt-2">
+              <span className="w-20 flex-shrink-0" />
+              <div className="flex-1 flex gap-1">
+                {takesPerMonth.takes.map(t => (
+                  <div key={t} className="flex-1 text-center text-xs text-slate-500">Take {t}</div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Expiring certifications list */}
