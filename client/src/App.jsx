@@ -1,6 +1,8 @@
+import { useEffect, useState } from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ToastProvider } from './components/Toast';
+import { checkServer, DEFAULT_SERVER } from './api';
 
 import Setup from './pages/Setup';
 import Login from './pages/Login';
@@ -29,8 +31,45 @@ function DashboardRedirect() {
 }
 
 function AppRoutes() {
-  const serverUrl = localStorage.getItem('serverUrl');
-  if (!serverUrl) return <Setup />;
+  const { configureServer } = useAuth();
+  const [bootState, setBootState] = useState('checking'); // checking | setup | ready
+
+  useEffect(() => {
+    if (localStorage.getItem('serverUrl')) {
+      setBootState('ready');
+      return;
+    }
+
+    if (!import.meta.env.DEV) {
+      setBootState('setup');
+      return;
+    }
+
+    let cancelled = false;
+    (async () => {
+      try {
+        await checkServer(DEFAULT_SERVER);
+        if (!cancelled) {
+          configureServer(DEFAULT_SERVER);
+          setBootState('ready');
+        }
+      } catch {
+        if (!cancelled) setBootState('setup');
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [configureServer]);
+
+  if (bootState === 'checking') {
+    return (
+      <div className="flex items-center justify-center h-screen bg-slate-900 text-slate-400 text-sm">
+        Connecting to local server...
+      </div>
+    );
+  }
+
+  if (bootState === 'setup') return <Setup />;
 
   return (
     <Routes>

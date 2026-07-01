@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 
 export default function Setup() {
   const { configureServer } = useAuth();
-  const [serverIp, setServerIp] = useState('');
+  const [serverIp, setServerIp] = useState(import.meta.env.DEV ? 'localhost' : '');
   const [port, setPort] = useState('3000');
   const [status, setStatus] = useState('idle'); // idle | testing | success | error
   const [errorMsg, setErrorMsg] = useState('');
@@ -48,7 +48,9 @@ export default function Setup() {
             <h2 className="text-lg font-semibold text-white">Server Setup</h2>
           </div>
           <p className="text-slate-400 text-sm mb-6">
-            Enter the IP address of the computer running the JAE TCRMS server on your company network.
+            {import.meta.env.DEV
+              ? 'Could not reach the local server. Make sure npm run server is running, then connect below.'
+              : 'Enter the IP address of the computer running the JAE TCRMS server on your company network.'}
           </p>
 
           <div className="space-y-4">

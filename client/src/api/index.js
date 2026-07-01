@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const DEFAULT_SERVER = 'http://localhost:3000';
+export const DEFAULT_SERVER = 'http://localhost:3000';
 
 function getServerUrl() {
   try {
