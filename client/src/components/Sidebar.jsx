@@ -37,7 +37,7 @@ export default function Sidebar() {
 
   return (
     <aside className="flex flex-col w-64 bg-white border-r border-gray-200 flex-shrink-0">
-      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto app-scroll-lock">
         {config.nav.map(({ to, icon: Icon, label }) => (
           <NavLink
             key={to}

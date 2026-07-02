@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Plus, Edit2, Trash2, RefreshCw, Shield, Pencil, Eye } from 'lucide-react';
+import { Plus, Edit2, Trash2, RefreshCw, Shield, Pencil, Eye, EyeOff } from 'lucide-react';
 import Layout from '../components/Layout';
 import DataTable from '../components/DataTable';
 import Modal from '../components/Modal';
+import FieldLabel from '../components/FieldLabel';
 import StatusBadge from '../components/StatusBadge';
 import { usersApi } from '../api';
 import { useAuth } from '../context/AuthContext';
@@ -129,7 +130,7 @@ export default function Users() {
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={selected ? 'Edit User' : 'Add User'} size="md">
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Username *</label>
+            <FieldLabel required>Username</FieldLabel>
             <input
               type="text"
               value={form.username}
@@ -140,9 +141,9 @@ export default function Users() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">
-              {selected ? 'New Password (leave blank to keep current)' : 'Password *'}
-            </label>
+            <FieldLabel required={!selected}>
+              {selected ? 'New Password (leave blank to keep current)' : 'Password'}
+            </FieldLabel>
             <div className="relative">
               <input
                 type={showPass ? 'text' : 'password'}
@@ -152,7 +153,7 @@ export default function Users() {
                 placeholder={selected ? 'Enter new password to change' : 'Minimum 6 characters'}
               />
               <button type="button" onClick={() => setShowPass(s => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700">
-                <Eye size={14} />
+                {showPass ? <Eye size={14} /> : <EyeOff size={14} />}
               </button>
             </div>
           </div>
@@ -168,7 +169,7 @@ export default function Users() {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Role *</label>
+              <FieldLabel required>Role</FieldLabel>
               <select
                 value={form.role}
                 onChange={e => setForm(f => ({ ...f, role: e.target.value }))}
@@ -200,7 +201,7 @@ export default function Users() {
         </div>
         <div className="flex justify-end gap-3 mt-6">
           <button onClick={() => setModalOpen(false)} className="px-4 py-2 text-sm text-gray-500 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">Cancel</button>
-          <button onClick={handleSave} disabled={saving} className="px-4 py-2 text-sm text-gray-900 bg-[#1D72B8] hover:bg-[#1864a3] disabled:bg-gray-200 disabled:text-gray-400 rounded-lg transition-colors">
+          <button onClick={handleSave} disabled={saving} className="px-4 py-2 text-sm text-white bg-green-600 hover:bg-green-700 disabled:bg-gray-200 disabled:text-gray-400 rounded-lg transition-colors">
             {saving ? 'Saving...' : selected ? 'Update User' : 'Create User'}
           </button>
         </div>

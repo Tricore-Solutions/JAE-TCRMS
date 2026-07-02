@@ -1,7 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Search, Users, ClipboardList, AlertTriangle, LogIn, XCircle, ArrowLeft, X, ChevronRight } from 'lucide-react';
+import { Search, Users, ClipboardList, AlertTriangle, LogIn, ArrowLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import StatusBadge from '../components/StatusBadge';
+import Modal from '../components/Modal';
+import PageEnter from '../components/PageEnter';
 import { publicApi } from '../api';
 import { useAuth } from '../context/AuthContext';
 
@@ -66,7 +68,7 @@ export default function ViewerDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white app-scroll-lock">
       {/* Header */}
       <header className="bg-white border-b border-gray-200 px-6 py-3">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
@@ -96,6 +98,7 @@ export default function ViewerDashboard() {
       </header>
 
       {/* Content */}
+      <PageEnter>
       <main className="max-w-6xl mx-auto px-8 py-10">
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-gray-900">Employee Training Directory</h1>
@@ -207,96 +210,75 @@ export default function ViewerDashboard() {
           JAE Philippines, Inc. — Read-only public view.
         </p>
       </main>
+      </PageEnter>
 
-      {/* Training History Modal */}
-      {selected && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto py-8 px-4 bg-black/60">
-          {/* Backdrop */}
-          <div className="fixed inset-0" onClick={() => setSelected(null)} />
+      <Modal
+        open={!!selected}
+        onClose={() => setSelected(null)}
+        title={selected?.full_name || ''}
+        description={selected ? `${selected.employee_id} · ${selected.factory || '—'} · ${selected.team || '—'}` : ''}
+        size="xl"
+      >
+        <h3 className="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
+          <ClipboardList size={14} className="text-[#1D72B8]" />
+          Training & Certification History
+        </h3>
 
-          {/* Panel */}
-          <div className="relative w-full max-w-4xl bg-white border border-gray-200 rounded-2xl shadow-2xl">
-            {/* Panel Header */}
-            <div className="flex items-start justify-between px-6 py-5 border-b border-gray-200">
-              <div>
-                <h2 className="text-lg font-bold text-gray-900">{selected.full_name}</h2>
-                <p className="text-sm text-gray-500 mt-0.5">
-                  {selected.employee_id} · {selected.factory || '—'} · {selected.team || '—'}
-                </p>
-              </div>
-              <button
-                onClick={() => setSelected(null)}
-                className="text-gray-500 hover:text-gray-900 p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            {/* Training Table */}
-            <div className="px-6 py-5">
-              <h3 className="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
-                <ClipboardList size={14} className="text-[#1D72B8]" />
-                Training & Certification History
-              </h3>
-
-              {trainingLoading ? (
-                <div className="flex items-center justify-center py-16">
-                  <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                </div>
-              ) : trainings.length === 0 ? (
-                <div className="text-center py-16 text-gray-500 text-sm">No training records found.</div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="bg-gray-50">
-                        {['Training Title', 'Category', 'Date', 'Trainer', 'Take', 'Worker Line', 'Expiration', 'Status'].map(h => (
-                          <th key={h} className="px-3 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">{h}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-200">
-                      {trainings.map(t => (
-                        <tr key={t.id} className="hover:bg-gray-50 transition-colors">
-                          <td className="px-3 py-3 text-gray-900 font-medium max-w-[180px]">
-                            <p className="truncate">{t.title}</p>
-                            {t.process_classification && (
-                              <p className="text-xs text-gray-500 truncate">{t.process_classification}</p>
-                            )}
-                          </td>
-                          <td className="px-3 py-3">
-                            <span className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full whitespace-nowrap">{t.category || '—'}</span>
-                          </td>
-                          <td className="px-3 py-3 text-gray-700 whitespace-nowrap">{t.training_date}</td>
-                          <td className="px-3 py-3 text-gray-500 whitespace-nowrap">{t.trainer || '—'}</td>
-                          <td className="px-3 py-3 whitespace-nowrap">
-                            <span className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full">
-                              {TAKE_LABELS[t.take] || `Take ${t.take}`}
-                            </span>
-                          </td>
-                          <td className="px-3 py-3 whitespace-nowrap">
-                            <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                              t.worker_line_status === 'Original'
-                                ? 'bg-blue-50 text-[#1D72B8] border border-blue-200'
-                                : 'bg-amber-50 text-amber-700 border border-amber-200'
-                            }`}>
-                              {t.worker_line_status || 'Floating'}
-                            </span>
-                          </td>
-                          <td className="px-3 py-3 text-gray-500 whitespace-nowrap">{t.expiration_date || 'No expiry'}</td>
-                          <td className="px-3 py-3">
-                            <StatusBadge status={getCertStatus(t.expiration_date)} />
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
+        {trainingLoading ? (
+          <div className="flex items-center justify-center py-16">
+            <div className="w-6 h-6 border-2 border-[#1D72B8] border-t-transparent rounded-full animate-spin" />
           </div>
-        </div>
-      )}
+        ) : trainings.length === 0 ? (
+          <div className="text-center py-16 text-gray-500 text-sm">No training records found.</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-gray-50">
+                  {['Training Title', 'Category', 'Date', 'Trainer', 'Take', 'Worker Line', 'Expiration', 'Status'].map(h => (
+                    <th key={h} className="px-3 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {trainings.map(t => (
+                  <tr key={t.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-3 py-3 text-gray-900 font-medium max-w-[180px]">
+                      <p className="truncate">{t.title}</p>
+                      {t.process_classification && (
+                        <p className="text-xs text-gray-500 truncate">{t.process_classification}</p>
+                      )}
+                    </td>
+                    <td className="px-3 py-3">
+                      <span className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full whitespace-nowrap">{t.category || '—'}</span>
+                    </td>
+                    <td className="px-3 py-3 text-gray-700 whitespace-nowrap">{t.training_date}</td>
+                    <td className="px-3 py-3 text-gray-500 whitespace-nowrap">{t.trainer || '—'}</td>
+                    <td className="px-3 py-3 whitespace-nowrap">
+                      <span className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full">
+                        {TAKE_LABELS[t.take] || `Take ${t.take}`}
+                      </span>
+                    </td>
+                    <td className="px-3 py-3 whitespace-nowrap">
+                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                        t.worker_line_status === 'Original'
+                          ? 'bg-blue-50 text-[#1D72B8] border border-blue-200'
+                          : 'bg-amber-50 text-amber-700 border border-amber-200'
+                      }`}>
+                        {t.worker_line_status || 'Floating'}
+                      </span>
+                    </td>
+                    <td className="px-3 py-3 text-gray-500 whitespace-nowrap">{t.expiration_date || 'No expiry'}</td>
+                    <td className="px-3 py-3">
+                      <StatusBadge status={getCertStatus(t.expiration_date)} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }

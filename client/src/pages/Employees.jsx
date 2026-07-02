@@ -3,6 +3,7 @@ import { Plus, Search, Edit2, Trash2, Eye } from 'lucide-react';
 import Layout from '../components/Layout';
 import DataTable from '../components/DataTable';
 import Modal from '../components/Modal';
+import FieldLabel from '../components/FieldLabel';
 import StatusBadge from '../components/StatusBadge';
 import { employeesApi, reportsApi } from '../api';
 import { useAuth } from '../context/AuthContext';
@@ -209,7 +210,7 @@ export default function Employees() {
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={selected ? 'Edit Employee' : 'Add Employee'} size="lg">
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Employee ID *</label>
+            <FieldLabel required>Employee ID</FieldLabel>
             <input
               type="text"
               value={form.employee_id}
@@ -220,7 +221,7 @@ export default function Employees() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Last Name *</label>
+            <FieldLabel required>Last Name</FieldLabel>
             <input
               type="text"
               value={form.last_name}
@@ -230,7 +231,7 @@ export default function Employees() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">First Name *</label>
+            <FieldLabel required>First Name</FieldLabel>
             <input
               type="text"
               value={form.first_name}
@@ -324,7 +325,7 @@ export default function Employees() {
         </div>
         <div className="flex justify-end gap-3 mt-6">
           <button onClick={() => setModalOpen(false)} className="px-4 py-2 text-sm text-gray-500 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">Cancel</button>
-          <button onClick={handleSave} disabled={saving} className="px-4 py-2 text-sm text-gray-900 bg-[#1D72B8] hover:bg-[#1864a3] disabled:bg-gray-200 disabled:text-gray-400 rounded-lg transition-colors">
+          <button onClick={handleSave} disabled={saving} className="px-4 py-2 text-sm text-white bg-green-600 hover:bg-green-700 disabled:bg-gray-200 disabled:text-gray-400 rounded-lg transition-colors">
             {saving ? 'Saving...' : selected ? 'Update Employee' : 'Add Employee'}
           </button>
         </div>

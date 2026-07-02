@@ -42,4 +42,33 @@
   .app-btn-secondary {
     @apply text-gray-600 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 transition-colors;
   }
+  .page-enter {
+    animation: page-enter 0.32s ease-out both;
+  }
+}
+
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-enter {
+    animation: none;
+  }
+}
+
+html.modal-open,
+html.modal-open body {
+  overflow: hidden;
+}
+
+html.modal-open .app-scroll-lock {
+  overflow: hidden !important;
 }

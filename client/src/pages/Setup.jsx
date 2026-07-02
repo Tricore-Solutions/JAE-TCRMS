@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Server, CheckCircle, XCircle, Wifi, ArrowRight } from 'lucide-react';
 import { checkServer } from '../api';
 import { useAuth } from '../context/AuthContext';
+import PageEnter from '../components/PageEnter';
 
 export default function Setup() {
   const { configureServer } = useAuth();
@@ -30,7 +31,7 @@ export default function Setup() {
 
   return (
     <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6">
-      <div className="w-full max-w-md">
+      <PageEnter className="w-full max-w-md">
         {/* Logo / Header */}
         <div className="text-center mb-10">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-600 mb-4">
@@ -117,7 +118,7 @@ export default function Setup() {
             Ask your IT administrator for the server IP address.
           </p>
         </div>
-      </div>
+      </PageEnter>
     </div>
   );
 }

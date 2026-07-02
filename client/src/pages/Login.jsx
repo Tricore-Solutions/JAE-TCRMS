@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, AlertCircle, Settings } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import PageEnter from '../components/PageEnter';
+import FieldLabel from '../components/FieldLabel';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -34,7 +36,7 @@ export default function Login() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#B8D4F0] via-[#E8F2FC] to-white flex items-center justify-center p-6">
-      <div className="w-full max-w-[480px]">
+      <PageEnter className="w-full max-w-[480px]">
         <div className="bg-white rounded-3xl shadow-[0_8px_30px_rgba(0,0,0,0.08)] px-10 py-10 text-center">
           <img
             src="/jae-logo.png"
@@ -55,7 +57,7 @@ export default function Login() {
 
           <form onSubmit={handleSubmit} className="space-y-5 text-left">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Username</label>
+              <FieldLabel required>Username</FieldLabel>
               <input
                 type="text"
                 autoFocus
@@ -66,7 +68,7 @@ export default function Login() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
+              <FieldLabel required>Password</FieldLabel>
               <div className="relative">
                 <input
                   type={showPass ? 'text' : 'password'}
@@ -116,7 +118,7 @@ export default function Login() {
             <Settings size={12} /> Change
           </button>
         </div>
-      </div>
+      </PageEnter>
     </div>
   );
 }

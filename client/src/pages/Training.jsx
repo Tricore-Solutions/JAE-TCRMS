@@ -3,6 +3,7 @@ import { Plus, Search, Edit2, Trash2, Eye, Filter } from 'lucide-react';
 import Layout from '../components/Layout';
 import DataTable from '../components/DataTable';
 import Modal from '../components/Modal';
+import FieldLabel from '../components/FieldLabel';
 import StatusBadge from '../components/StatusBadge';
 import { trainingsApi, employeesApi, reportsApi } from '../api';
 import { useAuth } from '../context/AuthContext';
@@ -267,7 +268,7 @@ export default function Training() {
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={selected ? 'Edit Training Record' : 'Add Training Record'} size="lg">
         <div className="grid grid-cols-2 gap-4">
           <div className="col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Employee *</label>
+            <FieldLabel required>Employee</FieldLabel>
             <select
               value={form.employee_id}
               onChange={e => setForm(f => ({ ...f, employee_id: e.target.value }))}
@@ -279,7 +280,7 @@ export default function Training() {
             </select>
           </div>
           <div className="col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Training Title *</label>
+            <FieldLabel required>Training Title</FieldLabel>
             <input
               type="text"
               value={form.title}
@@ -300,7 +301,7 @@ export default function Training() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Training Date *</label>
+            <FieldLabel required>Training Date</FieldLabel>
             <input
               type="date"
               value={form.training_date}
@@ -403,7 +404,7 @@ export default function Training() {
           <button onClick={() => setModalOpen(false)} className="px-4 py-2 text-sm text-gray-500 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
             Cancel
           </button>
-          <button onClick={handleSave} disabled={saving} className="px-4 py-2 text-sm text-gray-900 bg-[#1D72B8] hover:bg-[#1864a3] disabled:bg-gray-200 disabled:text-gray-400 rounded-lg transition-colors">
+          <button onClick={handleSave} disabled={saving} className="px-4 py-2 text-sm text-white bg-green-600 hover:bg-green-700 disabled:bg-gray-200 disabled:text-gray-400 rounded-lg transition-colors">
             {saving ? 'Saving...' : selected ? 'Update Record' : 'Add Record'}
           </button>
         </div>
