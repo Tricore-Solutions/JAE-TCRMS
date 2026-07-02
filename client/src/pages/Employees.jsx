@@ -130,32 +130,32 @@ export default function Employees() {
   };
 
   const columns = [
-    { key: 'employee_id', label: 'Employee ID', render: v => <span className="font-mono text-xs text-blue-400">{v}</span> },
+    { key: 'employee_id', label: 'Employee ID', render: v => <span className="font-mono text-xs text-[#1D72B8]">{v}</span> },
     { key: 'full_name', label: 'Name', render: (v, row) => (
       <div>
-        <p className="font-medium text-white text-sm">{v}</p>
+        <p className="font-medium text-gray-900 text-sm">{v}</p>
         {(row.first_name || row.last_name) && (
-          <p className="text-xs text-slate-500">{row.first_name} {row.middle_initial ? row.middle_initial + '. ' : ''}{row.last_name}</p>
+          <p className="text-xs text-gray-500">{row.first_name} {row.middle_initial ? row.middle_initial + '. ' : ''}{row.last_name}</p>
         )}
       </div>
     )},
     { key: 'factory', label: 'Factory' },
     { key: 'line', label: 'Line' },
     { key: 'team', label: 'Team' },
-    { key: 'position', label: 'Position', render: v => <span className="text-sm text-slate-400">{v || '—'}</span> },
+    { key: 'position', label: 'Position', render: v => <span className="text-sm text-gray-500">{v || '—'}</span> },
     { key: 'status', label: 'Status', render: v => <StatusBadge status={v} /> },
     { key: 'actions', label: '', sortable: false, render: (_, row) => (
       <div className="flex items-center gap-1">
-        <button onClick={e => { e.stopPropagation(); openView(row); }} className="p-1.5 text-slate-400 hover:text-blue-400 hover:bg-blue-900/30 rounded-lg transition-colors">
+        <button onClick={e => { e.stopPropagation(); openView(row); }} className="p-1.5 text-gray-500 hover:text-[#1D72B8] hover:bg-blue-50 rounded-lg transition-colors">
           <Eye size={14} />
         </button>
         {canEdit && (
           <>
-            <button onClick={e => { e.stopPropagation(); openEdit(row); }} className="p-1.5 text-slate-400 hover:text-amber-400 hover:bg-amber-900/30 rounded-lg transition-colors">
+            <button onClick={e => { e.stopPropagation(); openEdit(row); }} className="p-1.5 text-gray-500 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors">
               <Edit2 size={14} />
             </button>
             {isAdmin && (
-              <button onClick={e => { e.stopPropagation(); setDeleteConfirm(row); }} className="p-1.5 text-slate-400 hover:text-red-400 hover:bg-red-900/30 rounded-lg transition-colors">
+              <button onClick={e => { e.stopPropagation(); setDeleteConfirm(row); }} className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
                 <Trash2 size={14} />
               </button>
             )}
@@ -169,26 +169,26 @@ export default function Employees() {
     <Layout
       title="Employees"
       actions={canEdit && (
-        <button onClick={openCreate} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
+        <button onClick={openCreate} className="flex items-center gap-2 bg-[#1D72B8] hover:bg-[#1864a3] text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
           <Plus size={16} /> Add Employee
         </button>
       )}
     >
       <div className="flex flex-wrap gap-3 mb-6">
         <div className="relative flex-1 min-w-48">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
           <input
             type="text"
             placeholder="Search by name or employee ID..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="w-full bg-slate-800 border border-slate-700 rounded-lg pl-9 pr-4 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full bg-white border border-gray-200 rounded-lg pl-9 pr-4 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
           />
         </div>
         <select
           value={filterStatus}
           onChange={e => setFilterStatus(e.target.value)}
-          className="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
         >
           <option value="">All Status</option>
           {STATUSES.map(s => <option key={s} value={s} className="capitalize">{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
@@ -196,7 +196,7 @@ export default function Employees() {
         <select
           value={filterFactory}
           onChange={e => setFilterFactory(e.target.value)}
-          className="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
         >
           <option value="">All Factories</option>
           {filters.factories.map(f => <option key={f} value={f}>{f}</option>)}
@@ -209,55 +209,55 @@ export default function Employees() {
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={selected ? 'Edit Employee' : 'Add Employee'} size="lg">
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">Employee ID *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Employee ID *</label>
             <input
               type="text"
               value={form.employee_id}
               onChange={e => setForm(f => ({ ...f, employee_id: e.target.value }))}
               disabled={!!selected}
-              className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
+              className="w-full app-input px-3 py-2.5 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1D72B8] disabled:opacity-60"
               placeholder="e.g. EMP-011"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">Last Name *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Last Name *</label>
             <input
               type="text"
               value={form.last_name}
               onChange={e => setForm(f => ({ ...f, last_name: e.target.value }))}
-              className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full app-input px-3 py-2.5 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
               placeholder="e.g. Dela Cruz"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">First Name *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">First Name *</label>
             <input
               type="text"
               value={form.first_name}
               onChange={e => setForm(f => ({ ...f, first_name: e.target.value }))}
-              className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full app-input px-3 py-2.5 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
               placeholder="e.g. Juan"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">Middle Initial</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Middle Initial</label>
             <input
               type="text"
               value={form.middle_initial}
               onChange={e => setForm(f => ({ ...f, middle_initial: e.target.value }))}
               maxLength={5}
-              className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full app-input px-3 py-2.5 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
               placeholder="e.g. S"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">Factory</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Factory</label>
             <input
               type="text"
               value={form.factory}
               onChange={e => setForm(f => ({ ...f, factory: e.target.value }))}
               list="factories-list"
-              className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full app-input px-3 py-2.5 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
               placeholder="e.g. Factory A"
             />
             <datalist id="factories-list">
@@ -265,13 +265,13 @@ export default function Employees() {
             </datalist>
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">Line</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Line</label>
             <input
               type="text"
               value={form.line}
               onChange={e => setForm(f => ({ ...f, line: e.target.value }))}
               list="lines-list"
-              className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full app-input px-3 py-2.5 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
               placeholder="e.g. Line 1"
             />
             <datalist id="lines-list">
@@ -279,13 +279,13 @@ export default function Employees() {
             </datalist>
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">Team</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Team</label>
             <input
               type="text"
               value={form.team}
               onChange={e => setForm(f => ({ ...f, team: e.target.value }))}
               list="teams-list"
-              className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full app-input px-3 py-2.5 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
               placeholder="e.g. Team Alpha"
             />
             <datalist id="teams-list">
@@ -293,38 +293,38 @@ export default function Employees() {
             </datalist>
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">Position</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Position</label>
             <input
               type="text"
               value={form.position}
               onChange={e => setForm(f => ({ ...f, position: e.target.value }))}
-              className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full app-input px-3 py-2.5 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
               placeholder="e.g. Machine Operator"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">Hire Date</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Hire Date</label>
             <input
               type="date"
               value={form.hire_date}
               onChange={e => setForm(f => ({ ...f, hire_date: e.target.value }))}
-              className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full app-input px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">Status</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Status</label>
             <select
               value={form.status}
               onChange={e => setForm(f => ({ ...f, status: e.target.value }))}
-              className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full app-input px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
             >
               {STATUSES.map(s => <option key={s} value={s} className="capitalize">{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
             </select>
           </div>
         </div>
         <div className="flex justify-end gap-3 mt-6">
-          <button onClick={() => setModalOpen(false)} className="px-4 py-2 text-sm text-slate-400 hover:text-white bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors">Cancel</button>
-          <button onClick={handleSave} disabled={saving} className="px-4 py-2 text-sm text-white bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 disabled:text-slate-500 rounded-lg transition-colors">
+          <button onClick={() => setModalOpen(false)} className="px-4 py-2 text-sm text-gray-500 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">Cancel</button>
+          <button onClick={handleSave} disabled={saving} className="px-4 py-2 text-sm text-gray-900 bg-[#1D72B8] hover:bg-[#1864a3] disabled:bg-gray-200 disabled:text-gray-400 rounded-lg transition-colors">
             {saving ? 'Saving...' : selected ? 'Update Employee' : 'Add Employee'}
           </button>
         </div>
@@ -335,13 +335,13 @@ export default function Employees() {
         {selected && (
           <>
             {/* Tabs */}
-            <div className="flex gap-1 mb-4 bg-slate-700/40 rounded-lg p-1">
+            <div className="flex gap-1 mb-4 bg-gray-100/40 rounded-lg p-1">
               {['details', 'history'].map(tab => (
                 <button
                   key={tab}
                   onClick={() => setViewTab(tab)}
                   className={`flex-1 py-1.5 text-sm font-medium rounded-md capitalize transition-colors ${
-                    viewTab === tab ? 'bg-slate-600 text-white' : 'text-slate-400 hover:text-white'
+                    viewTab === tab ? 'bg-[#1D72B8] text-white' : 'text-gray-500 hover:text-gray-900'
                   }`}
                 >
                   {tab === 'history' ? `History (${recordLogs.length})` : 'Details'}
@@ -350,7 +350,7 @@ export default function Employees() {
             </div>
 
             {viewTab === 'details' ? (
-              <dl className="space-y-0 divide-y divide-slate-700/50">
+              <dl className="space-y-0 divide-y divide-gray-200">
                 {[
                   { label: 'Employee ID', value: selected.employee_id },
                   { label: 'Full Name', value: selected.full_name },
@@ -365,36 +365,36 @@ export default function Employees() {
                   { label: 'Status', value: <StatusBadge status={selected.status} /> },
                 ].map(({ label, value }) => (
                   <div key={label} className="flex justify-between gap-4 py-3">
-                    <dt className="text-sm text-slate-400">{label}</dt>
-                    <dd className="text-sm text-white">{value}</dd>
+                    <dt className="text-sm text-gray-500">{label}</dt>
+                    <dd className="text-sm text-gray-900">{value}</dd>
                   </div>
                 ))}
               </dl>
             ) : (
               <div className="space-y-2 max-h-72 overflow-y-auto">
                 {logsLoading ? (
-                  <p className="text-slate-500 text-sm text-center py-6">Loading history...</p>
+                  <p className="text-gray-500 text-sm text-center py-6">Loading history...</p>
                 ) : recordLogs.length === 0 ? (
-                  <p className="text-slate-500 text-sm text-center py-6">No history available.</p>
+                  <p className="text-gray-500 text-sm text-center py-6">No history available.</p>
                 ) : recordLogs.map((log, i) => (
-                  <div key={i} className="p-3 bg-slate-700/40 rounded-lg space-y-2">
+                  <div key={i} className="p-3 bg-gray-100/40 rounded-lg space-y-2">
                     <div className="flex items-center gap-2">
                       <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
                         log.action === 'CREATE' ? 'bg-green-400' :
                         log.action === 'UPDATE' ? 'bg-amber-400' : 'bg-red-400'
                       }`} />
-                      <p className="text-sm text-white font-medium flex-1">{log.username}</p>
-                      <span className="text-xs text-slate-500">{log.created_at}</span>
+                      <p className="text-sm text-gray-900 font-medium flex-1">{log.username}</p>
+                      <span className="text-xs text-gray-500">{log.created_at}</span>
                     </div>
-                    <p className="text-xs text-slate-400 ml-4">{log.summary}</p>
+                    <p className="text-xs text-gray-500 ml-4">{log.summary}</p>
                     {log.changes && Object.keys(log.changes).length > 0 && (
-                      <div className="ml-4 space-y-1 border-l-2 border-slate-600 pl-3">
+                      <div className="ml-4 space-y-1 border-l-2 border-gray-300 pl-3">
                         {Object.entries(log.changes).map(([field, { before, after }]) => (
                           <div key={field} className="text-xs">
-                            <span className="text-slate-500 capitalize">{field.replace(/_/g, ' ')}:</span>
-                            <span className="text-red-400 line-through ml-1">{before ?? '—'}</span>
-                            <span className="text-slate-400 mx-1">→</span>
-                            <span className="text-green-400">{after ?? '—'}</span>
+                            <span className="text-gray-500 capitalize">{field.replace(/_/g, ' ')}:</span>
+                            <span className="text-red-600 line-through ml-1">{before ?? '—'}</span>
+                            <span className="text-gray-500 mx-1">→</span>
+                            <span className="text-green-600">{after ?? '—'}</span>
                           </div>
                         ))}
                       </div>
@@ -409,12 +409,12 @@ export default function Employees() {
 
       {/* Delete Confirm */}
       <Modal open={!!deleteConfirm} onClose={() => setDeleteConfirm(null)} title="Deactivate Employee" size="sm">
-        <p className="text-slate-300 text-sm">
-          Deactivate <span className="text-white font-medium">{deleteConfirm?.full_name}</span>? Their training records will be preserved.
+        <p className="text-gray-700 text-sm">
+          Deactivate <span className="text-gray-900 font-medium">{deleteConfirm?.full_name}</span>? Their training records will be preserved.
         </p>
         <div className="flex justify-end gap-3 mt-6">
-          <button onClick={() => setDeleteConfirm(null)} className="px-4 py-2 text-sm text-slate-400 hover:text-white bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors">Cancel</button>
-          <button onClick={() => handleDelete(deleteConfirm)} className="px-4 py-2 text-sm text-white bg-red-600 hover:bg-red-500 rounded-lg transition-colors">Deactivate</button>
+          <button onClick={() => setDeleteConfirm(null)} className="px-4 py-2 text-sm text-gray-500 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">Cancel</button>
+          <button onClick={() => handleDelete(deleteConfirm)} className="px-4 py-2 text-sm text-gray-900 bg-red-600 hover:bg-red-500 rounded-lg transition-colors">Deactivate</button>
         </div>
       </Modal>
     </Layout>

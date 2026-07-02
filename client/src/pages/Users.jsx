@@ -90,18 +90,18 @@ export default function Users() {
   const roleIcons = { admin: <Shield size={12} />, encoder: <Pencil size={12} />, viewer: <Eye size={12} /> };
 
   const columns = [
-    { key: 'username', label: 'Username', render: v => <span className="font-mono text-sm text-blue-400">{v}</span> },
-    { key: 'full_name', label: 'Full Name', render: v => <span className="font-medium text-white text-sm">{v || '—'}</span> },
+    { key: 'username', label: 'Username', render: v => <span className="font-mono text-sm text-[#1D72B8]">{v}</span> },
+    { key: 'full_name', label: 'Full Name', render: v => <span className="font-medium text-gray-900 text-sm">{v || '—'}</span> },
     { key: 'role', label: 'Role', render: v => <StatusBadge status={v} /> },
     { key: 'status', label: 'Status', render: v => <StatusBadge status={v} /> },
-    { key: 'created_at', label: 'Created', render: v => <span className="text-xs text-slate-500">{v?.split('T')[0] || v}</span> },
+    { key: 'created_at', label: 'Created', render: v => <span className="text-xs text-gray-500">{v?.split('T')[0] || v}</span> },
     { key: 'actions', label: '', sortable: false, render: (_, row) => (
       <div className="flex items-center gap-1">
-        <button onClick={() => openEdit(row)} className="p-1.5 text-slate-400 hover:text-amber-400 hover:bg-amber-900/30 rounded-lg transition-colors">
+        <button onClick={() => openEdit(row)} className="p-1.5 text-gray-500 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors">
           <Edit2 size={14} />
         </button>
         {row.id !== currentUser?.id && (
-          <button onClick={() => setDeleteConfirm(row)} className="p-1.5 text-slate-400 hover:text-red-400 hover:bg-red-900/30 rounded-lg transition-colors">
+          <button onClick={() => setDeleteConfirm(row)} className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
             <Trash2 size={14} />
           </button>
         )}
@@ -114,10 +114,10 @@ export default function Users() {
       title="User Management"
       actions={
         <>
-          <button onClick={load} className="flex items-center gap-2 text-slate-400 hover:text-white text-sm px-3 py-2 rounded-lg hover:bg-slate-800 transition-colors">
+          <button onClick={load} className="flex items-center gap-2 text-gray-500 hover:text-gray-900 text-sm px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors">
             <RefreshCw size={14} />
           </button>
-          <button onClick={openCreate} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
+          <button onClick={openCreate} className="flex items-center gap-2 bg-[#1D72B8] hover:bg-[#1864a3] text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
             <Plus size={16} /> Add User
           </button>
         </>
@@ -129,18 +129,18 @@ export default function Users() {
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={selected ? 'Edit User' : 'Add User'} size="md">
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">Username *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Username *</label>
             <input
               type="text"
               value={form.username}
               onChange={e => setForm(f => ({ ...f, username: e.target.value.toLowerCase() }))}
               disabled={!!selected}
-              className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
+              className="w-full app-input px-3 py-2.5 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1D72B8] disabled:opacity-60"
               placeholder="e.g. jdelacruz"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
               {selected ? 'New Password (leave blank to keep current)' : 'Password *'}
             </label>
             <div className="relative">
@@ -148,31 +148,31 @@ export default function Users() {
                 type={showPass ? 'text' : 'password'}
                 value={form.password}
                 onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
-                className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2.5 pr-10 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full app-input px-3 py-2.5 pr-10"
                 placeholder={selected ? 'Enter new password to change' : 'Minimum 6 characters'}
               />
-              <button type="button" onClick={() => setShowPass(s => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300">
+              <button type="button" onClick={() => setShowPass(s => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700">
                 <Eye size={14} />
               </button>
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">Full Name</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Full Name</label>
             <input
               type="text"
               value={form.full_name}
               onChange={e => setForm(f => ({ ...f, full_name: e.target.value }))}
-              className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full app-input px-3 py-2.5 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
               placeholder="User's full name"
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1.5">Role *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Role *</label>
               <select
                 value={form.role}
                 onChange={e => setForm(f => ({ ...f, role: e.target.value }))}
-                className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full app-input px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
               >
                 <option value="admin">Admin</option>
                 <option value="encoder">Encoder</option>
@@ -180,11 +180,11 @@ export default function Users() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1.5">Status</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Status</label>
               <select
                 value={form.status}
                 onChange={e => setForm(f => ({ ...f, status: e.target.value }))}
-                className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full app-input px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
               >
                 <option value="active">Active</option>
                 <option value="inactive">Inactive</option>
@@ -192,15 +192,15 @@ export default function Users() {
             </div>
           </div>
         </div>
-        <div className="bg-slate-700/40 rounded-lg p-3 mt-4 text-xs text-slate-400">
-          <strong className="text-slate-300">Role permissions:</strong><br />
+        <div className="bg-blue-50 rounded-lg p-3 mt-4 text-xs text-gray-600 border border-blue-100">
+          <strong className="text-gray-700">Role permissions:</strong><br />
           Admin — full access + user management<br />
           Encoder — add/edit employees &amp; training records<br />
           Viewer — read-only access to public directory
         </div>
         <div className="flex justify-end gap-3 mt-6">
-          <button onClick={() => setModalOpen(false)} className="px-4 py-2 text-sm text-slate-400 hover:text-white bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors">Cancel</button>
-          <button onClick={handleSave} disabled={saving} className="px-4 py-2 text-sm text-white bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 disabled:text-slate-500 rounded-lg transition-colors">
+          <button onClick={() => setModalOpen(false)} className="px-4 py-2 text-sm text-gray-500 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">Cancel</button>
+          <button onClick={handleSave} disabled={saving} className="px-4 py-2 text-sm text-gray-900 bg-[#1D72B8] hover:bg-[#1864a3] disabled:bg-gray-200 disabled:text-gray-400 rounded-lg transition-colors">
             {saving ? 'Saving...' : selected ? 'Update User' : 'Create User'}
           </button>
         </div>
@@ -208,12 +208,12 @@ export default function Users() {
 
       {/* Delete Confirm */}
       <Modal open={!!deleteConfirm} onClose={() => setDeleteConfirm(null)} title="Deactivate User" size="sm">
-        <p className="text-slate-300 text-sm">
-          Deactivate user <span className="text-white font-medium">"{deleteConfirm?.username}"</span>? They will no longer be able to log in.
+        <p className="text-gray-700 text-sm">
+          Deactivate user <span className="text-gray-900 font-medium">"{deleteConfirm?.username}"</span>? They will no longer be able to log in.
         </p>
         <div className="flex justify-end gap-3 mt-6">
-          <button onClick={() => setDeleteConfirm(null)} className="px-4 py-2 text-sm text-slate-400 hover:text-white bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors">Cancel</button>
-          <button onClick={() => handleDelete(deleteConfirm)} className="px-4 py-2 text-sm text-white bg-red-600 hover:bg-red-500 rounded-lg transition-colors">Deactivate</button>
+          <button onClick={() => setDeleteConfirm(null)} className="px-4 py-2 text-sm text-gray-500 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">Cancel</button>
+          <button onClick={() => handleDelete(deleteConfirm)} className="px-4 py-2 text-sm text-gray-900 bg-red-600 hover:bg-red-500 rounded-lg transition-colors">Deactivate</button>
         </div>
       </Modal>
     </Layout>

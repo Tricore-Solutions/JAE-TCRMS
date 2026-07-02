@@ -1,7 +1,7 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Users, ClipboardList, BarChart3,
-  UserCog, LogOut, Settings, Eye, Shield, Pencil
+  UserCog, LogOut, Settings, Eye
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -20,8 +20,8 @@ const encoderNav = [
 ];
 
 const roleConfig = {
-  admin: { nav: adminNav, icon: Shield, label: 'Administrator', color: 'text-red-400' },
-  encoder: { nav: encoderNav, icon: Pencil, label: 'Encoder', color: 'text-blue-400' },
+  admin: { nav: adminNav },
+  encoder: { nav: encoderNav },
 };
 
 export default function Sidebar() {
@@ -34,38 +34,10 @@ export default function Sidebar() {
   };
 
   const config = roleConfig[user?.role] || roleConfig.encoder;
-  const RoleIcon = config.icon;
 
   return (
-    <aside className="flex flex-col w-64 bg-slate-900 border-r border-slate-700/50 min-h-screen">
-      {/* Brand */}
-      <div className="px-6 py-5 border-b border-slate-700/50">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0">
-            <ClipboardList size={18} className="text-white" />
-          </div>
-          <div>
-            <p className="text-sm font-bold text-white leading-tight">JAE TCRMS</p>
-            <p className="text-xs text-slate-500">JAE Philippines, Inc.</p>
-          </div>
-        </div>
-      </div>
-
-      {/* User info */}
-      <div className="px-4 py-4 border-b border-slate-700/50">
-        <div className="flex items-center gap-3 bg-slate-800 rounded-lg px-3 py-2.5">
-          <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center flex-shrink-0">
-            <RoleIcon size={14} className={config.color} />
-          </div>
-          <div className="min-w-0">
-            <p className="text-sm font-medium text-white truncate">{user?.full_name || user?.username}</p>
-            <p className={`text-xs ${config.color} capitalize`}>{config.label}</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Navigation */}
-      <nav className="flex-1 px-3 py-4 space-y-1">
+    <aside className="flex flex-col w-64 bg-white border-r border-gray-200 flex-shrink-0">
+      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         {config.nav.map(({ to, icon: Icon, label }) => (
           <NavLink
             key={to}
@@ -73,8 +45,8 @@ export default function Sidebar() {
             className={({ isActive }) =>
               `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                 isActive
-                  ? 'bg-blue-600 text-white'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                  ? 'bg-[#1D72B8] text-white'
+                  : 'text-gray-600 hover:text-[#1D72B8] hover:bg-blue-50'
               }`
             }
           >
@@ -83,10 +55,10 @@ export default function Sidebar() {
           </NavLink>
         ))}
 
-        <div className="pt-3 mt-3 border-t border-slate-700/50">
+        <div className="pt-3 mt-3 border-t border-gray-200">
           <NavLink
             to="/viewer"
-            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:text-[#1D72B8] hover:bg-blue-50 transition-colors"
           >
             <Eye size={16} />
             Public Viewer
@@ -96,7 +68,7 @@ export default function Sidebar() {
               localStorage.removeItem('serverUrl');
               window.location.reload();
             }}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:text-[#1D72B8] hover:bg-blue-50 transition-colors"
           >
             <Settings size={16} />
             Server Settings
@@ -104,11 +76,10 @@ export default function Sidebar() {
         </div>
       </nav>
 
-      {/* Logout */}
-      <div className="px-3 py-4 border-t border-slate-700/50">
+      <div className="px-3 py-4 border-t border-gray-200">
         <button
           onClick={handleLogout}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-red-400 hover:bg-red-900/20 transition-colors"
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:text-red-600 hover:bg-red-50 transition-colors"
         >
           <LogOut size={16} />
           Sign Out

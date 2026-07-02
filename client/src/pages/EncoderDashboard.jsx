@@ -26,16 +26,16 @@ export default function EncoderDashboard() {
   const greeting = now.getHours() < 12 ? 'Good morning' : now.getHours() < 18 ? 'Good afternoon' : 'Good evening';
 
   return (
-    <Layout title="Encoder Dashboard">
+    <Layout>
       <div className="mb-8">
-        <h2 className="text-2xl font-bold text-white">{greeting}, {user?.full_name || user?.username}</h2>
-        <p className="text-slate-400 mt-1 text-sm">Manage employee training and certification records.</p>
+        <h2 className="text-2xl font-bold text-gray-900">{greeting}, {user?.full_name || user?.username}</h2>
+        <p className="text-gray-500 mt-1 text-sm">Manage employee training and certification records.</p>
       </div>
 
       {loading ? (
         <div className="grid grid-cols-2 gap-5 mb-8">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="rounded-xl border border-slate-700 bg-slate-800/60 p-5 h-28 animate-pulse" />
+            <div key={i} className="rounded-xl border border-gray-200 bg-white p-5 h-28 animate-pulse" />
           ))}
         </div>
       ) : (
@@ -47,27 +47,27 @@ export default function EncoderDashboard() {
         </div>
       )}
 
-      <div className="bg-slate-800/60 border border-slate-700 rounded-2xl p-6">
+      <div className="app-panel p-6">
         <div className="flex items-center justify-between mb-5">
-          <h3 className="font-semibold text-white flex items-center gap-2">
-            <AlertTriangle size={16} className="text-amber-400" />
+          <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+            <AlertTriangle size={16} className="text-amber-600" />
             Certifications Requiring Attention
           </h3>
-          <span className="text-xs text-slate-500">{expiring.length} records</span>
+          <span className="text-xs text-gray-500">{expiring.length} records</span>
         </div>
         {expiring.length === 0 ? (
-          <p className="text-slate-500 text-sm text-center py-6">All certifications are up to date.</p>
+          <p className="text-gray-500 text-sm text-center py-6">All certifications are up to date.</p>
         ) : (
-          <div className="space-y-0 divide-y divide-slate-700/50">
+          <div className="space-y-0 divide-y divide-gray-200">
             {expiring.map(item => (
               <div key={item.id} className="flex items-start justify-between gap-4 py-3">
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-white">{item.full_name}</p>
-                  <p className="text-xs text-slate-500">{item.title} · {item.factory}</p>
+                  <p className="text-sm font-medium text-gray-900">{item.full_name}</p>
+                  <p className="text-xs text-gray-500">{item.title} · {item.factory}</p>
                 </div>
                 <div className="flex flex-col items-end flex-shrink-0">
                   <StatusBadge status={item.cert_status} />
-                  <span className="text-xs text-slate-500 mt-1">{item.expiration_date}</span>
+                  <span className="text-xs text-gray-500 mt-1">{item.expiration_date}</span>
                 </div>
               </div>
             ))}

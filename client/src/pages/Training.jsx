@@ -161,49 +161,49 @@ export default function Training() {
   const columns = [
     { key: 'employee_name', label: 'Employee', render: (v, row) => (
       <div>
-        <p className="text-white font-medium text-sm">{v}</p>
-        <p className="text-xs text-slate-500">{row.emp_code}</p>
+        <p className="text-gray-900 font-medium text-sm">{v}</p>
+        <p className="text-xs text-gray-500">{row.emp_code}</p>
       </div>
     )},
     { key: 'title', label: 'Training Title', render: v => (
-      <span className="text-sm text-slate-200">{v}</span>
+      <span className="text-sm text-gray-600">{v}</span>
     )},
     { key: 'category', label: 'Category', render: v => (
-      <span className="text-xs bg-slate-700 text-slate-300 px-2 py-0.5 rounded-full">{v || '—'}</span>
+      <span className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full">{v || '—'}</span>
     )},
     { key: 'training_date', label: 'Date' },
     { key: 'expiration_date', label: 'Expiration', render: (v, row) => (
       <div className="flex flex-col gap-1">
         <StatusBadge status={getCertStatus(v)} />
-        <span className="text-xs text-slate-500">{v || 'No expiry'}</span>
+        <span className="text-xs text-gray-500">{v || 'No expiry'}</span>
       </div>
     )},
     { key: 'worker_line_status', label: 'Worker Line Status', render: v => (
       <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
         v === 'Original'
-          ? 'bg-blue-900/40 text-blue-400 border border-blue-700/50'
-          : 'bg-amber-900/40 text-amber-400 border border-amber-700/50'
+          ? 'bg-blue-50 text-[#1D72B8] border border-blue-200'
+          : 'bg-amber-50 text-amber-700 border border-amber-200'
       }`}>
         {v || 'Floating'}
       </span>
     )},
     { key: 'take', label: 'Take', render: v => (
-      <span className="text-xs font-semibold text-slate-300 bg-slate-700 px-2 py-0.5 rounded-full">
+      <span className="text-xs font-semibold text-gray-700 bg-gray-100 px-2 py-0.5 rounded-full">
         {TAKE_OPTIONS.find(o => o.value === v)?.label || `${v || 1}st Take`}
       </span>
     )},
     { key: 'actions', label: '', sortable: false, render: (_, row) => (
       <div className="flex items-center gap-1">
-        <button onClick={e => { e.stopPropagation(); openView(row); }} className="p-1.5 text-slate-400 hover:text-blue-400 hover:bg-blue-900/30 rounded-lg transition-colors" title="View">
+        <button onClick={e => { e.stopPropagation(); openView(row); }} className="p-1.5 text-gray-500 hover:text-[#1D72B8] hover:bg-blue-50 rounded-lg transition-colors" title="View">
           <Eye size={14} />
         </button>
         {canEdit && (
           <>
-            <button onClick={e => { e.stopPropagation(); openEdit(row); }} className="p-1.5 text-slate-400 hover:text-amber-400 hover:bg-amber-900/30 rounded-lg transition-colors" title="Edit">
+            <button onClick={e => { e.stopPropagation(); openEdit(row); }} className="p-1.5 text-gray-500 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors" title="Edit">
               <Edit2 size={14} />
             </button>
             {isAdmin && (
-              <button onClick={e => { e.stopPropagation(); setDeleteConfirm(row); }} className="p-1.5 text-slate-400 hover:text-red-400 hover:bg-red-900/30 rounded-lg transition-colors" title="Delete">
+              <button onClick={e => { e.stopPropagation(); setDeleteConfirm(row); }} className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Delete">
                 <Trash2 size={14} />
               </button>
             )}
@@ -217,7 +217,7 @@ export default function Training() {
     <Layout
       title="Training Records"
       actions={canEdit && (
-        <button onClick={openCreate} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
+        <button onClick={openCreate} className="flex items-center gap-2 bg-[#1D72B8] hover:bg-[#1864a3] text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
           <Plus size={16} /> Add Training Record
         </button>
       )}
@@ -225,19 +225,19 @@ export default function Training() {
       {/* Filters */}
       <div className="flex flex-wrap gap-3 mb-6">
         <div className="relative flex-1 min-w-48">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
           <input
             type="text"
             placeholder="Search employee or training..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="w-full bg-slate-800 border border-slate-700 rounded-lg pl-9 pr-4 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full bg-white border border-gray-200 rounded-lg pl-9 pr-4 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
           />
         </div>
         <select
           value={filterCategory}
           onChange={e => setFilterCategory(e.target.value)}
-          className="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
         >
           <option value="">All Categories</option>
           {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
@@ -245,7 +245,7 @@ export default function Training() {
         <select
           value={filterStatus}
           onChange={e => setFilterStatus(e.target.value)}
-          className="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
         >
           <option value="">All Status</option>
           <option value="expired">Expired</option>
@@ -254,7 +254,7 @@ export default function Training() {
         <select
           value={filterWorkerLine}
           onChange={e => setFilterWorkerLine(e.target.value)}
-          className="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
         >
           <option value="">All Worker Line</option>
           {WORKER_LINE_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
@@ -267,54 +267,54 @@ export default function Training() {
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={selected ? 'Edit Training Record' : 'Add Training Record'} size="lg">
         <div className="grid grid-cols-2 gap-4">
           <div className="col-span-2">
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">Employee *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Employee *</label>
             <select
               value={form.employee_id}
               onChange={e => setForm(f => ({ ...f, employee_id: e.target.value }))}
               disabled={!!selected}
-              className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
+              className="w-full app-input px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#1D72B8] disabled:opacity-60"
             >
               <option value="">Select employee...</option>
               {employees.map(e => <option key={e.id} value={e.id}>{e.full_name} ({e.employee_id})</option>)}
             </select>
           </div>
           <div className="col-span-2">
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">Training Title *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Training Title *</label>
             <input
               type="text"
               value={form.title}
               onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
-              className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full app-input px-3 py-2.5 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
               placeholder="e.g. Basic Safety Orientation"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">Category</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Category</label>
             <select
               value={form.category}
               onChange={e => setForm(f => ({ ...f, category: e.target.value }))}
-              className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full app-input px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
             >
               <option value="">Select category...</option>
               {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">Training Date *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Training Date *</label>
             <input
               type="date"
               value={form.training_date}
               onChange={e => setForm(f => ({ ...f, training_date: e.target.value }))}
-              className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full app-input px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">Trainer / Conducted By</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Trainer / Conducted By</label>
             <input
               type="text"
               value={form.trainer}
               onChange={e => setForm(f => ({ ...f, trainer: e.target.value }))}
-              className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full app-input px-3 py-2.5 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
               placeholder="Trainer name or organization"
             />
             {form.category === 'Orientation' && (
@@ -325,50 +325,50 @@ export default function Training() {
                   onChange={e => setWithValidity(e.target.checked)}
                   className="w-4 h-4 rounded accent-blue-500"
                 />
-                <span className="text-sm text-slate-300">With Validity</span>
+                <span className="text-sm text-gray-700">With Validity</span>
               </label>
             )}
           </div>
           {!(form.category === 'Orientation' && !withValidity) && (
             <>
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1.5">Validity (months)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Validity (months)</label>
                 <select
                   value={form.validity_months}
                   onChange={e => setForm(f => ({ ...f, validity_months: parseInt(e.target.value) }))}
-                  className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full app-input px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
                 >
                   {VALIDITY_OPTIONS.map(v => <option key={v} value={v}>{v} months</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1.5">Process Classification</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Process Classification</label>
                 <input
                   type="text"
                   value={form.process_classification}
                   onChange={e => setForm(f => ({ ...f, process_classification: e.target.value }))}
-                  className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full app-input px-3 py-2.5 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
                   placeholder="e.g. General, Production"
                 />
               </div>
             </>
           )}
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">Worker Line Status</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Worker Line Status</label>
             <select
               value={form.worker_line_status}
               onChange={e => setForm(f => ({ ...f, worker_line_status: e.target.value }))}
-              className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full app-input px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
             >
               {WORKER_LINE_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">Take</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Take</label>
             <select
               value={form.take}
               onChange={e => setForm(f => ({ ...f, take: parseInt(e.target.value) }))}
-              className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full app-input px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
             >
               {TAKE_OPTIONS.map(o => (
                 <option key={o.value} value={o.value}>{o.label}</option>
@@ -376,20 +376,20 @@ export default function Training() {
             </select>
           </div>
           <div className="col-span-2">
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">Remarks</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Remarks</label>
             <textarea
               value={form.remarks}
               onChange={e => setForm(f => ({ ...f, remarks: e.target.value }))}
               rows={3}
-              className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+              className="w-full app-input px-3 py-2.5 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1D72B8] resize-none"
               placeholder="Optional notes..."
             />
           </div>
         </div>
         {form.training_date && form.validity_months && !(form.category === 'Orientation' && !withValidity) && (
-          <div className="mt-4 bg-slate-700/50 rounded-lg p-3">
-            <p className="text-xs text-slate-400">
-              Calculated expiration: <span className="text-white font-medium">
+          <div className="mt-4 bg-gray-100/50 rounded-lg p-3">
+            <p className="text-xs text-gray-500">
+              Calculated expiration: <span className="text-gray-900 font-medium">
                 {(() => {
                   const d = new Date(form.training_date);
                   d.setMonth(d.getMonth() + parseInt(form.validity_months));
@@ -400,10 +400,10 @@ export default function Training() {
           </div>
         )}
         <div className="flex justify-end gap-3 mt-6">
-          <button onClick={() => setModalOpen(false)} className="px-4 py-2 text-sm text-slate-400 hover:text-white bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors">
+          <button onClick={() => setModalOpen(false)} className="px-4 py-2 text-sm text-gray-500 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
             Cancel
           </button>
-          <button onClick={handleSave} disabled={saving} className="px-4 py-2 text-sm text-white bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 disabled:text-slate-500 rounded-lg transition-colors">
+          <button onClick={handleSave} disabled={saving} className="px-4 py-2 text-sm text-gray-900 bg-[#1D72B8] hover:bg-[#1864a3] disabled:bg-gray-200 disabled:text-gray-400 rounded-lg transition-colors">
             {saving ? 'Saving...' : selected ? 'Update Record' : 'Add Record'}
           </button>
         </div>
@@ -414,13 +414,13 @@ export default function Training() {
         {selected && (
           <>
             {/* Tabs */}
-            <div className="flex gap-1 mb-4 bg-slate-700/40 rounded-lg p-1">
+            <div className="flex gap-1 mb-4 bg-gray-100/40 rounded-lg p-1">
               {['details', 'history'].map(tab => (
                 <button
                   key={tab}
                   onClick={() => setViewTab(tab)}
                   className={`flex-1 py-1.5 text-sm font-medium rounded-md capitalize transition-colors ${
-                    viewTab === tab ? 'bg-slate-600 text-white' : 'text-slate-400 hover:text-white'
+                    viewTab === tab ? 'bg-[#1D72B8] text-white' : 'text-gray-500 hover:text-gray-900'
                   }`}
                 >
                   {tab === 'history' ? `History (${recordLogs.length})` : 'Details'}
@@ -444,37 +444,37 @@ export default function Training() {
                   { label: 'Take', value: TAKE_OPTIONS.find(o => o.value === selected.take)?.label || `${selected.take || 1}st Take` },
                   { label: 'Remarks', value: selected.remarks || '—' },
                 ].map(({ label, value }) => (
-                  <div key={label} className="flex justify-between gap-4 py-2 border-b border-slate-700/50">
-                    <dt className="text-sm text-slate-400 flex-shrink-0">{label}</dt>
-                    <dd className="text-sm text-white text-right">{value}</dd>
+                  <div key={label} className="flex justify-between gap-4 py-2 border-b border-gray-200">
+                    <dt className="text-sm text-gray-500 flex-shrink-0">{label}</dt>
+                    <dd className="text-sm text-gray-900 text-right">{value}</dd>
                   </div>
                 ))}
               </dl>
             ) : (
               <div className="space-y-2 max-h-72 overflow-y-auto">
                 {logsLoading ? (
-                  <p className="text-slate-500 text-sm text-center py-6">Loading history...</p>
+                  <p className="text-gray-500 text-sm text-center py-6">Loading history...</p>
                 ) : recordLogs.length === 0 ? (
-                  <p className="text-slate-500 text-sm text-center py-6">No history available.</p>
+                  <p className="text-gray-500 text-sm text-center py-6">No history available.</p>
                 ) : recordLogs.map((log, i) => (
-                  <div key={i} className="p-3 bg-slate-700/40 rounded-lg space-y-2">
+                  <div key={i} className="p-3 bg-gray-100/40 rounded-lg space-y-2">
                     <div className="flex items-center gap-2">
                       <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
                         log.action === 'CREATE' ? 'bg-green-400' :
                         log.action === 'UPDATE' ? 'bg-amber-400' : 'bg-red-400'
                       }`} />
-                      <p className="text-sm text-white font-medium flex-1">{log.username}</p>
-                      <span className="text-xs text-slate-500">{log.created_at}</span>
+                      <p className="text-sm text-gray-900 font-medium flex-1">{log.username}</p>
+                      <span className="text-xs text-gray-500">{log.created_at}</span>
                     </div>
-                    <p className="text-xs text-slate-400 ml-4">{log.summary}</p>
+                    <p className="text-xs text-gray-500 ml-4">{log.summary}</p>
                     {log.changes && Object.keys(log.changes).length > 0 && (
-                      <div className="ml-4 space-y-1 border-l-2 border-slate-600 pl-3">
+                      <div className="ml-4 space-y-1 border-l-2 border-gray-300 pl-3">
                         {Object.entries(log.changes).map(([field, { before, after }]) => (
                           <div key={field} className="text-xs">
-                            <span className="text-slate-500 capitalize">{field.replace(/_/g, ' ')}:</span>
-                            <span className="text-red-400 line-through ml-1">{before ?? '—'}</span>
-                            <span className="text-slate-400 mx-1">→</span>
-                            <span className="text-green-400">{after ?? '—'}</span>
+                            <span className="text-gray-500 capitalize">{field.replace(/_/g, ' ')}:</span>
+                            <span className="text-red-600 line-through ml-1">{before ?? '—'}</span>
+                            <span className="text-gray-500 mx-1">→</span>
+                            <span className="text-green-600">{after ?? '—'}</span>
                           </div>
                         ))}
                       </div>
@@ -489,15 +489,15 @@ export default function Training() {
 
       {/* Delete Confirm */}
       <Modal open={!!deleteConfirm} onClose={() => setDeleteConfirm(null)} title="Delete Training Record" size="sm">
-        <p className="text-slate-300 text-sm">
-          Are you sure you want to delete the training record "<span className="text-white font-medium">{deleteConfirm?.title}</span>" for <span className="text-white font-medium">{deleteConfirm?.employee_name}</span>?
+        <p className="text-gray-700 text-sm">
+          Are you sure you want to delete the training record "<span className="text-gray-900 font-medium">{deleteConfirm?.title}</span>" for <span className="text-gray-900 font-medium">{deleteConfirm?.employee_name}</span>?
           This action cannot be undone.
         </p>
         <div className="flex justify-end gap-3 mt-6">
-          <button onClick={() => setDeleteConfirm(null)} className="px-4 py-2 text-sm text-slate-400 hover:text-white bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors">
+          <button onClick={() => setDeleteConfirm(null)} className="px-4 py-2 text-sm text-gray-500 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
             Cancel
           </button>
-          <button onClick={() => handleDelete(deleteConfirm.id)} className="px-4 py-2 text-sm text-white bg-red-600 hover:bg-red-500 rounded-lg transition-colors">
+          <button onClick={() => handleDelete(deleteConfirm.id)} className="px-4 py-2 text-sm text-gray-900 bg-red-600 hover:bg-red-500 rounded-lg transition-colors">
             Delete
           </button>
         </div>

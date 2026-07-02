@@ -66,30 +66,28 @@ export default function ViewerDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950">
+    <div className="min-h-screen bg-white">
       {/* Header */}
-      <header className="bg-slate-900 border-b border-slate-700/50 px-8 py-4">
+      <header className="bg-white border-b border-gray-200 px-6 py-3">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center">
-              <ClipboardList size={18} className="text-white" />
-            </div>
-            <div>
-              <p className="text-sm font-bold text-white leading-none">JAE TCRMS</p>
-              <p className="text-xs text-slate-500">Public Employee Directory</p>
+          <div className="flex items-center gap-4 min-w-0">
+            <img src="/jae-logo.png" alt="JAE" className="h-10 w-auto object-contain flex-shrink-0" />
+            <div className="min-w-0">
+              <p className="text-base font-bold text-gray-900 leading-tight truncate">Training &amp; Certifications Management</p>
+              <p className="text-xs text-gray-500">Public Employee Directory</p>
             </div>
           </div>
           {user ? (
             <button
               onClick={() => navigate('/dashboard')}
-              className="flex items-center gap-2 text-sm text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 px-4 py-2 rounded-lg transition-colors"
+              className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 bg-white hover:bg-gray-100 px-4 py-2 rounded-lg transition-colors"
             >
               <ArrowLeft size={14} /> Back to Dashboard
             </button>
           ) : (
             <button
               onClick={() => navigate('/login')}
-              className="flex items-center gap-2 text-sm text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 px-4 py-2 rounded-lg transition-colors"
+              className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 bg-white hover:bg-gray-100 px-4 py-2 rounded-lg transition-colors"
             >
               <LogIn size={14} /> Staff Login
             </button>
@@ -100,27 +98,27 @@ export default function ViewerDashboard() {
       {/* Content */}
       <main className="max-w-6xl mx-auto px-8 py-10">
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-white">Employee Training Directory</h1>
-          <p className="text-slate-400 mt-1 text-sm">Click on an employee to view their full training history.</p>
+          <h1 className="text-2xl font-bold text-gray-900">Employee Training Directory</h1>
+          <p className="text-gray-500 mt-1 text-sm">Click on an employee to view their full training history.</p>
         </div>
 
         {/* Search and filter */}
         <div className="flex flex-wrap gap-3 mb-6">
           <div className="relative flex-1 min-w-64">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
             <input
               type="text"
               placeholder="Search employee name or ID..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="w-full bg-slate-800 border border-slate-700 rounded-lg pl-9 pr-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full bg-white border border-gray-200 rounded-lg pl-9 pr-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
             />
           </div>
           {teams.length > 0 && (
             <select
               value={filterTeam}
               onChange={e => setFilterTeam(e.target.value)}
-              className="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
             >
               <option value="">All Teams</option>
               {teams.map(t => <option key={t} value={t}>{t}</option>)}
@@ -129,39 +127,39 @@ export default function ViewerDashboard() {
         </div>
 
         {/* Summary bar */}
-        <div className="flex items-center gap-6 mb-6 bg-slate-800/50 border border-slate-700/50 rounded-xl px-5 py-3">
+        <div className="flex items-center gap-6 mb-6 app-panel px-5 py-3">
           <div className="flex items-center gap-2 text-sm">
-            <Users size={14} className="text-blue-400" />
-            <span className="text-slate-400">Employees:</span>
-            <span className="text-white font-semibold">{employees.length}</span>
+            <Users size={14} className="text-[#1D72B8]" />
+            <span className="text-gray-500">Employees:</span>
+            <span className="text-gray-900 font-semibold">{employees.length}</span>
           </div>
           <div className="flex items-center gap-2 text-sm">
-            <ClipboardList size={14} className="text-green-400" />
-            <span className="text-slate-400">Total Trainings:</span>
-            <span className="text-white font-semibold">{employees.reduce((s, e) => s + (e.total_trainings || 0), 0)}</span>
+            <ClipboardList size={14} className="text-green-600" />
+            <span className="text-gray-500">Total Trainings:</span>
+            <span className="text-gray-900 font-semibold">{employees.reduce((s, e) => s + (e.total_trainings || 0), 0)}</span>
           </div>
           <div className="flex items-center gap-2 text-sm">
-            <AlertTriangle size={14} className="text-red-400" />
-            <span className="text-slate-400">With Expired Certs:</span>
-            <span className="text-white font-semibold">{employees.filter(e => e.expired_count > 0).length}</span>
+            <AlertTriangle size={14} className="text-red-600" />
+            <span className="text-gray-500">With Expired Certs:</span>
+            <span className="text-gray-900 font-semibold">{employees.filter(e => e.expired_count > 0).length}</span>
           </div>
         </div>
 
         {/* Employee Table */}
-        <div className="bg-slate-800/40 border border-slate-700 rounded-2xl overflow-hidden">
+        <div className="app-panel overflow-hidden">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-slate-800/80">
+              <tr className="bg-gray-50">
                 {['Employee ID', 'Full Name', 'Factory', 'Line', 'Team', 'Trainings', 'Cert Status', ''].map(h => (
-                  <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">{h}</th>
+                  <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{h}</th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-700/40">
+            <tbody className="divide-y divide-gray-200">
               {loading ? (
                 <tr>
                   <td colSpan={8} className="px-4 py-12 text-center">
-                    <div className="flex flex-col items-center gap-2 text-slate-500">
+                    <div className="flex flex-col items-center gap-2 text-gray-500">
                       <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
                       <span className="text-sm">Loading...</span>
                     </div>
@@ -169,33 +167,33 @@ export default function ViewerDashboard() {
                 </tr>
               ) : employees.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-12 text-center text-slate-500 text-sm">No employees found.</td>
+                  <td colSpan={8} className="px-4 py-12 text-center text-gray-500 text-sm">No employees found.</td>
                 </tr>
               ) : (
                 employees.map(emp => (
                   <tr
                     key={emp.id}
                     onClick={() => openEmployee(emp)}
-                    className="hover:bg-slate-700/40 cursor-pointer transition-colors"
+                    className="hover:bg-gray-50 cursor-pointer transition-colors"
                   >
-                    <td className="px-4 py-3 font-mono text-xs text-blue-400">{emp.employee_id}</td>
-                    <td className="px-4 py-3 text-white font-medium">{emp.full_name}</td>
-                    <td className="px-4 py-3 text-slate-400">{emp.factory || '—'}</td>
-                    <td className="px-4 py-3 text-slate-400">{emp.line || '—'}</td>
-                    <td className="px-4 py-3 text-slate-400">{emp.team || '—'}</td>
+                    <td className="px-4 py-3 font-mono text-xs text-[#1D72B8]">{emp.employee_id}</td>
+                    <td className="px-4 py-3 text-gray-900 font-medium">{emp.full_name}</td>
+                    <td className="px-4 py-3 text-gray-500">{emp.factory || '—'}</td>
+                    <td className="px-4 py-3 text-gray-500">{emp.line || '—'}</td>
+                    <td className="px-4 py-3 text-gray-500">{emp.team || '—'}</td>
                     <td className="px-4 py-3">
-                      <span className="text-sm text-white font-medium">{emp.total_trainings || 0}</span>
+                      <span className="text-sm text-gray-900 font-medium">{emp.total_trainings || 0}</span>
                     </td>
                     <td className="px-4 py-3">
                       {emp.expired_count > 0 ? (
-                        <span className="inline-flex items-center gap-1 text-xs text-red-400">
+                        <span className="inline-flex items-center gap-1 text-xs text-red-600">
                           <XCircle size={12} /> {emp.expired_count} expired
                         </span>
                       ) : (
                         <StatusBadge status="valid" />
                       )}
                     </td>
-                    <td className="px-4 py-3 text-slate-500">
+                    <td className="px-4 py-3 text-gray-500">
                       <ChevronRight size={14} />
                     </td>
                   </tr>
@@ -205,7 +203,7 @@ export default function ViewerDashboard() {
           </table>
         </div>
 
-        <p className="text-xs text-slate-600 mt-6 text-center">
+        <p className="text-xs text-gray-400 mt-6 text-center">
           JAE Philippines, Inc. — Read-only public view.
         </p>
       </main>
@@ -217,18 +215,18 @@ export default function ViewerDashboard() {
           <div className="fixed inset-0" onClick={() => setSelected(null)} />
 
           {/* Panel */}
-          <div className="relative w-full max-w-4xl bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl">
+          <div className="relative w-full max-w-4xl bg-white border border-gray-200 rounded-2xl shadow-2xl">
             {/* Panel Header */}
-            <div className="flex items-start justify-between px-6 py-5 border-b border-slate-700">
+            <div className="flex items-start justify-between px-6 py-5 border-b border-gray-200">
               <div>
-                <h2 className="text-lg font-bold text-white">{selected.full_name}</h2>
-                <p className="text-sm text-slate-400 mt-0.5">
+                <h2 className="text-lg font-bold text-gray-900">{selected.full_name}</h2>
+                <p className="text-sm text-gray-500 mt-0.5">
                   {selected.employee_id} · {selected.factory || '—'} · {selected.team || '—'}
                 </p>
               </div>
               <button
                 onClick={() => setSelected(null)}
-                className="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition-colors"
+                className="text-gray-500 hover:text-gray-900 p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
               >
                 <X size={18} />
               </button>
@@ -236,8 +234,8 @@ export default function ViewerDashboard() {
 
             {/* Training Table */}
             <div className="px-6 py-5">
-              <h3 className="text-sm font-semibold text-slate-300 mb-4 flex items-center gap-2">
-                <ClipboardList size={14} className="text-blue-400" />
+              <h3 className="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
+                <ClipboardList size={14} className="text-[#1D72B8]" />
                 Training & Certification History
               </h3>
 
@@ -246,46 +244,46 @@ export default function ViewerDashboard() {
                   <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
                 </div>
               ) : trainings.length === 0 ? (
-                <div className="text-center py-16 text-slate-500 text-sm">No training records found.</div>
+                <div className="text-center py-16 text-gray-500 text-sm">No training records found.</div>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="bg-slate-800/60">
+                      <tr className="bg-gray-50">
                         {['Training Title', 'Category', 'Date', 'Trainer', 'Take', 'Worker Line', 'Expiration', 'Status'].map(h => (
-                          <th key={h} className="px-3 py-2.5 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider whitespace-nowrap">{h}</th>
+                          <th key={h} className="px-3 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">{h}</th>
                         ))}
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-700/40">
+                    <tbody className="divide-y divide-gray-200">
                       {trainings.map(t => (
-                        <tr key={t.id} className="hover:bg-slate-800/30 transition-colors">
-                          <td className="px-3 py-3 text-white font-medium max-w-[180px]">
+                        <tr key={t.id} className="hover:bg-gray-50 transition-colors">
+                          <td className="px-3 py-3 text-gray-900 font-medium max-w-[180px]">
                             <p className="truncate">{t.title}</p>
                             {t.process_classification && (
-                              <p className="text-xs text-slate-500 truncate">{t.process_classification}</p>
+                              <p className="text-xs text-gray-500 truncate">{t.process_classification}</p>
                             )}
                           </td>
                           <td className="px-3 py-3">
-                            <span className="text-xs bg-slate-700 text-slate-300 px-2 py-0.5 rounded-full whitespace-nowrap">{t.category || '—'}</span>
+                            <span className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full whitespace-nowrap">{t.category || '—'}</span>
                           </td>
-                          <td className="px-3 py-3 text-slate-300 whitespace-nowrap">{t.training_date}</td>
-                          <td className="px-3 py-3 text-slate-400 whitespace-nowrap">{t.trainer || '—'}</td>
+                          <td className="px-3 py-3 text-gray-700 whitespace-nowrap">{t.training_date}</td>
+                          <td className="px-3 py-3 text-gray-500 whitespace-nowrap">{t.trainer || '—'}</td>
                           <td className="px-3 py-3 whitespace-nowrap">
-                            <span className="text-xs bg-slate-700 text-slate-300 px-2 py-0.5 rounded-full">
+                            <span className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full">
                               {TAKE_LABELS[t.take] || `Take ${t.take}`}
                             </span>
                           </td>
                           <td className="px-3 py-3 whitespace-nowrap">
                             <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
                               t.worker_line_status === 'Original'
-                                ? 'bg-blue-900/40 text-blue-400 border border-blue-700/50'
-                                : 'bg-amber-900/40 text-amber-400 border border-amber-700/50'
+                                ? 'bg-blue-50 text-[#1D72B8] border border-blue-200'
+                                : 'bg-amber-50 text-amber-700 border border-amber-200'
                             }`}>
                               {t.worker_line_status || 'Floating'}
                             </span>
                           </td>
-                          <td className="px-3 py-3 text-slate-400 whitespace-nowrap">{t.expiration_date || 'No expiry'}</td>
+                          <td className="px-3 py-3 text-gray-500 whitespace-nowrap">{t.expiration_date || 'No expiry'}</td>
                           <td className="px-3 py-3">
                             <StatusBadge status={getCertStatus(t.expiration_date)} />
                           </td>

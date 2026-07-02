@@ -30,22 +30,22 @@ export function useToast() {
 
 function Toast({ message, type, onClose }) {
   const icons = {
-    success: <CheckCircle size={16} className="text-green-400 flex-shrink-0" />,
-    error:   <XCircle size={16} className="text-red-400 flex-shrink-0" />,
-    warning: <AlertTriangle size={16} className="text-amber-400 flex-shrink-0" />,
-    info:    <Info size={16} className="text-blue-400 flex-shrink-0" />,
+    success: <CheckCircle size={16} className="text-green-600 flex-shrink-0" />,
+    error:   <XCircle size={16} className="text-red-600 flex-shrink-0" />,
+    warning: <AlertTriangle size={16} className="text-amber-600 flex-shrink-0" />,
+    info:    <Info size={16} className="text-[#1D72B8] flex-shrink-0" />,
   };
   const borders = {
-    success: 'border-green-700/40',
-    error:   'border-red-700/40',
-    warning: 'border-amber-700/40',
-    info:    'border-blue-700/40',
+    success: 'border-green-200',
+    error:   'border-red-200',
+    warning: 'border-amber-200',
+    info:    'border-blue-200',
   };
   return (
-    <div className={`flex items-start gap-3 bg-slate-800 border ${borders[type] || borders.info} rounded-xl px-4 py-3 shadow-lg text-sm text-slate-200 animate-in slide-in-from-right`}>
+    <div className={`flex items-start gap-3 bg-white border ${borders[type] || borders.info} rounded-xl px-4 py-3 shadow-lg text-sm text-gray-700 animate-in slide-in-from-right`}>
       {icons[type] || icons.info}
       <span className="flex-1">{message}</span>
-      <button onClick={onClose} className="text-slate-500 hover:text-white">
+      <button onClick={onClose} className="text-gray-400 hover:text-gray-700">
         <X size={14} />
       </button>
     </div>

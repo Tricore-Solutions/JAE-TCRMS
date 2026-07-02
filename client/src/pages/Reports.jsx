@@ -32,11 +32,11 @@ function SimpleBar({ label, value, max, color = 'bg-blue-500' }) {
   const pct = max > 0 ? Math.round((value / max) * 100) : 0;
   return (
     <div className="flex items-center gap-3">
-      <span className="text-sm text-slate-300 w-36 truncate flex-shrink-0">{label}</span>
-      <div className="flex-1 bg-slate-700 rounded-full h-2 overflow-hidden">
+      <span className="text-sm text-gray-700 w-36 truncate flex-shrink-0">{label}</span>
+      <div className="flex-1 bg-gray-100 rounded-full h-2 overflow-hidden">
         <div className={`h-full ${color} rounded-full transition-all`} style={{ width: `${pct}%` }} />
       </div>
-      <span className="text-sm font-semibold text-white w-8 text-right flex-shrink-0">{value}</span>
+      <span className="text-sm font-semibold text-gray-900 w-8 text-right flex-shrink-0">{value}</span>
     </div>
   );
 }
@@ -102,7 +102,7 @@ export default function Reports() {
     <Layout
       title="Reports"
       actions={
-        <button onClick={load} disabled={loading} className="flex items-center gap-2 text-slate-400 hover:text-white text-sm px-3 py-2 rounded-lg hover:bg-slate-800 transition-colors disabled:opacity-40">
+        <button onClick={load} disabled={loading} className="flex items-center gap-2 text-gray-500 hover:text-gray-900 text-sm px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-40">
           <RefreshCw size={14} className={loading ? 'animate-spin' : ''} /> Refresh
         </button>
       }
@@ -111,7 +111,7 @@ export default function Reports() {
       {loading ? (
         <div className="grid grid-cols-3 gap-5 mb-8">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="rounded-xl border border-slate-700 bg-slate-800/60 p-5 h-28 animate-pulse" />
+            <div key={i} className="rounded-xl border border-gray-200 bg-white p-5 h-28 animate-pulse" />
           ))}
         </div>
       ) : (
@@ -124,12 +124,12 @@ export default function Reports() {
 
       <div className="grid lg:grid-cols-2 gap-6 mb-6">
         {/* By Category */}
-        <div className="bg-slate-800/60 border border-slate-700 rounded-2xl p-6">
-          <h3 className="font-semibold text-white mb-5 flex items-center gap-2">
-            <Tag size={16} className="text-blue-400" /> Training by Category
+        <div className="app-panel p-6">
+          <h3 className="font-semibold text-gray-900 mb-5 flex items-center gap-2">
+            <Tag size={16} className="text-[#1D72B8]" /> Training by Category
           </h3>
           {byCategory.length === 0 ? (
-            <p className="text-slate-500 text-sm text-center py-6">No data available</p>
+            <p className="text-gray-500 text-sm text-center py-6">No data available</p>
           ) : (
             <div className="space-y-3">
               {byCategory.map((row, i) => (
@@ -140,18 +140,18 @@ export default function Reports() {
         </div>
 
         {/* By Factory */}
-        <div className="bg-slate-800/60 border border-slate-700 rounded-2xl p-6">
-          <h3 className="font-semibold text-white mb-5 flex items-center gap-2">
-            <Factory size={16} className="text-green-400" /> Employees by Factory
+        <div className="app-panel p-6">
+          <h3 className="font-semibold text-gray-900 mb-5 flex items-center gap-2">
+            <Factory size={16} className="text-green-600" /> Employees by Factory
           </h3>
           {byFactory.length === 0 ? (
-            <p className="text-slate-500 text-sm text-center py-6">No data available</p>
+            <p className="text-gray-500 text-sm text-center py-6">No data available</p>
           ) : (
             <div className="space-y-3">
               {byFactory.map((row, i) => (
                 <div key={row.factory}>
                   <SimpleBar label={row.factory} value={row.employee_count} max={maxFactory} color="bg-green-500" />
-                  <p className="text-xs text-slate-500 mt-0.5 ml-[156px]">{row.training_count} training records</p>
+                  <p className="text-xs text-gray-500 mt-0.5 ml-[156px]">{row.training_count} training records</p>
                 </div>
               ))}
             </div>
@@ -160,12 +160,12 @@ export default function Reports() {
       </div>
 
       {/* Takes per Month — X: Take number, Y: Month */}
-      <div className="bg-slate-800/60 border border-slate-700 rounded-2xl p-6 mb-6">
-        <h3 className="font-semibold text-white mb-5 flex items-center gap-2">
-          <BarChart3 size={16} className="text-purple-400" /> Takes per Month
+      <div className="app-panel p-6 mb-6">
+        <h3 className="font-semibold text-gray-900 mb-5 flex items-center gap-2">
+          <BarChart3 size={16} className="text-purple-600" /> Takes per Month
         </h3>
         {!takesPerMonth.months || takesPerMonth.months.length === 0 ? (
-          <p className="text-slate-500 text-sm text-center py-6">No data available</p>
+          <p className="text-gray-500 text-sm text-center py-6">No data available</p>
         ) : (
           <div className="overflow-x-auto">
             {/* Legend */}
@@ -173,7 +173,7 @@ export default function Reports() {
               {takesPerMonth.takes.map((t, i) => (
                 <div key={t} className="flex items-center gap-1.5">
                   <div className={`w-3 h-3 rounded-sm ${TAKE_COLORS[i % TAKE_COLORS.length]}`} />
-                  <span className="text-xs text-slate-400">Take {t}</span>
+                  <span className="text-xs text-gray-500">Take {t}</span>
                 </div>
               ))}
             </div>
@@ -181,15 +181,15 @@ export default function Reports() {
             <div className="space-y-3">
               {takesPerMonth.months.map(month => (
                 <div key={month} className="flex items-center gap-3">
-                  <span className="text-sm text-slate-300 w-20 flex-shrink-0 text-right">{month}</span>
+                  <span className="text-sm text-gray-700 w-20 flex-shrink-0 text-right">{month}</span>
                   <div className="flex-1 flex items-center gap-1">
                     {takesPerMonth.takes.map((t, i) => {
                       const val = takesPerMonth.data[month]?.[String(t)] || 0;
                       const pct = maxTakes > 0 ? Math.round((val / maxTakes) * 100) : 0;
                       return (
                         <div key={t} className="flex flex-col items-center gap-0.5 flex-1">
-                          <span className="text-xs text-slate-400">{val > 0 ? val : ''}</span>
-                          <div className="w-full bg-slate-700 rounded h-6 overflow-hidden">
+                          <span className="text-xs text-gray-500">{val > 0 ? val : ''}</span>
+                          <div className="w-full bg-gray-100 rounded h-6 overflow-hidden">
                             <div
                               className={`h-full ${TAKE_COLORS[i % TAKE_COLORS.length]} rounded transition-all`}
                               style={{ width: `${pct}%` }}
@@ -207,7 +207,7 @@ export default function Reports() {
               <span className="w-20 flex-shrink-0" />
               <div className="flex-1 flex gap-1">
                 {takesPerMonth.takes.map(t => (
-                  <div key={t} className="flex-1 text-center text-xs text-slate-500">Take {t}</div>
+                  <div key={t} className="flex-1 text-center text-xs text-gray-500">Take {t}</div>
                 ))}
               </div>
             </div>
@@ -216,67 +216,67 @@ export default function Reports() {
       </div>
 
       {/* Expiring certifications list */}
-      <div className="bg-slate-800/60 border border-slate-700 rounded-2xl p-6 mb-6">
-        <h3 className="font-semibold text-white mb-5 flex items-center gap-2">
-          <AlertTriangle size={16} className="text-amber-400" /> Certifications Requiring Attention (next 60 days + expired)
+      <div className="app-panel p-6 mb-6">
+        <h3 className="font-semibold text-gray-900 mb-5 flex items-center gap-2">
+          <AlertTriangle size={16} className="text-amber-600" /> Certifications Requiring Attention (next 60 days + expired)
         </h3>
         {expiring.length === 0 ? (
-          <p className="text-slate-500 text-sm text-center py-6">No expiring or expired certifications found.</p>
+          <p className="text-gray-500 text-sm text-center py-6">No expiring or expired certifications found.</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-slate-700">
-                  <th className="pb-3 text-left text-xs font-semibold text-slate-400 uppercase">Employee</th>
-                  <th className="pb-3 text-left text-xs font-semibold text-slate-400 uppercase">Training</th>
-                  <th className="pb-3 text-left text-xs font-semibold text-slate-400 uppercase">Factory / Team</th>
-                  <th className="pb-3 text-left text-xs font-semibold text-slate-400 uppercase">Expiry Date</th>
-                  <th className="pb-3 text-left text-xs font-semibold text-slate-400 uppercase">Status</th>
+                <tr className="border-b border-gray-200">
+                  <th className="pb-3 text-left text-xs font-semibold text-gray-500 uppercase">Employee</th>
+                  <th className="pb-3 text-left text-xs font-semibold text-gray-500 uppercase">Training</th>
+                  <th className="pb-3 text-left text-xs font-semibold text-gray-500 uppercase">Factory / Team</th>
+                  <th className="pb-3 text-left text-xs font-semibold text-gray-500 uppercase">Expiry Date</th>
+                  <th className="pb-3 text-left text-xs font-semibold text-gray-500 uppercase">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-700/40">
+              <tbody className="divide-y divide-gray-200">
                 {expiring.slice(0, 20).map(item => (
-                  <tr key={item.id} className="hover:bg-slate-800/40">
-                    <td className="py-3 text-white font-medium">{item.full_name}</td>
-                    <td className="py-3 text-slate-300">{item.title}</td>
-                    <td className="py-3 text-slate-400 text-xs">{item.factory} / {item.team}</td>
-                    <td className="py-3 text-slate-300">{item.expiration_date}</td>
+                  <tr key={item.id} className="hover:bg-white">
+                    <td className="py-3 text-gray-900 font-medium">{item.full_name}</td>
+                    <td className="py-3 text-gray-700">{item.title}</td>
+                    <td className="py-3 text-gray-500 text-xs">{item.factory} / {item.team}</td>
+                    <td className="py-3 text-gray-700">{item.expiration_date}</td>
                     <td className="py-3"><StatusBadge status={item.cert_status} /></td>
                   </tr>
                 ))}
               </tbody>
             </table>
             {expiring.length > 20 && (
-              <p className="text-xs text-slate-500 text-center mt-4">Showing 20 of {expiring.length} records. Export CSV for full list.</p>
+              <p className="text-xs text-gray-500 text-center mt-4">Showing 20 of {expiring.length} records. Export CSV for full list.</p>
             )}
           </div>
         )}
       </div>
 
       {/* CSV Export */}
-      <div className="bg-slate-800/60 border border-slate-700 rounded-2xl p-6">
-        <h3 className="font-semibold text-white mb-1 flex items-center gap-2">
-          <Download size={16} className="text-slate-400" /> Export Training Records
+      <div className="app-panel p-6">
+        <h3 className="font-semibold text-gray-900 mb-1 flex items-center gap-2">
+          <Download size={16} className="text-gray-500" /> Export Training Records
         </h3>
-        <p className="text-sm text-slate-500 mb-5">Download all training records as a CSV file for reporting or backup.</p>
+        <p className="text-sm text-gray-500 mb-5">Download all training records as a CSV file for reporting or backup.</p>
         <div className="flex flex-wrap gap-3 items-end">
           <div>
-            <label className="block text-xs font-medium text-slate-400 mb-1">Filter by Factory</label>
+            <label className="block text-xs font-medium text-gray-500 mb-1">Filter by Factory</label>
             <select
               value={exportFilter.factory}
               onChange={e => setExportFilter(f => ({ ...f, factory: e.target.value }))}
-              className="bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="app-input px-3 py-2 text-sm"
             >
               <option value="">All Factories</option>
               {byFactory.map(f => <option key={f.factory} value={f.factory}>{f.factory}</option>)}
             </select>
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-400 mb-1">Filter by Category</label>
+            <label className="block text-xs font-medium text-gray-500 mb-1">Filter by Category</label>
             <select
               value={exportFilter.category}
               onChange={e => setExportFilter(f => ({ ...f, category: e.target.value }))}
-              className="bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="app-input px-3 py-2 text-sm"
             >
               <option value="">All Categories</option>
               {byCategory.map(c => <option key={c.category} value={c.category}>{c.category}</option>)}
@@ -285,7 +285,7 @@ export default function Reports() {
           <button
             onClick={handleExport}
             disabled={exporting}
-            className="flex items-center gap-2 bg-green-700 hover:bg-green-600 disabled:bg-slate-700 disabled:text-slate-500 text-white text-sm font-medium px-5 py-2 rounded-lg transition-colors"
+            className="flex items-center gap-2 bg-green-700 hover:bg-green-600 disabled:bg-gray-200 disabled:text-gray-400 text-white text-sm font-medium px-5 py-2 rounded-lg transition-colors"
           >
             {exporting ? (
               <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />

@@ -16,7 +16,7 @@ import Reports from './pages/Reports';
 
 function RequireAuth({ children, roles }) {
   const { user, loading } = useAuth();
-  if (loading) return <div className="flex items-center justify-center h-screen bg-slate-900 text-white">Loading...</div>;
+  if (loading) return <div className="flex items-center justify-center h-screen bg-white text-gray-900">Loading...</div>;
   if (!user) return <Navigate to="/login" replace />;
   if (roles && !roles.includes(user.role)) return <Navigate to="/dashboard" replace />;
   return children;
@@ -70,7 +70,7 @@ function AppRoutes() {
 
   if (bootState === 'checking') {
     return (
-      <div className="flex items-center justify-center h-screen bg-slate-900 text-slate-400 text-sm">
+      <div className="flex items-center justify-center h-screen bg-white text-gray-500 text-sm">
         Connecting to local server...
       </div>
     );

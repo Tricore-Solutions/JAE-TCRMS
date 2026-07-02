@@ -34,20 +34,20 @@ export default function DataTable({
   };
 
   const SortIcon = ({ col }) => {
-    if (sort.key !== col.key) return <ChevronsUpDown size={12} className="text-slate-600" />;
-    return sort.dir === 'asc' ? <ChevronUp size={12} className="text-blue-400" /> : <ChevronDown size={12} className="text-blue-400" />;
+    if (sort.key !== col.key) return <ChevronsUpDown size={12} className="text-gray-400" />;
+    return sort.dir === 'asc' ? <ChevronUp size={12} className="text-[#1D72B8]" /> : <ChevronDown size={12} className="text-[#1D72B8]" />;
   };
 
   return (
     <div className="flex flex-col">
-      <div className="overflow-x-auto rounded-xl border border-slate-700">
+      <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
         <table className="w-full text-sm">
           <thead>
-            <tr className="bg-slate-800/80">
+            <tr className="bg-gray-50">
               {columns.map((col) => (
                 <th
                   key={col.key}
-                  className={`px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider whitespace-nowrap ${col.sortable !== false ? 'cursor-pointer hover:text-white select-none' : ''} ${col.className || ''}`}
+                  className={`px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap ${col.sortable !== false ? 'cursor-pointer hover:text-gray-900 select-none' : ''} ${col.className || ''}`}
                   onClick={() => col.sortable !== false && toggleSort(col.key)}
                 >
                   <div className="flex items-center gap-1.5">
@@ -58,19 +58,19 @@ export default function DataTable({
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-700/50">
+          <tbody className="divide-y divide-gray-200">
             {loading ? (
               <tr>
                 <td colSpan={columns.length} className="px-4 py-12 text-center">
-                  <div className="flex flex-col items-center gap-2 text-slate-500">
-                    <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                  <div className="flex flex-col items-center gap-2 text-gray-500">
+                    <div className="w-6 h-6 border-2 border-[#1D72B8] border-t-transparent rounded-full animate-spin" />
                     <span className="text-sm">Loading...</span>
                   </div>
                 </td>
               </tr>
             ) : paginated.length === 0 ? (
               <tr>
-                <td colSpan={columns.length} className="px-4 py-12 text-center text-slate-500 text-sm">
+                <td colSpan={columns.length} className="px-4 py-12 text-center text-gray-500 text-sm">
                   {emptyMessage}
                 </td>
               </tr>
@@ -78,11 +78,11 @@ export default function DataTable({
               paginated.map((row) => (
                 <tr
                   key={row[rowKey]}
-                  className={`bg-slate-900/40 hover:bg-slate-800/60 transition-colors ${onRowClick ? 'cursor-pointer' : ''}`}
+                  className={`hover:bg-gray-50 transition-colors ${onRowClick ? 'cursor-pointer' : ''}`}
                   onClick={() => onRowClick?.(row)}
                 >
                   {columns.map((col) => (
-                    <td key={col.key} className={`px-4 py-3 text-slate-300 ${col.className || ''}`}>
+                    <td key={col.key} className={`px-4 py-3 text-gray-700 ${col.className || ''}`}>
                       {col.render ? col.render(row[col.key], row) : (row[col.key] ?? '—')}
                     </td>
                   ))}
@@ -93,17 +93,16 @@ export default function DataTable({
         </table>
       </div>
 
-      {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-between mt-3 px-1">
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-gray-500">
             Showing {Math.min((page - 1) * pageSize + 1, sorted.length)}–{Math.min(page * pageSize, sorted.length)} of {sorted.length}
           </p>
           <div className="flex items-center gap-1">
             <button
               onClick={() => setPage(p => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="px-3 py-1.5 text-xs rounded-lg bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="px-3 py-1.5 text-xs rounded-lg bg-white border border-gray-200 text-gray-600 hover:text-gray-900 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
               Previous
             </button>
@@ -113,7 +112,7 @@ export default function DataTable({
                 <button
                   key={p}
                   onClick={() => setPage(p)}
-                  className={`w-8 h-8 text-xs rounded-lg transition-colors ${p === page ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white'}`}
+                  className={`w-8 h-8 text-xs rounded-lg transition-colors ${p === page ? 'bg-[#1D72B8] text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900'}`}
                 >
                   {p}
                 </button>
@@ -122,7 +121,7 @@ export default function DataTable({
             <button
               onClick={() => setPage(p => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
-              className="px-3 py-1.5 text-xs rounded-lg bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="px-3 py-1.5 text-xs rounded-lg bg-white border border-gray-200 text-gray-600 hover:text-gray-900 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
               Next
             </button>
