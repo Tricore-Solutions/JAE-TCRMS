@@ -122,6 +122,7 @@ def record_audit_logs(request, table_name, record_id):
     import json as _json
     logs = (
         AuditLog.objects
+        .select_related('user')
         .filter(table_name=table_name, record_id=record_id)
         .order_by('-created_at')
     )
@@ -130,6 +131,7 @@ def record_audit_logs(request, table_name, record_id):
         entry = {
             'action': log.action,
             'username': log.username,
+            'full_name': log.user.full_name if log.user else None,
             'created_at': log.created_at.strftime('%b %d, %Y %I:%M %p'),
             'summary': log.details or '',
             'changes': {},

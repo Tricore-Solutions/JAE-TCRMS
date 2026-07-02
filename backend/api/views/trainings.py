@@ -72,6 +72,9 @@ def training_list_create(request):
         worker_line_status = request.query_params.get('worker_line_status')
         if worker_line_status:
             qs = qs.filter(worker_line_status=worker_line_status)
+        take = request.query_params.get('take')
+        if take:
+            qs = qs.filter(take=int(take))
         if search:
             qs = qs.filter(
                 Q(employee__full_name__icontains=search)

@@ -46,6 +46,7 @@ export default function Training() {
   const [filterCategory, setFilterCategory] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [filterWorkerLine, setFilterWorkerLine] = useState('');
+  const [filterTake, setFilterTake] = useState('');
 
   const [modalOpen, setModalOpen] = useState(false);
   const [viewModal, setViewModal] = useState(false);
@@ -65,6 +66,7 @@ export default function Training() {
       if (search) params.search = search;
       if (filterCategory) params.category = filterCategory;
       if (filterWorkerLine) params.worker_line_status = filterWorkerLine;
+      if (filterTake) params.take = filterTake;
       if (filterStatus === 'expired') params.expired = 'true';
       if (filterStatus === 'expiring') params.expiring_soon = 'true';
       const [trRes, empRes] = await Promise.all([
@@ -78,7 +80,7 @@ export default function Training() {
     } finally {
       setLoading(false);
     }
-  }, [search, filterCategory, filterStatus, filterWorkerLine]);
+  }, [search, filterCategory, filterStatus, filterWorkerLine, filterTake]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -216,7 +218,7 @@ export default function Training() {
 
   return (
     <Layout
-      title="Training Records"
+      title="Training & Certification Records"
       actions={canEdit && (
         <button onClick={openCreate} className="flex items-center gap-2 bg-[#1D72B8] hover:bg-[#1864a3] text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
           <Plus size={16} /> Add Training Record
@@ -259,6 +261,14 @@ export default function Training() {
         >
           <option value="">All Worker Line</option>
           {WORKER_LINE_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+        </select>
+        <select
+          value={filterTake}
+          onChange={e => setFilterTake(e.target.value)}
+          className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
+        >
+          <option value="">All Takes</option>
+          {TAKE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
       </div>
 
