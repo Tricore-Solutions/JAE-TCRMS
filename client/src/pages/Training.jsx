@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Plus, Search, Edit2, Trash2, Eye, Filter } from 'lucide-react';
+import { Plus, Search, Trash2 } from 'lucide-react';
 import Layout from '../components/Layout';
 import DataTable from '../components/DataTable';
 import Modal from '../components/Modal';
@@ -196,14 +196,14 @@ export default function Training() {
       </span>
     )},
     { key: 'actions', label: '', sortable: false, render: (_, row) => (
-      <div className="flex items-center gap-1">
-        <button onClick={e => { e.stopPropagation(); openView(row); }} className="p-1.5 text-gray-500 hover:text-[#1D72B8] hover:bg-blue-50 rounded-lg transition-colors" title="View">
-          <Eye size={14} />
+      <div className="flex flex-col items-start gap-1">
+        <button onClick={e => { e.stopPropagation(); openView(row); }} className="px-2.5 py-1 text-xs font-medium text-[#1D72B8] bg-blue-50 hover:bg-blue-100 hover:text-[#1864a3] rounded-lg transition-colors">
+          View
         </button>
         {canEdit && (
           <>
-            <button onClick={e => { e.stopPropagation(); openEdit(row); }} className="p-1.5 text-gray-500 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors" title="Edit">
-              <Edit2 size={14} />
+            <button onClick={e => { e.stopPropagation(); openEdit(row); }} className="px-2.5 py-1 text-xs font-medium text-amber-600 bg-amber-50 hover:bg-amber-100 hover:text-amber-700 rounded-lg transition-colors">
+              Edit
             </button>
             {isAdmin && (
               <button onClick={e => { e.stopPropagation(); setDeleteConfirm(row); }} className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Delete">
