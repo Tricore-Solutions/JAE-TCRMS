@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogIn, Eye, EyeOff, ClipboardList, AlertCircle, Settings } from 'lucide-react';
+import { Eye, EyeOff, AlertCircle, Settings } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export default function Login() {
@@ -33,103 +33,66 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 flex">
-      {/* Left panel */}
-      <div className="hidden lg:flex flex-col justify-between w-1/2 bg-gradient-to-br from-blue-900 via-slate-900 to-slate-950 p-12">
-        <div>
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-500/20 border border-blue-500/30 flex items-center justify-center">
-              <ClipboardList size={20} className="text-blue-400" />
-            </div>
-            <span className="text-white font-semibold text-lg">JAE TCRMS</span>
-          </div>
-        </div>
-        <div>
-          <h2 className="text-4xl font-bold text-white leading-tight">
-            Training &amp; Certification<br />Record Management
-          </h2>
-          <p className="text-slate-400 mt-4 text-lg">
-            Manage employee training records, track certifications, and stay compliant — all on your company network.
+    <div className="min-h-screen bg-gradient-to-br from-[#B8D4F0] via-[#E8F2FC] to-white flex items-center justify-center p-6">
+      <div className="w-full max-w-[480px]">
+        <div className="bg-white rounded-3xl shadow-[0_8px_30px_rgba(0,0,0,0.08)] px-10 py-10 text-center">
+          <img
+            src="/jae-logo.png"
+            alt="JAE"
+            className="h-[4.5rem] w-auto object-contain mb-8 mx-auto"
+          />
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Welcome Back</h1>
+          <p className="text-gray-500 text-sm mb-8">
+            Sign in to the Training &amp; Certifications Record Management System
           </p>
-          <div className="mt-8 grid grid-cols-2 gap-4">
-            {[
-              { label: 'Employee Tracking', desc: 'Monitor workforce training status' },
-              { label: 'Cert Alerts', desc: 'Automatic expiration notifications' },
-              { label: 'Role-Based Access', desc: 'Admin, Encoder, Viewer roles' },
-              { label: 'Offline-Ready', desc: 'Works on your local network' },
-            ].map(f => (
-              <div key={f.label} className="bg-white/5 rounded-xl p-4 border border-white/10">
-                <p className="text-white text-sm font-medium">{f.label}</p>
-                <p className="text-slate-400 text-xs mt-1">{f.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-        <p className="text-slate-600 text-sm">JAE Philippines, Inc. — Internal Use Only</p>
-      </div>
-
-      {/* Right panel */}
-      <div className="flex-1 flex flex-col items-center justify-center p-8">
-        <div className="w-full max-w-sm">
-          <div className="lg:hidden mb-8 text-center">
-            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-blue-600 mb-3">
-              <ClipboardList size={28} className="text-white" />
-            </div>
-            <h1 className="text-xl font-bold text-white">JAE TCRMS</h1>
-          </div>
-
-          <h2 className="text-2xl font-bold text-white mb-1">Welcome back</h2>
-          <p className="text-slate-400 text-sm mb-8">Sign in to your account to continue.</p>
 
           {error && (
-            <div className="flex items-center gap-2 bg-red-900/40 border border-red-700 rounded-lg p-3 mb-6">
-              <AlertCircle size={16} className="text-red-400 flex-shrink-0" />
-              <p className="text-red-300 text-sm">{error}</p>
+            <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg p-3 mb-6">
+              <AlertCircle size={16} className="text-red-500 flex-shrink-0" />
+              <p className="text-red-600 text-sm">{error}</p>
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-5 text-left">
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1.5">Username</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Username</label>
               <input
                 type="text"
                 autoFocus
                 value={form.username}
                 onChange={e => setForm(f => ({ ...f, username: e.target.value }))}
-                className="w-full bg-slate-800 border border-slate-600 rounded-lg px-4 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Enter username"
+                className="w-full bg-white border border-gray-300 rounded-lg px-4 py-2.5 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Enter your username"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1.5">Password</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
               <div className="relative">
                 <input
                   type={showPass ? 'text' : 'password'}
                   value={form.password}
                   onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
-                  className="w-full bg-slate-800 border border-slate-600 rounded-lg px-4 py-2.5 pr-11 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Enter password"
+                  className="w-full bg-white border border-gray-300 rounded-lg px-4 py-2.5 pr-11 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Enter your password"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPass(s => !s)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
-                  {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
+                  {showPass ? <Eye size={18} /> : <EyeOff size={18} />}
                 </button>
               </div>
             </div>
             <button
               type="submit"
               disabled={loading}
-              className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 disabled:text-slate-500 text-white font-medium rounded-lg px-4 py-3 transition-colors mt-2"
+              className="w-full bg-[#1D72B8] hover:bg-[#1864a3] disabled:bg-gray-300 disabled:text-gray-500 text-white font-semibold rounded-full px-4 py-3 transition-colors"
             >
               {loading ? (
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto" />
               ) : (
-                <>
-                  <LogIn size={16} /> Sign In
-                </>
+                'Log in'
               )}
             </button>
           </form>
@@ -137,21 +100,21 @@ export default function Login() {
           <div className="mt-6 text-center">
             <button
               onClick={() => navigate('/viewer')}
-              className="text-slate-400 hover:text-white text-sm transition-colors"
+              className="text-gray-500 hover:text-[#1D72B8] text-sm transition-colors"
             >
               Continue as Outside Viewer →
             </button>
           </div>
+        </div>
 
-          <div className="mt-8 pt-6 border-t border-slate-800 flex items-center justify-between">
-            <span className="text-xs text-slate-600 truncate">Server: {serverUrl}</span>
-            <button
-              onClick={() => { localStorage.removeItem('serverUrl'); window.location.reload(); }}
-              className="text-slate-500 hover:text-slate-300 flex items-center gap-1 text-xs ml-2"
-            >
-              <Settings size={12} /> Change
-            </button>
-          </div>
+        <div className="mt-6 flex items-center justify-center gap-2 text-xs text-gray-400">
+          <span className="truncate max-w-[280px]">Server: {serverUrl}</span>
+          <button
+            onClick={() => { localStorage.removeItem('serverUrl'); window.location.reload(); }}
+            className="text-gray-500 hover:text-gray-700 flex items-center gap-1 flex-shrink-0"
+          >
+            <Settings size={12} /> Change
+          </button>
         </div>
       </div>
     </div>
