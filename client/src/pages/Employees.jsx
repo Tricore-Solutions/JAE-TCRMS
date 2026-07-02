@@ -384,7 +384,7 @@ export default function Employees() {
                         log.action === 'CREATE' ? 'bg-green-400' :
                         log.action === 'UPDATE' ? 'bg-amber-400' : 'bg-red-400'
                       }`} />
-                      <p className="text-sm text-gray-900 font-medium flex-1">{log.full_name || log.username}</p>
+                      <p className="text-sm text-gray-900 font-medium flex-1">{log.full_name}</p>
                       <span className="text-xs text-gray-500">{log.created_at}</span>
                     </div>
                     <p className="text-xs text-gray-500 ml-4">{log.summary}</p>

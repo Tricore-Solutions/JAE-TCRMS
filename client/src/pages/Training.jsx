@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Plus, Search, Trash2 } from 'lucide-react';
+import { Plus, Search } from 'lucide-react';
 import Layout from '../components/Layout';
 import DataTable from '../components/DataTable';
 import Modal from '../components/Modal';
@@ -175,12 +175,14 @@ export default function Training() {
       <span className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full">{v || '—'}</span>
     )},
     { key: 'training_date', label: 'Date' },
-    { key: 'expiration_date', label: 'Expiration', render: (v, row) => (
-      <div className="flex flex-col gap-1">
-        <StatusBadge status={getCertStatus(v)} />
-        <span className="text-xs text-gray-500">{v || 'No expiry'}</span>
-      </div>
-    )},
+    { key: 'expiration_date', label: 'Expiration', render: v => {
+      const isExpired = getCertStatus(v) === 'expired';
+      return (
+        <span className={`text-sm font-medium ${isExpired ? 'text-red-600' : 'text-green-600'}`}>
+          {v || 'No expiry'}
+        </span>
+      );
+    }},
     { key: 'worker_line_status', label: 'Worker Line Status', render: v => (
       <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
         v === 'Original'
@@ -196,18 +198,18 @@ export default function Training() {
       </span>
     )},
     { key: 'actions', label: '', sortable: false, render: (_, row) => (
-      <div className="flex flex-col items-start gap-1">
-        <button onClick={e => { e.stopPropagation(); openView(row); }} className="px-2.5 py-1 text-xs font-medium text-[#1D72B8] bg-blue-50 hover:bg-blue-100 hover:text-[#1864a3] rounded-lg transition-colors">
+      <div className="flex items-center gap-1">
+        <button onClick={e => { e.stopPropagation(); openView(row); }} className="px-2.5 py-1 text-xs font-medium text-gray-500 bg-gray-50 hover:text-[#1D72B8] hover:bg-blue-50 rounded-lg transition-colors">
           View
         </button>
         {canEdit && (
           <>
-            <button onClick={e => { e.stopPropagation(); openEdit(row); }} className="px-2.5 py-1 text-xs font-medium text-amber-600 bg-amber-50 hover:bg-amber-100 hover:text-amber-700 rounded-lg transition-colors">
+            <button onClick={e => { e.stopPropagation(); openEdit(row); }} className="px-2.5 py-1 text-xs font-medium text-gray-500 bg-gray-50 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors">
               Edit
             </button>
             {isAdmin && (
-              <button onClick={e => { e.stopPropagation(); setDeleteConfirm(row); }} className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Delete">
-                <Trash2 size={14} />
+              <button onClick={e => { e.stopPropagation(); setDeleteConfirm(row); }} className="px-2.5 py-1 text-xs font-medium text-gray-500 bg-gray-50 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                Delete
               </button>
             )}
           </>
@@ -474,7 +476,7 @@ export default function Training() {
                         log.action === 'CREATE' ? 'bg-green-400' :
                         log.action === 'UPDATE' ? 'bg-amber-400' : 'bg-red-400'
                       }`} />
-                      <p className="text-sm text-gray-900 font-medium flex-1">{log.username}</p>
+                      <p className="text-sm text-gray-900 font-medium flex-1">{log.full_name}</p>
                       <span className="text-xs text-gray-500">{log.created_at}</span>
                     </div>
                     <p className="text-xs text-gray-500 ml-4">{log.summary}</p>

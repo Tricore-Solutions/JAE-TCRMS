@@ -6,7 +6,7 @@ from rest_framework.response import Response
 from api.models import User
 from api.permissions import IsAdmin
 from api.serializers import UserCreateSerializer, UserSerializer, UserUpdateSerializer
-from api.utils import log_audit
+from api.utils import log_audit, user_display_name
 
 
 @api_view(['GET', 'POST'])
@@ -34,7 +34,7 @@ def user_list_create(request):
         full_name=data.get('full_name') or '',
         role=data['role'],
     )
-    log_audit(request.user, 'CREATE', 'users', user.id, f'Created user: {username}')
+    log_audit(request.user, 'CREATE', 'users', user.id, f'Created user: {user_display_name(user)}')
     return Response(UserSerializer(user).data, status=status.HTTP_201_CREATED)
 
 
@@ -79,7 +79,7 @@ def user_detail(request, pk):
             ).decode('utf-8')
         user.save()
 
-        log_audit(request.user, 'UPDATE', 'users', user.id, f'Updated user: {user.username}')
+        log_audit(request.user, 'UPDATE', 'users', user.id, f'Updated user: {user_display_name(user)}')
         return Response(UserSerializer(user).data)
 
     if user.id == request.user.id:
@@ -95,5 +95,5 @@ def user_detail(request, pk):
 
     user.status = 'inactive'
     user.save()
-    log_audit(request.user, 'DELETE', 'users', user.id, f'Deactivated user: {user.username}')
+    log_audit(request.user, 'DELETE', 'users', user.id, f'Deactivated user: {user_display_name(user)}')
     return Response({'message': 'User deactivated'})

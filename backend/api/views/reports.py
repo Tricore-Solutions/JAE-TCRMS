@@ -6,7 +6,7 @@ from rest_framework.response import Response
 
 from api.models import AuditLog, Employee, Training, User
 from api.serializers import AuditLogSerializer
-from api.utils import days_from_today, today
+from api.utils import days_from_today, today, user_display_name
 
 
 @api_view(['GET'])
@@ -112,7 +112,7 @@ def expiring(request):
 @permission_classes([IsAuthenticated])
 def audit_logs(request):
     limit = int(request.query_params.get('limit') or 50)
-    logs = AuditLog.objects.order_by('-created_at')[:limit]
+    logs = AuditLog.objects.select_related('user').order_by('-created_at')[:limit]
     return Response(AuditLogSerializer(logs, many=True).data)
 
 
@@ -130,8 +130,7 @@ def record_audit_logs(request, table_name, record_id):
     for log in logs:
         entry = {
             'action': log.action,
-            'username': log.username,
-            'full_name': log.user.full_name if log.user else None,
+            'full_name': user_display_name(log.user, log.username),
             'created_at': log.created_at.strftime('%b %d, %Y %I:%M %p'),
             'summary': log.details or '',
             'changes': {},

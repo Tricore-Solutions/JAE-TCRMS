@@ -27,7 +27,7 @@ export default function Navbar() {
           <User size={16} className="text-gray-600" />
         </div>
         <div className="min-w-0 hidden sm:block">
-          <p className="text-sm font-medium text-gray-900 truncate">{user?.full_name || user?.username}</p>
+          <p className="text-sm font-medium text-gray-900 truncate">{user?.full_name}</p>
           <p className={`text-xs ${config.color}`}>{config.label}</p>
         </div>
       </div>

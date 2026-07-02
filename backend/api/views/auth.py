@@ -6,7 +6,7 @@ from rest_framework.response import Response
 
 from api.authentication import create_access_token
 from api.models import User
-from api.utils import log_audit
+from api.utils import log_audit, user_display_name
 
 
 @api_view(['POST'])
@@ -35,7 +35,7 @@ def login(request):
             status=status.HTTP_401_UNAUTHORIZED,
         )
 
-    log_audit(user, 'LOGIN', 'users', details=f'User {user.username} logged in')
+    log_audit(user, 'LOGIN', 'users', details=f'User {user_display_name(user)} logged in')
 
     token = create_access_token(user)
     return Response({
@@ -73,6 +73,6 @@ def logout(request):
         request.user,
         'LOGOUT',
         'users',
-        details=f'User {request.user.username} logged out',
+        details=f'User {user_display_name(request.user)} logged out',
     )
     return Response({'message': 'Logged out'})

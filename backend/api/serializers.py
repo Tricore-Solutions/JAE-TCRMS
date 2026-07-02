@@ -62,6 +62,12 @@ class TrainingListSerializer(serializers.ModelSerializer):
 
 
 class AuditLogSerializer(serializers.ModelSerializer):
+    full_name = serializers.SerializerMethodField()
+
     class Meta:
         model = AuditLog
-        fields = '__all__'
+        fields = ['id', 'action', 'table_name', 'record_id', 'details', 'created_at', 'full_name']
+
+    def get_full_name(self, obj):
+        from api.utils import user_display_name
+        return user_display_name(obj.user, obj.username)

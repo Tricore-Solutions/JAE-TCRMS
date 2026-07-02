@@ -89,7 +89,7 @@ export default function Users() {
   const handleDelete = async (u) => {
     try {
       await usersApi.remove(u.id);
-      toast(`User "${u.username}" deactivated.`, 'success');
+      toast(`User "${u.full_name || u.username}" deactivated.`, 'success');
       setDeleteConfirm(null);
       load();
     } catch (err) {
@@ -221,7 +221,7 @@ export default function Users() {
       {/* Delete Confirm */}
       <Modal open={!!deleteConfirm} onClose={() => setDeleteConfirm(null)} title="Deactivate User" size="sm">
         <p className="text-gray-700 text-sm">
-          Deactivate user <span className="text-gray-900 font-medium">"{deleteConfirm?.username}"</span>? They will no longer be able to log in.
+          Deactivate user <span className="text-gray-900 font-medium">"{deleteConfirm?.full_name || deleteConfirm?.username}"</span>? They will no longer be able to log in.
         </p>
         <div className="flex justify-end gap-3 mt-6">
           <button onClick={() => setDeleteConfirm(null)} className="px-4 py-2 text-sm text-gray-500 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">Cancel</button>

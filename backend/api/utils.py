@@ -22,10 +22,20 @@ def calc_expiration(training_date, validity_months):
     return date(year, month, day)
 
 
+def user_display_name(user, fallback=None):
+    if user:
+        name = (getattr(user, 'full_name', None) or '').strip()
+        if name:
+            return name
+        if getattr(user, 'username', None):
+            return user.username
+    return fallback or 'Unknown'
+
+
 def log_audit(user, action, table_name, record_id=None, details=None):
     AuditLog.objects.create(
         user_id=getattr(user, 'id', None),
-        username=getattr(user, 'username', None),
+        username=user_display_name(user) if user else None,
         action=action,
         table_name=table_name,
         record_id=record_id,

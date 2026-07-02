@@ -51,7 +51,7 @@ export default function AdminDashboard() {
   return (
     <Layout>
       <div className="mb-8">
-        <h2 className="text-2xl font-bold text-gray-900">{greeting}, {user?.full_name || user?.username}</h2>
+        <h2 className="text-2xl font-bold text-gray-900">{greeting}, {user?.full_name}</h2>
         <p className="text-gray-500 mt-1 text-sm">
           Here's an overview of your training and certification records.
         </p>
