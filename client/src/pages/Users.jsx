@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Plus, Edit2, Trash2, RefreshCw, Shield, Pencil, Eye, EyeOff } from 'lucide-react';
 import Layout from '../components/Layout';
 import DataTable from '../components/DataTable';
@@ -17,6 +17,9 @@ export default function Users() {
 
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [contentKey, setContentKey] = useState(0);
+  const isInitialLoad = useRef(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [selected, setSelected] = useState(null);
   const [form, setForm] = useState(emptyForm);
@@ -25,16 +28,22 @@ export default function Users() {
   const [showPass, setShowPass] = useState(false);
 
   const load = useCallback(async () => {
-    setLoading(true);
+    const isRefresh = !isInitialLoad.current;
+    if (isRefresh) setRefreshing(true);
+    else setLoading(true);
+
     try {
       const res = await usersApi.list();
       setUsers(res.data);
+      if (isRefresh) setContentKey(k => k + 1);
     } catch {
       toast('Failed to load users.', 'error');
     } finally {
       setLoading(false);
+      setRefreshing(false);
+      isInitialLoad.current = false;
     }
-  }, []);
+  }, [toast]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -115,8 +124,8 @@ export default function Users() {
       title="User Management"
       actions={
         <>
-          <button onClick={load} className="flex items-center gap-2 text-gray-500 hover:text-gray-900 text-sm px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors">
-            <RefreshCw size={14} />
+          <button onClick={load} disabled={loading || refreshing} className="flex items-center gap-2 text-gray-500 hover:text-gray-900 text-sm px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-40">
+            <RefreshCw size={14} className={loading || refreshing ? 'animate-spin' : ''} />
           </button>
           <button onClick={openCreate} className="flex items-center gap-2 bg-[#1D72B8] hover:bg-[#1864a3] text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
             <Plus size={16} /> Add User
@@ -124,7 +133,9 @@ export default function Users() {
         </>
       }
     >
-      <DataTable columns={columns} data={users} loading={loading} emptyMessage="No users found." />
+      <div key={contentKey} className={contentKey > 0 ? 'page-enter' : undefined}>
+        <DataTable columns={columns} data={users} loading={loading && !refreshing} emptyMessage="No users found." />
+      </div>
 
       {/* Add/Edit Modal */}
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={selected ? 'Edit User' : 'Add User'} size="md">
