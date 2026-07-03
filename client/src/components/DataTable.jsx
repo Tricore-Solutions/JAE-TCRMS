@@ -1,5 +1,5 @@
 import { ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 
 export default function DataTable({
   columns,
@@ -8,10 +8,15 @@ export default function DataTable({
   emptyMessage = 'No records found',
   rowKey = 'id',
   onRowClick,
+  rowClassName,
+  pageSize = 10,
 }) {
   const [sort, setSort] = useState({ key: null, dir: 'asc' });
   const [page, setPage] = useState(1);
-  const pageSize = 15;
+
+  useEffect(() => {
+    setPage(1);
+  }, [data, pageSize]);
 
   const sorted = useMemo(() => {
     if (!sort.key) return data;
@@ -78,7 +83,7 @@ export default function DataTable({
               paginated.map((row) => (
                 <tr
                   key={row[rowKey]}
-                  className={`hover:bg-gray-50 transition-colors ${onRowClick ? 'cursor-pointer' : ''}`}
+                  className={`transition-colors ${onRowClick ? 'cursor-pointer' : ''} ${rowClassName?.(row) || 'hover:bg-gray-50'}`}
                   onClick={() => onRowClick?.(row)}
                 >
                   {columns.map((col) => (
@@ -93,11 +98,12 @@ export default function DataTable({
         </table>
       </div>
 
-      {totalPages > 1 && (
+      {!loading && sorted.length > 0 && (
         <div className="flex items-center justify-between mt-3 px-1">
           <p className="text-xs text-gray-500">
             Showing {Math.min((page - 1) * pageSize + 1, sorted.length)}–{Math.min(page * pageSize, sorted.length)} of {sorted.length}
           </p>
+          {totalPages > 1 && (
           <div className="flex items-center gap-1">
             <button
               onClick={() => setPage(p => Math.max(1, p - 1))}
@@ -126,6 +132,7 @@ export default function DataTable({
               Next
             </button>
           </div>
+          )}
         </div>
       )}
     </div>

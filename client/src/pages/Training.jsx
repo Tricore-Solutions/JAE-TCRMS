@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Plus, Search } from 'lucide-react';
 import Layout from '../components/Layout';
 import DataTable from '../components/DataTable';
@@ -18,6 +19,15 @@ function getCertStatus(expirationDate) {
   const in60 = new Date(Date.now() + 60 * 86400000).toISOString().split('T')[0];
   if (expirationDate < today) return 'expired';
   if (expirationDate <= in60) return 'expiring';
+  return 'valid';
+}
+
+function getExpirationUrgency(expirationDate) {
+  if (!expirationDate) return 'none';
+  const today = new Date().toISOString().split('T')[0];
+  const in30 = new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0];
+  if (expirationDate < today) return 'expired';
+  if (expirationDate <= in30) return 'expiring30';
   return 'valid';
 }
 
@@ -51,6 +61,7 @@ export default function Training() {
   const { isAdmin, isEncoder } = useAuth();
   const { show: toast } = useToast();
   const canEdit = isAdmin || isEncoder;
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [records, setRecords] = useState([]);
   const [employees, setEmployees] = useState([]);
@@ -96,6 +107,16 @@ export default function Training() {
   }, [search, filterCategory, filterStatus, filterWorkerLine, filterTake]);
 
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    if (searchParams.get('action') === 'create' && canEdit) {
+      setSelected(null);
+      setForm({ ...emptyForm, training_date: new Date().toISOString().split('T')[0] });
+      setWithValidity(true);
+      setModalOpen(true);
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams, canEdit, setSearchParams]);
 
   const openCreate = () => {
     setSelected(null);
@@ -194,9 +215,14 @@ export default function Training() {
     )},
     { key: 'training_date', label: 'Date' },
     { key: 'expiration_date', label: 'Expiration', render: v => {
-      const isExpired = getCertStatus(v) === 'expired';
+      const urgency = getExpirationUrgency(v);
+      const colorClass = urgency === 'valid'
+        ? 'text-green-600'
+        : urgency === 'none'
+          ? 'text-gray-500'
+          : 'text-red-600';
       return (
-        <span className={`text-sm font-medium ${isExpired ? 'text-red-600' : 'text-green-600'}`}>
+        <span className={`text-sm font-medium ${colorClass}`}>
           {v || 'No expiry'}
         </span>
       );
@@ -292,7 +318,17 @@ export default function Training() {
         </select>
       </div>
 
-      <DataTable columns={columns} data={records} loading={loading} emptyMessage="No training records found." />
+      <DataTable
+        columns={columns}
+        data={records}
+        loading={loading}
+        emptyMessage="No training records found."
+        rowClassName={(row) =>
+          getExpirationUrgency(row.expiration_date) === 'expired'
+            ? 'bg-red-50 hover:bg-red-100'
+            : ''
+        }
+      />
 
       {/* Add/Edit Modal */}
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={selected ? 'Edit Training Record' : 'Add Training Record'} size="lg">

@@ -1,4 +1,4 @@
-export default function StatCard({ title, value, subtitle, icon: Icon, color = 'blue', trend }) {
+export default function StatCard({ title, value, subtitle, icon: Icon, color = 'blue', trend, onClick }) {
   const colors = {
     blue:   { bg: 'bg-blue-50', icon: 'text-[#1D72B8]', border: 'border-blue-100' },
     green:  { bg: 'bg-green-50', icon: 'text-green-600', border: 'border-green-100' },
@@ -8,8 +8,12 @@ export default function StatCard({ title, value, subtitle, icon: Icon, color = '
   };
   const c = colors[color] || colors.blue;
 
-  return (
-    <div className={`rounded-xl border ${c.border} bg-white shadow-sm p-5`}>
+  const className = `rounded-xl border ${c.border} bg-white shadow-sm p-5 w-full text-left${
+    onClick ? ' cursor-pointer hover:shadow-md transition-shadow' : ''
+  }`;
+
+  const content = (
+    <>
       <div className="flex items-start justify-between">
         <div>
           <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">{title}</p>
@@ -22,6 +26,16 @@ export default function StatCard({ title, value, subtitle, icon: Icon, color = '
           </div>
         )}
       </div>
-    </div>
+    </>
   );
+
+  if (onClick) {
+    return (
+      <button type="button" onClick={onClick} className={className}>
+        {content}
+      </button>
+    );
+  }
+
+  return <div className={className}>{content}</div>;
 }

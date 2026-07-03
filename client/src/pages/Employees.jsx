@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Plus, Search } from 'lucide-react';
 import Layout from '../components/Layout';
 import DataTable from '../components/DataTable';
@@ -26,6 +27,7 @@ export default function Employees() {
   const { isAdmin, isEncoder } = useAuth();
   const { show: toast } = useToast();
   const canEdit = isAdmin || isEncoder;
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [employees, setEmployees] = useState([]);
   const [filters, setFilters] = useState({ factories: [], lines: [], teams: [] });
@@ -67,6 +69,15 @@ export default function Employees() {
   }, [search, filterStatus, filterFactory, filterEmploymentStatus]);
 
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    if (searchParams.get('action') === 'create' && canEdit) {
+      setSelected(null);
+      setForm(emptyForm);
+      setModalOpen(true);
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams, canEdit, setSearchParams]);
 
   const openCreate = () => {
     setSelected(null);

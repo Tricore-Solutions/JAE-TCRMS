@@ -76,14 +76,34 @@ def by_factory(request):
 def expiring(request):
     current = today()
     in60 = days_from_today(60)
+    days = request.query_params.get('days')
+    expired_only = request.query_params.get('expired') == 'true'
+
+    if expired_only:
+        trainings = (
+            Training.objects.select_related('employee')
+            .filter(expiration_date__isnull=False, expiration_date__lt=current)
+            .order_by('expiration_date')
+        )
+    elif days:
+        in_days = days_from_today(int(days))
+        trainings = (
+            Training.objects.select_related('employee')
+            .filter(
+                expiration_date__isnull=False,
+                expiration_date__gte=current,
+                expiration_date__lte=in_days,
+            )
+            .order_by('expiration_date')
+        )
+    else:
+        trainings = (
+            Training.objects.select_related('employee')
+            .filter(expiration_date__isnull=False, expiration_date__lte=in60)
+            .order_by('expiration_date')[:100]
+        )
 
     rows = []
-    trainings = (
-        Training.objects.select_related('employee')
-        .filter(expiration_date__isnull=False, expiration_date__lte=in60)
-        .order_by('expiration_date')[:100]
-    )
-
     for training in trainings:
         if training.expiration_date < current:
             cert_status = 'expired'
