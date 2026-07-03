@@ -153,7 +153,7 @@ export default function ViewerDashboard() {
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-gray-50">
-                {['Employee ID', 'Full Name', 'Factory', 'Line', 'Team', 'Trainings', 'Cert Status', ''].map(h => (
+                {['Employee ID', 'Full Name', 'Factory', 'Line', 'Team', 'Date Hired', 'Employment Status', 'Trainings', 'Cert Status', ''].map(h => (
                   <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{h}</th>
                 ))}
               </tr>
@@ -161,7 +161,7 @@ export default function ViewerDashboard() {
             <tbody className="divide-y divide-gray-200">
               {loading ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-12 text-center">
+                  <td colSpan={10} className="px-4 py-12 text-center">
                     <div className="flex flex-col items-center gap-2 text-gray-500">
                       <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
                       <span className="text-sm">Loading...</span>
@@ -170,7 +170,7 @@ export default function ViewerDashboard() {
                 </tr>
               ) : employees.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-12 text-center text-gray-500 text-sm">No employees found.</td>
+                  <td colSpan={10} className="px-4 py-12 text-center text-gray-500 text-sm">No employees found.</td>
                 </tr>
               ) : (
                 employees.map(emp => (
@@ -184,6 +184,8 @@ export default function ViewerDashboard() {
                     <td className="px-4 py-3 text-gray-500">{emp.factory || '—'}</td>
                     <td className="px-4 py-3 text-gray-500">{emp.line || '—'}</td>
                     <td className="px-4 py-3 text-gray-500">{emp.team || '—'}</td>
+                    <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{emp.hire_date || '—'}</td>
+                    <td className="px-4 py-3 text-gray-500">{emp.employment_status || '—'}</td>
                     <td className="px-4 py-3">
                       <span className="text-sm text-gray-900 font-medium">{emp.total_trainings || 0}</span>
                     </td>

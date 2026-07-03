@@ -37,7 +37,8 @@ def public_employees(request):
             ),
         ),
     ).order_by('full_name').values(
-        'id', 'employee_id', 'full_name', 'factory', 'line', 'team', 'status',
+        'id', 'employee_id', 'full_name', 'factory', 'line', 'team',
+        'employment_status', 'hire_date', 'status',
         'total_trainings', 'expired_count',
     )
 
@@ -93,6 +94,8 @@ def public_employee_trainings(request, pk):
             'line': employee.line,
             'team': employee.team,
             'position': employee.position,
+            'employment_status': employee.employment_status,
+            'hire_date': str(employee.hire_date) if employee.hire_date else None,
         },
         'trainings': rows,
     })

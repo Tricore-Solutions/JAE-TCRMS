@@ -116,6 +116,7 @@ def employee_detail(request, pk):
 
         # Capture before state
         before = {
+            'employee_id': employee.employee_id,
             'full_name': employee.full_name,
             'factory': employee.factory,
             'line': employee.line,
@@ -125,6 +126,17 @@ def employee_detail(request, pk):
             'hire_date': str(employee.hire_date) if employee.hire_date else None,
             'status': employee.status,
         }
+
+        employee_id = (request.data.get('employee_id') or employee.employee_id).strip()
+        if not employee_id:
+            return Response(
+                {'error': 'employee_id is required'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if employee_id != employee.employee_id:
+            if Employee.objects.filter(employee_id=employee_id).exclude(pk=employee.pk).exists():
+                return Response({'error': 'Employee ID already exists'}, status=status.HTTP_409_CONFLICT)
+            employee.employee_id = employee_id
 
         last_name = (request.data.get('last_name') or employee.last_name).strip()
         first_name = (request.data.get('first_name') or employee.first_name).strip()
@@ -143,6 +155,7 @@ def employee_detail(request, pk):
         employee.save()
 
         after = {
+            'employee_id': employee.employee_id,
             'full_name': employee.full_name,
             'factory': employee.factory,
             'line': employee.line,

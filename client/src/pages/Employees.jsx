@@ -153,13 +153,8 @@ export default function Employees() {
 
   const columns = [
     { key: 'employee_id', label: 'Employee ID', render: v => <span className="font-mono text-xs text-[#1D72B8]">{v}</span> },
-    { key: 'full_name', label: 'Name', render: (v, row) => (
-      <div>
-        <p className="font-medium text-gray-900 text-sm">{v}</p>
-        {(row.first_name || row.last_name) && (
-          <p className="text-xs text-gray-500">{row.first_name} {row.middle_initial ? row.middle_initial + '. ' : ''}{row.last_name}</p>
-        )}
-      </div>
+    { key: 'full_name', label: 'Name', render: v => (
+      <span className="font-medium text-gray-900 text-sm">{v}</span>
     )},
     { key: 'factory', label: 'Factory' },
     { key: 'line', label: 'Line' },
@@ -167,6 +162,9 @@ export default function Employees() {
     { key: 'position', label: 'Position', render: v => <span className="text-sm text-gray-500">{v || '—'}</span> },
     { key: 'employment_status', label: 'Employment Status', render: v => (
       <span className="text-sm text-gray-600">{v || '—'}</span>
+    )},
+    { key: 'hire_date', label: 'Date Hired', render: v => (
+      <span className="text-sm text-gray-500">{v || '—'}</span>
     )},
     { key: 'status', label: 'Status', render: v => <StatusBadge status={v} /> },
     { key: 'actions', label: '', sortable: false, render: (_, row) => (
@@ -247,8 +245,7 @@ export default function Employees() {
               type="text"
               value={form.employee_id}
               onChange={e => setForm(f => ({ ...f, employee_id: e.target.value }))}
-              disabled={!!selected}
-              className="w-full app-input px-3 py-2.5 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1D72B8] disabled:opacity-60"
+              className="w-full app-input px-3 py-2.5 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
               placeholder="e.g. EMP-011"
             />
           </div>
