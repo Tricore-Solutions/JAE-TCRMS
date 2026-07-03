@@ -3,7 +3,9 @@ import { Users, ClipboardList, AlertTriangle, XCircle, UserCog, TrendingUp } fro
 import Layout from '../components/Layout';
 import StatCard from '../components/StatCard';
 import StatusBadge from '../components/StatusBadge';
-import { reportsApi, trainingsApi } from '../api';
+import Modal from '../components/Modal';
+import DataTable from '../components/DataTable';
+import { reportsApi } from '../api';
 import { useAuth } from '../context/AuthContext';
 
 function ExpiringList({ items }) {
@@ -28,19 +30,44 @@ function ExpiringList({ items }) {
   );
 }
 
+const certColumns = [
+  { key: 'full_name', label: 'Employee', render: (v, row) => (
+    <div>
+      <p className="text-gray-900 font-medium text-sm">{v}</p>
+      <p className="text-xs text-gray-500">{row.emp_code}</p>
+    </div>
+  )},
+  { key: 'title', label: 'Training Title' },
+  { key: 'factory', label: 'Factory', render: v => v || '—' },
+  { key: 'expiration_date', label: 'Expiration Date' },
+  { key: 'cert_status', label: 'Status', render: v => <StatusBadge status={v} /> },
+];
+
 export default function AdminDashboard() {
   const { user } = useAuth();
   const [overview, setOverview] = useState(null);
   const [expiring, setExpiring] = useState([]);
+  const [expiring30, setExpiring30] = useState([]);
+  const [expiring60, setExpiring60] = useState([]);
+  const [expiredCerts, setExpiredCerts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [expiring30ModalOpen, setExpiring30ModalOpen] = useState(false);
+  const [expiring60ModalOpen, setExpiring60ModalOpen] = useState(false);
+  const [expiredModalOpen, setExpiredModalOpen] = useState(false);
 
   useEffect(() => {
     Promise.all([
       reportsApi.overview(),
       reportsApi.expiring(),
-    ]).then(([ovRes, exRes]) => {
+      reportsApi.expiring({ days: 30 }),
+      reportsApi.expiring({ days: 60 }),
+      reportsApi.expiring({ expired: true }),
+    ]).then(([ovRes, exRes, ex30Res, ex60Res, expiredRes]) => {
       setOverview(ovRes.data);
       setExpiring(exRes.data);
+      setExpiring30(ex30Res.data);
+      setExpiring60(ex60Res.data);
+      setExpiredCerts(expiredRes.data);
     }).catch(console.error)
       .finally(() => setLoading(false));
   }, []);
@@ -53,7 +80,7 @@ export default function AdminDashboard() {
       <div className="mb-8">
         <h2 className="text-2xl font-bold text-gray-900">{greeting}, {user?.full_name}</h2>
         <p className="text-gray-500 mt-1 text-sm">
-          Here's an overview of your training and certification records.
+          Here&apos;s an overview of your training and certification records.
         </p>
       </div>
 
@@ -82,18 +109,21 @@ export default function AdminDashboard() {
             value={overview?.expiring30 ?? '—'}
             icon={AlertTriangle}
             color="amber"
+            onClick={() => setExpiring30ModalOpen(true)}
           />
           <StatCard
             title="Expired Certifications"
             value={overview?.expiredCerts ?? '—'}
             icon={XCircle}
             color="red"
+            onClick={() => setExpiredModalOpen(true)}
           />
           <StatCard
             title="Expiring (60 days)"
             value={overview?.expiring60 ?? '—'}
             icon={TrendingUp}
             color="purple"
+            onClick={() => setExpiring60ModalOpen(true)}
           />
           <StatCard
             title="System Users"
@@ -127,6 +157,54 @@ export default function AdminDashboard() {
           <ExpiringList items={expiring.filter(e => e.cert_status === 'expiring').slice(0, 8)} />
         </div>
       </div>
+
+      <Modal
+        open={expiring30ModalOpen}
+        onClose={() => setExpiring30ModalOpen(false)}
+        title="Expiring in 30 Days"
+        description="Training certifications expiring within the next 30 days."
+        size="xl"
+      >
+        <DataTable
+          columns={certColumns}
+          data={expiring30}
+          loading={loading}
+          emptyMessage="No certifications expiring in the next 30 days."
+        />
+      </Modal>
+
+      <Modal
+        open={expiring60ModalOpen}
+        onClose={() => setExpiring60ModalOpen(false)}
+        title="Expiring in 60 Days"
+        description="Training certifications expiring within the next 60 days."
+        size="xl"
+      >
+        <DataTable
+          columns={certColumns}
+          data={expiring60}
+          loading={loading}
+          emptyMessage="No certifications expiring in the next 60 days."
+        />
+      </Modal>
+
+      <Modal
+        open={expiredModalOpen}
+        onClose={() => setExpiredModalOpen(false)}
+        title="Expired Certifications"
+        description="Training certifications that have already expired."
+        size="xl"
+      >
+        <DataTable
+          columns={certColumns}
+          data={expiredCerts}
+          loading={loading}
+          emptyMessage="No expired certifications found."
+          rowClassName={(row) =>
+            row.cert_status === 'expired' ? 'bg-red-50 hover:bg-red-100' : ''
+          }
+        />
+      </Modal>
     </Layout>
   );
 }
