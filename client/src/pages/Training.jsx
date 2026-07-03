@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Plus, Search } from 'lucide-react';
+import { Plus, Search, Download } from 'lucide-react';
 import Layout from '../components/Layout';
 import DataTable from '../components/DataTable';
 import Modal from '../components/Modal';
@@ -57,6 +57,37 @@ const emptyForm = {
   worker_line_status: 'Floating', take: 1,
 };
 
+function buildFilterParams({ search, filterCategory, filterStatus, filterWorkerLine, filterTake }) {
+  const params = {};
+  if (search) params.search = search;
+  if (filterCategory) params.category = filterCategory;
+  if (filterWorkerLine) params.worker_line_status = filterWorkerLine;
+  if (filterTake) params.take = filterTake;
+  if (filterStatus === 'expired') params.expired = 'true';
+  if (filterStatus === 'expiring') params.expiring_soon = 'true';
+  return params;
+}
+
+function exportToCSV(data, filename) {
+  if (!data.length) return;
+  const headers = Object.keys(data[0]);
+  const rows = data.map(row =>
+    headers.map(h => {
+      const val = row[h] ?? '';
+      const str = String(val).replace(/"/g, '""');
+      return str.includes(',') || str.includes('"') || str.includes('\n') ? `"${str}"` : str;
+    }).join(',')
+  );
+  const csv = [headers.join(','), ...rows].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 export default function Training() {
   const { isAdmin, isEncoder } = useAuth();
   const { show: toast } = useToast();
@@ -82,17 +113,12 @@ export default function Training() {
   const [viewTab, setViewTab] = useState('details');
   const [recordLogs, setRecordLogs] = useState([]);
   const [logsLoading, setLogsLoading] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const params = {};
-      if (search) params.search = search;
-      if (filterCategory) params.category = filterCategory;
-      if (filterWorkerLine) params.worker_line_status = filterWorkerLine;
-      if (filterTake) params.take = filterTake;
-      if (filterStatus === 'expired') params.expired = 'true';
-      if (filterStatus === 'expiring') params.expiring_soon = 'true';
+      const params = buildFilterParams({ search, filterCategory, filterStatus, filterWorkerLine, filterTake });
       const [trRes, empRes] = await Promise.all([
         trainingsApi.list(params),
         employeesApi.list({ status: 'active' }),
@@ -195,6 +221,25 @@ export default function Training() {
     }
   };
 
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const params = buildFilterParams({ search, filterCategory, filterStatus, filterWorkerLine, filterTake });
+      const res = await reportsApi.exportTrainings(params);
+      if (!res.data.length) {
+        toast('No records to export for the current filters.', 'warning');
+        return;
+      }
+      const today = new Date().toISOString().split('T')[0];
+      exportToCSV(res.data, `JAE-TCRMS-Training-Report-${today}.csv`);
+      toast(`Exported ${res.data.length} records to CSV.`, 'success');
+    } catch {
+      toast('Export failed.', 'error');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const columns = [
     { key: 'employee_name', label: 'Employee', render: (v, row) => (
       <div>
@@ -265,10 +310,26 @@ export default function Training() {
   return (
     <Layout
       title="Training & Certification Records"
-      actions={canEdit && (
-        <button onClick={openCreate} className="flex items-center gap-2 bg-[#1D72B8] hover:bg-[#1864a3] text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
-          <Plus size={16} /> Add Training Record
-        </button>
+      actions={(
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleExport}
+            disabled={exporting}
+            className="flex items-center gap-2 bg-green-700 hover:bg-green-600 disabled:bg-gray-200 disabled:text-gray-400 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+          >
+            {exporting ? (
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <Download size={16} />
+            )}
+            {exporting ? 'Exporting...' : 'Export to CSV'}
+          </button>
+          {canEdit && (
+            <button onClick={openCreate} className="flex items-center gap-2 bg-[#1D72B8] hover:bg-[#1864a3] text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
+              <Plus size={16} /> Add Training Record
+            </button>
+          )}
+        </div>
       )}
     >
       {/* Filters */}

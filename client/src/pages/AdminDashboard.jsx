@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Users, ClipboardList, AlertTriangle, XCircle, UserCog, TrendingUp } from 'lucide-react';
+import { Users, ClipboardList, AlertTriangle, XCircle } from 'lucide-react';
 import Layout from '../components/Layout';
 import StatCard from '../components/StatCard';
 import StatusBadge from '../components/StatusBadge';
@@ -48,11 +48,9 @@ export default function AdminDashboard() {
   const [overview, setOverview] = useState(null);
   const [expiring, setExpiring] = useState([]);
   const [expiring30, setExpiring30] = useState([]);
-  const [expiring60, setExpiring60] = useState([]);
   const [expiredCerts, setExpiredCerts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [expiring30ModalOpen, setExpiring30ModalOpen] = useState(false);
-  const [expiring60ModalOpen, setExpiring60ModalOpen] = useState(false);
   const [expiredModalOpen, setExpiredModalOpen] = useState(false);
 
   useEffect(() => {
@@ -60,13 +58,11 @@ export default function AdminDashboard() {
       reportsApi.overview(),
       reportsApi.expiring(),
       reportsApi.expiring({ days: 30 }),
-      reportsApi.expiring({ days: 60 }),
       reportsApi.expiring({ expired: true }),
-    ]).then(([ovRes, exRes, ex30Res, ex60Res, expiredRes]) => {
+    ]).then(([ovRes, exRes, ex30Res, expiredRes]) => {
       setOverview(ovRes.data);
       setExpiring(exRes.data);
       setExpiring30(ex30Res.data);
-      setExpiring60(ex60Res.data);
       setExpiredCerts(expiredRes.data);
     }).catch(console.error)
       .finally(() => setLoading(false));
@@ -85,13 +81,13 @@ export default function AdminDashboard() {
       </div>
 
       {loading ? (
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
-          {[...Array(6)].map((_, i) => (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+          {[...Array(4)].map((_, i) => (
             <div key={i} className="rounded-xl border border-gray-200 bg-white p-5 h-28 animate-pulse" />
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
           <StatCard
             title="Active Employees"
             value={overview?.totalEmployees ?? '—'}
@@ -117,19 +113,6 @@ export default function AdminDashboard() {
             icon={XCircle}
             color="red"
             onClick={() => setExpiredModalOpen(true)}
-          />
-          <StatCard
-            title="Expiring (60 days)"
-            value={overview?.expiring60 ?? '—'}
-            icon={TrendingUp}
-            color="purple"
-            onClick={() => setExpiring60ModalOpen(true)}
-          />
-          <StatCard
-            title="System Users"
-            value={overview?.totalUsers ?? '—'}
-            icon={UserCog}
-            color="blue"
           />
         </div>
       )}
@@ -170,21 +153,6 @@ export default function AdminDashboard() {
           data={expiring30}
           loading={loading}
           emptyMessage="No certifications expiring in the next 30 days."
-        />
-      </Modal>
-
-      <Modal
-        open={expiring60ModalOpen}
-        onClose={() => setExpiring60ModalOpen(false)}
-        title="Expiring in 60 Days"
-        description="Training certifications expiring within the next 60 days."
-        size="xl"
-      >
-        <DataTable
-          columns={certColumns}
-          data={expiring60}
-          loading={loading}
-          emptyMessage="No certifications expiring in the next 60 days."
         />
       </Modal>
 

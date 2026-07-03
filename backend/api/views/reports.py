@@ -171,16 +171,44 @@ def record_audit_logs(request, table_name, record_id):
 @permission_classes([IsAuthenticated])
 def export_trainings(request):
     qs = Training.objects.select_related('employee').all()
-    factory = request.query_params.get('factory')
+
     category = request.query_params.get('category')
+    factory = request.query_params.get('factory')
+    search = request.query_params.get('search')
+    worker_line_status = request.query_params.get('worker_line_status')
+    take = request.query_params.get('take')
+    training_date = request.query_params.get('training_date')
     emp_status = request.query_params.get('status')
 
     if factory:
         qs = qs.filter(employee__factory=factory)
     if category:
         qs = qs.filter(category=category)
+    if worker_line_status:
+        qs = qs.filter(worker_line_status=worker_line_status)
+    if take:
+        qs = qs.filter(take=int(take))
+    if training_date:
+        qs = qs.filter(training_date=training_date)
     if emp_status:
         qs = qs.filter(employee__status=emp_status)
+    if search:
+        qs = qs.filter(
+            Q(employee__full_name__icontains=search)
+            | Q(employee__employee_id__icontains=search)
+            | Q(title__icontains=search)
+        )
+
+    current = today()
+    in60 = days_from_today(60)
+    if request.query_params.get('expired') == 'true':
+        qs = qs.filter(expiration_date__isnull=False, expiration_date__lt=current)
+    elif request.query_params.get('expiring_soon') == 'true':
+        qs = qs.filter(
+            expiration_date__isnull=False,
+            expiration_date__gte=current,
+            expiration_date__lte=in60,
+        )
 
     rows = []
     for training in qs.order_by('employee__full_name', '-training_date'):
@@ -201,6 +229,8 @@ def export_trainings(request):
                 training.expiration_date.isoformat() if training.expiration_date else None
             ),
             'process_classification': training.process_classification,
+            'worker_line_status': training.worker_line_status,
+            'take': training.take,
             'remarks': training.remarks,
         })
 

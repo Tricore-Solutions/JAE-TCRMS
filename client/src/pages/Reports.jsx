@@ -1,30 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
-import { Download, BarChart3, Factory, Tag, AlertTriangle, RefreshCw } from 'lucide-react';
+import { BarChart3, Factory, Tag, AlertTriangle, RefreshCw } from 'lucide-react';
 import Layout from '../components/Layout';
-import StatCard from '../components/StatCard';
 import StatusBadge from '../components/StatusBadge';
 import { reportsApi } from '../api';
 import { useToast } from '../components/Toast';
-
-function exportToCSV(data, filename) {
-  if (!data.length) return;
-  const headers = Object.keys(data[0]);
-  const rows = data.map(row =>
-    headers.map(h => {
-      const val = row[h] ?? '';
-      const str = String(val).replace(/"/g, '""');
-      return str.includes(',') || str.includes('"') || str.includes('\n') ? `"${str}"` : str;
-    }).join(',')
-  );
-  const csv = [headers.join(','), ...rows].join('\n');
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
-}
 
 const TAKE_AXIS = [1, 2, 3];
 const TAKE_LABELS = { 1: '1st Take', 2: '2nd Take', 3: '3rd Take' };
@@ -193,7 +172,6 @@ function SimpleBar({ label, value, max, color = 'bg-blue-500', animDelay = 0 }) 
 
 export default function Reports() {
   const { show: toast } = useToast();
-  const [overview, setOverview] = useState(null);
   const [byCategory, setByCategory] = useState([]);
   const [byFactory, setByFactory] = useState([]);
   const [expiring, setExpiring] = useState([]);
@@ -202,8 +180,6 @@ export default function Reports() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const isInitialLoad = useRef(true);
-  const [exporting, setExporting] = useState(false);
-  const [exportFilter, setExportFilter] = useState({ factory: '', category: '' });
 
   const load = async () => {
     const isRefresh = !isInitialLoad.current;
@@ -211,14 +187,12 @@ export default function Reports() {
     else setLoading(true);
 
     try {
-      const [ovRes, catRes, facRes, expRes, tpmRes] = await Promise.all([
-        reportsApi.overview(),
+      const [catRes, facRes, expRes, tpmRes] = await Promise.all([
         reportsApi.byCategory(),
         reportsApi.byFactory(),
         reportsApi.expiring(),
         reportsApi.takesPerMonth(),
       ]);
-      setOverview(ovRes.data);
       setByCategory(catRes.data);
       setByFactory(facRes.data);
       setExpiring(expRes.data);
@@ -235,20 +209,6 @@ export default function Reports() {
 
   useEffect(() => { load(); }, []);
 
-  const handleExport = async () => {
-    setExporting(true);
-    try {
-      const res = await reportsApi.exportTrainings(exportFilter);
-      const today = new Date().toISOString().split('T')[0];
-      exportToCSV(res.data, `JAE-TCRMS-Training-Report-${today}.csv`);
-      toast(`Exported ${res.data.length} records to CSV.`, 'success');
-    } catch {
-      toast('Export failed.', 'error');
-    } finally {
-      setExporting(false);
-    }
-  };
-
   const maxCategory = Math.max(...byCategory.map(r => r.count), 1);
   const maxFactory = Math.max(...byFactory.map(r => r.employee_count), 1);
 
@@ -264,21 +224,6 @@ export default function Reports() {
       }
     >
       <div key={contentKey} className={contentKey > 0 ? 'page-enter' : undefined}>
-      {/* Overview stats */}
-      {loading ? (
-        <div className="grid grid-cols-3 gap-5 mb-8">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="rounded-xl border border-gray-200 bg-white p-5 h-28 animate-pulse" />
-          ))}
-        </div>
-      ) : (
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
-          <StatCard title="Active Employees" value={overview?.totalEmployees ?? '—'} icon={BarChart3} color="blue" />
-          <StatCard title="Total Trainings" value={overview?.totalTrainings ?? '—'} icon={Tag} color="green" />
-          <StatCard title="Expired Certifications" value={overview?.expiredCerts ?? '—'} icon={AlertTriangle} color="red" />
-        </div>
-      )}
-
       <div className="grid lg:grid-cols-2 gap-6 mb-6">
         {/* By Category */}
         <div className="app-panel p-6">
@@ -379,54 +324,10 @@ export default function Reports() {
               </tbody>
             </table>
             {expiring.length > 20 && (
-              <p className="text-xs text-gray-500 text-center mt-4">Showing 20 of {expiring.length} records. Export CSV for full list.</p>
+              <p className="text-xs text-gray-500 text-center mt-4">Showing 20 of {expiring.length} records.</p>
             )}
           </div>
         )}
-      </div>
-
-      {/* CSV Export */}
-      <div className="app-panel p-6">
-        <h3 className="font-semibold text-gray-900 mb-1 flex items-center gap-2">
-          <Download size={16} className="text-gray-500" /> Export Training Records
-        </h3>
-        <p className="text-sm text-gray-500 mb-5">Download all training records as a CSV file for reporting or backup.</p>
-        <div className="flex flex-wrap gap-3 items-end">
-          <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">Filter by Factory</label>
-            <select
-              value={exportFilter.factory}
-              onChange={e => setExportFilter(f => ({ ...f, factory: e.target.value }))}
-              className="app-input px-3 py-2 text-sm"
-            >
-              <option value="">All Factories</option>
-              {byFactory.map(f => <option key={f.factory} value={f.factory}>{f.factory}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">Filter by Category</label>
-            <select
-              value={exportFilter.category}
-              onChange={e => setExportFilter(f => ({ ...f, category: e.target.value }))}
-              className="app-input px-3 py-2 text-sm"
-            >
-              <option value="">All Categories</option>
-              {byCategory.map(c => <option key={c.category} value={c.category}>{c.category}</option>)}
-            </select>
-          </div>
-          <button
-            onClick={handleExport}
-            disabled={exporting}
-            className="flex items-center gap-2 bg-green-700 hover:bg-green-600 disabled:bg-gray-200 disabled:text-gray-400 text-white text-sm font-medium px-5 py-2 rounded-lg transition-colors"
-          >
-            {exporting ? (
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-            ) : (
-              <Download size={16} />
-            )}
-            {exporting ? 'Exporting...' : 'Export to CSV'}
-          </button>
-        </div>
       </div>
       </div>
     </Layout>
