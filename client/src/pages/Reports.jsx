@@ -187,15 +187,24 @@ export default function Reports() {
     else setLoading(true);
 
     try {
-      const [catRes, facRes, expRes, tpmRes] = await Promise.all([
+      const [catRes, facRes, exp30Res, expiredRes, tpmRes] = await Promise.all([
         reportsApi.byCategory(),
         reportsApi.byFactory(),
-        reportsApi.expiring(),
+        reportsApi.expiring({ days: 30 }),
+        reportsApi.expiring({ expired: true }),
         reportsApi.takesPerMonth(),
       ]);
       setByCategory(catRes.data);
       setByFactory(facRes.data);
-      setExpiring(expRes.data);
+      const seen = new Set();
+      const mergedExpiring = [...expiredRes.data, ...exp30Res.data]
+        .filter(item => {
+          if (seen.has(item.id)) return false;
+          seen.add(item.id);
+          return true;
+        })
+        .sort((a, b) => a.expiration_date.localeCompare(b.expiration_date));
+      setExpiring(mergedExpiring);
       setTakesPerMonth(tpmRes.data);
       if (isRefresh) setContentKey(k => k + 1);
     } catch {
@@ -295,7 +304,7 @@ export default function Reports() {
       {/* Expiring certifications list */}
       <div className="app-panel p-6 mb-6">
         <h3 className="font-semibold text-gray-900 mb-5 flex items-center gap-2">
-          <AlertTriangle size={16} className="text-amber-600" /> Certifications Requiring Attention (next 60 days + expired)
+          <AlertTriangle size={16} className="text-amber-600" /> Certifications Requiring Attention (next 30 days + expired)
         </h3>
         {expiring.length === 0 ? (
           <p className="text-gray-500 text-sm text-center py-6">No expiring or expired certifications found.</p>

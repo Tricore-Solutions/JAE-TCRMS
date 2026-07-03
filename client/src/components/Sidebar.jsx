@@ -1,7 +1,7 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Users, ClipboardList, BarChart3,
-  UserCog, LogOut, Settings, Eye
+  UserCog, LogOut, Eye
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -63,16 +63,6 @@ export default function Sidebar() {
             <Eye size={16} />
             Public Viewer
           </NavLink>
-          <button
-            onClick={() => {
-              localStorage.removeItem('serverUrl');
-              window.location.reload();
-            }}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:text-[#1D72B8] hover:bg-blue-50 transition-colors"
-          >
-            <Settings size={16} />
-            Server Settings
-          </button>
         </div>
       </nav>
 
