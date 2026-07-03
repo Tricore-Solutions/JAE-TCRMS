@@ -22,6 +22,19 @@ function getCertStatus(expirationDate) {
 }
 
 const WORKER_LINE_STATUSES = ['Floating', 'Original'];
+const PROCESS_CLASSIFICATION_OPTIONS = ['Beginner', 'Basic', 'Expert', 'Advanced', 'Non-sensing', 'Sensing'];
+const CLASSIFICATION_CHIP_STYLES = {
+  Beginner: 'bg-green-50 text-green-700 border border-green-200',
+  Basic: 'bg-blue-50 text-[#1D72B8] border border-blue-200',
+  Advanced: 'bg-amber-50 text-amber-700 border border-amber-200',
+  Expert: 'bg-purple-50 text-purple-700 border border-purple-200',
+  'Non-sensing': 'bg-slate-50 text-slate-700 border border-slate-200',
+  Sensing: 'bg-cyan-50 text-cyan-700 border border-cyan-200',
+};
+
+function getClassificationChipClass(value) {
+  return CLASSIFICATION_CHIP_STYLES[value] || 'bg-gray-100 text-gray-600 border border-gray-200';
+}
 const TAKE_OPTIONS = [
   { value: 1, label: '1st Take' },
   { value: 2, label: '2nd Take' },
@@ -174,6 +187,11 @@ export default function Training() {
     { key: 'category', label: 'Category', render: v => (
       <span className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full">{v || '—'}</span>
     )},
+    { key: 'process_classification', label: 'Classification', render: v => v ? (
+      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${getClassificationChipClass(v)}`}>{v}</span>
+    ) : (
+      <span className="text-xs text-gray-400">—</span>
+    )},
     { key: 'training_date', label: 'Date' },
     { key: 'expiration_date', label: 'Expiration', render: v => {
       const isExpired = getCertStatus(v) === 'expired';
@@ -252,7 +270,7 @@ export default function Training() {
           onChange={e => setFilterStatus(e.target.value)}
           className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
         >
-          <option value="">All Status</option>
+          <option value="">All Expiry</option>
           <option value="expired">Expired</option>
           <option value="expiring">Expiring Soon</option>
         </select>
@@ -356,13 +374,17 @@ export default function Training() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Process Classification</label>
-                <input
-                  type="text"
+                <select
                   value={form.process_classification}
                   onChange={e => setForm(f => ({ ...f, process_classification: e.target.value }))}
-                  className="w-full app-input px-3 py-2.5 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
-                  placeholder="e.g. General, Production"
-                />
+                  className="w-full app-input px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
+                >
+                  <option value="">Select classification...</option>
+                  {form.process_classification && !PROCESS_CLASSIFICATION_OPTIONS.includes(form.process_classification) && (
+                    <option value={form.process_classification}>{form.process_classification}</option>
+                  )}
+                  {PROCESS_CLASSIFICATION_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
+                </select>
               </div>
             </>
           )}
