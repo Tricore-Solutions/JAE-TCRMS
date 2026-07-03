@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Plus, Search, Edit2, Trash2, Eye } from 'lucide-react';
+import { Plus, Search } from 'lucide-react';
 import Layout from '../components/Layout';
 import DataTable from '../components/DataTable';
 import Modal from '../components/Modal';
@@ -10,9 +10,16 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/Toast';
 
 const STATUSES = ['active', 'inactive', 'resigned'];
+const EMPLOYMENT_STATUSES = [
+  'FAMSI - Proby',
+  'FAMSI - Reg',
+  'MDHII - Proby',
+  'MDHII - Reg',
+  'Regular - JAE',
+];
 const emptyForm = {
   employee_id: '', last_name: '', first_name: '', middle_initial: '',
-  factory: '', line: '', team: '', position: '', status: 'active', hire_date: '',
+  factory: '', line: '', team: '', position: '', employment_status: '', status: 'active', hire_date: '',
 };
 
 export default function Employees() {
@@ -26,6 +33,7 @@ export default function Employees() {
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('active');
   const [filterFactory, setFilterFactory] = useState('');
+  const [filterEmploymentStatus, setFilterEmploymentStatus] = useState('');
 
   const [modalOpen, setModalOpen] = useState(false);
   const [viewModal, setViewModal] = useState(false);
@@ -43,6 +51,7 @@ export default function Employees() {
       const params = {};
       if (filterStatus) params.status = filterStatus;
       if (filterFactory) params.factory = filterFactory;
+      if (filterEmploymentStatus) params.employment_status = filterEmploymentStatus;
       if (search) params.search = search;
       const [empRes, filRes] = await Promise.all([
         employeesApi.list(params),
@@ -55,7 +64,7 @@ export default function Employees() {
     } finally {
       setLoading(false);
     }
-  }, [search, filterStatus, filterFactory]);
+  }, [search, filterStatus, filterFactory, filterEmploymentStatus]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -76,6 +85,7 @@ export default function Employees() {
       line: emp.line,
       team: emp.team,
       position: emp.position,
+      employment_status: emp.employment_status || '',
       status: emp.status,
       hire_date: emp.hire_date || '',
     });
@@ -144,20 +154,23 @@ export default function Employees() {
     { key: 'line', label: 'Line' },
     { key: 'team', label: 'Team' },
     { key: 'position', label: 'Position', render: v => <span className="text-sm text-gray-500">{v || '—'}</span> },
+    { key: 'employment_status', label: 'Employment Status', render: v => (
+      <span className="text-sm text-gray-600">{v || '—'}</span>
+    )},
     { key: 'status', label: 'Status', render: v => <StatusBadge status={v} /> },
     { key: 'actions', label: '', sortable: false, render: (_, row) => (
       <div className="flex items-center gap-1">
-        <button onClick={e => { e.stopPropagation(); openView(row); }} className="p-1.5 text-gray-500 hover:text-[#1D72B8] hover:bg-blue-50 rounded-lg transition-colors">
-          <Eye size={14} />
+        <button onClick={e => { e.stopPropagation(); openView(row); }} className="px-2.5 py-1 text-xs font-medium text-gray-500 bg-gray-50 hover:text-[#1D72B8] hover:bg-blue-50 rounded-lg transition-colors">
+          View
         </button>
         {canEdit && (
           <>
-            <button onClick={e => { e.stopPropagation(); openEdit(row); }} className="p-1.5 text-gray-500 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors">
-              <Edit2 size={14} />
+            <button onClick={e => { e.stopPropagation(); openEdit(row); }} className="px-2.5 py-1 text-xs font-medium text-gray-500 bg-gray-50 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors">
+              Edit
             </button>
             {isAdmin && (
-              <button onClick={e => { e.stopPropagation(); setDeleteConfirm(row); }} className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-                <Trash2 size={14} />
+              <button onClick={e => { e.stopPropagation(); setDeleteConfirm(row); }} className="px-2.5 py-1 text-xs font-medium text-gray-500 bg-gray-50 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                Delete
               </button>
             )}
           </>
@@ -201,6 +214,14 @@ export default function Employees() {
         >
           <option value="">All Factories</option>
           {filters.factories.map(f => <option key={f} value={f}>{f}</option>)}
+        </select>
+        <select
+          value={filterEmploymentStatus}
+          onChange={e => setFilterEmploymentStatus(e.target.value)}
+          className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
+        >
+          <option value="">All Employment Status</option>
+          {EMPLOYMENT_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
         </select>
       </div>
 
@@ -292,6 +313,20 @@ export default function Employees() {
             />
           </div>
           <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Employment Status</label>
+            <select
+              value={form.employment_status}
+              onChange={e => setForm(f => ({ ...f, employment_status: e.target.value }))}
+              className="w-full app-input px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
+            >
+              <option value="">Select employment status...</option>
+              {form.employment_status && !EMPLOYMENT_STATUSES.includes(form.employment_status) && (
+                <option value={form.employment_status}>{form.employment_status}</option>
+              )}
+              {EMPLOYMENT_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+          </div>
+          <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Hire Date</label>
             <input
               type="date"
@@ -350,6 +385,7 @@ export default function Employees() {
                   { label: 'Line', value: selected.line || '—' },
                   { label: 'Team', value: selected.team || '—' },
                   { label: 'Position', value: selected.position || '—' },
+                  { label: 'Employment Status', value: selected.employment_status || '—' },
                   { label: 'Hire Date', value: selected.hire_date || '—' },
                   { label: 'Status', value: <StatusBadge status={selected.status} /> },
                 ].map(({ label, value }) => (

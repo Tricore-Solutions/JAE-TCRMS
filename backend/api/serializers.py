@@ -30,7 +30,7 @@ class EmployeeSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'employee_id', 'last_name', 'first_name', 'middle_initial',
             'full_name', 'factory', 'line', 'team',
-            'position', 'status', 'hire_date', 'created_at', 'updated_at',
+            'position', 'employment_status', 'status', 'hire_date', 'created_at', 'updated_at',
         ]
 
 

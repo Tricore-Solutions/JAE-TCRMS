@@ -48,7 +48,7 @@ def employee_filters(request):
 def employee_list_create(request):
     if request.method == 'GET':
         qs = Employee.objects.all()
-        for field in ('status', 'factory', 'line', 'team'):
+        for field in ('status', 'factory', 'line', 'team', 'employment_status'):
             value = request.query_params.get(field)
             if value:
                 qs = qs.filter(**{field: value})
@@ -88,6 +88,7 @@ def employee_list_create(request):
         line=request.data.get('line') or '',
         team=request.data.get('team') or '',
         position=request.data.get('position') or '',
+        employment_status=request.data.get('employment_status') or '',
         status=request.data.get('status') or 'active',
         hire_date=request.data.get('hire_date') or None,
     )
@@ -120,6 +121,7 @@ def employee_detail(request, pk):
             'line': employee.line,
             'team': employee.team,
             'position': employee.position,
+            'employment_status': employee.employment_status,
             'hire_date': str(employee.hire_date) if employee.hire_date else None,
             'status': employee.status,
         }
@@ -133,7 +135,7 @@ def employee_detail(request, pk):
         employee.middle_initial = middle_initial
         employee.full_name = _build_full_name(last_name, first_name, middle_initial)
 
-        for field in ('factory', 'line', 'team', 'position', 'hire_date'):
+        for field in ('factory', 'line', 'team', 'position', 'employment_status', 'hire_date'):
             if field in request.data:
                 setattr(employee, field, request.data[field])
         if request.data.get('status'):
@@ -146,6 +148,7 @@ def employee_detail(request, pk):
             'line': employee.line,
             'team': employee.team,
             'position': employee.position,
+            'employment_status': employee.employment_status,
             'hire_date': str(employee.hire_date) if employee.hire_date else None,
             'status': employee.status,
         }

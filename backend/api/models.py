@@ -33,6 +33,13 @@ class Employee(models.Model):
         ('inactive', 'Inactive'),
         ('resigned', 'Resigned'),
     ]
+    EMPLOYMENT_STATUS_CHOICES = [
+        ('FAMSI - Proby', 'FAMSI - Proby'),
+        ('FAMSI - Reg', 'FAMSI - Reg'),
+        ('MDHII - Proby', 'MDHII - Proby'),
+        ('MDHII - Reg', 'MDHII - Reg'),
+        ('Regular - JAE', 'Regular - JAE'),
+    ]
 
     employee_id = models.CharField(max_length=50, unique=True)
     last_name = models.CharField(max_length=100, default='')
@@ -43,6 +50,7 @@ class Employee(models.Model):
     line = models.CharField(max_length=100, default='')
     team = models.CharField(max_length=100, default='')
     position = models.CharField(max_length=100, default='')
+    employment_status = models.CharField(max_length=50, choices=EMPLOYMENT_STATUS_CHOICES, default='', blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
     hire_date = models.DateField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -78,7 +86,7 @@ class Training(models.Model):
     expiration_date = models.DateField(null=True, blank=True)
     process_classification = models.CharField(max_length=255, default='')
     remarks = models.TextField(default='')
-    worker_line_status = models.CharField(max_length=50, choices=WORKER_LINE_STATUS_CHOICES, default='On Line')
+    worker_line_status = models.CharField(max_length=50, choices=WORKER_LINE_STATUS_CHOICES, default='Floating')
     take = models.PositiveIntegerField(default=1)
     created_by = models.ForeignKey(
         User,
