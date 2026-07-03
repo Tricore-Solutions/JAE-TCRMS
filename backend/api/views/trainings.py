@@ -78,6 +78,12 @@ def training_list_create(request):
         training_date = request.query_params.get('training_date')
         if training_date:
             qs = qs.filter(training_date=training_date)
+        date_from = request.query_params.get('date_from')
+        date_to = request.query_params.get('date_to')
+        if date_from:
+            qs = qs.filter(training_date__gte=date_from)
+        if date_to:
+            qs = qs.filter(training_date__lte=date_to)
         if search:
             qs = qs.filter(
                 Q(employee__full_name__icontains=search)

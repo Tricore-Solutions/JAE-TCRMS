@@ -190,6 +190,12 @@ def export_trainings(request):
         qs = qs.filter(take=int(take))
     if training_date:
         qs = qs.filter(training_date=training_date)
+    date_from = request.query_params.get('date_from')
+    date_to = request.query_params.get('date_to')
+    if date_from:
+        qs = qs.filter(training_date__gte=date_from)
+    if date_to:
+        qs = qs.filter(training_date__lte=date_to)
     if emp_status:
         qs = qs.filter(employee__status=emp_status)
     if search:

@@ -57,12 +57,14 @@ const emptyForm = {
   worker_line_status: 'Floating', take: 1,
 };
 
-function buildFilterParams({ search, filterCategory, filterStatus, filterWorkerLine, filterTake }) {
+function buildFilterParams({ search, filterCategory, filterStatus, filterWorkerLine, filterTake, filterDateFrom, filterDateTo }) {
   const params = {};
   if (search) params.search = search;
   if (filterCategory) params.category = filterCategory;
   if (filterWorkerLine) params.worker_line_status = filterWorkerLine;
   if (filterTake) params.take = filterTake;
+  if (filterDateFrom) params.date_from = filterDateFrom;
+  if (filterDateTo) params.date_to = filterDateTo;
   if (filterStatus === 'expired') params.expired = 'true';
   if (filterStatus === 'expiring') params.expiring_soon = 'true';
   return params;
@@ -102,6 +104,8 @@ export default function Training() {
   const [filterStatus, setFilterStatus] = useState('');
   const [filterWorkerLine, setFilterWorkerLine] = useState('');
   const [filterTake, setFilterTake] = useState('');
+  const [filterDateFrom, setFilterDateFrom] = useState('');
+  const [filterDateTo, setFilterDateTo] = useState('');
 
   const [modalOpen, setModalOpen] = useState(false);
   const [viewModal, setViewModal] = useState(false);
@@ -118,7 +122,7 @@ export default function Training() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const params = buildFilterParams({ search, filterCategory, filterStatus, filterWorkerLine, filterTake });
+      const params = buildFilterParams({ search, filterCategory, filterStatus, filterWorkerLine, filterTake, filterDateFrom, filterDateTo });
       const [trRes, empRes] = await Promise.all([
         trainingsApi.list(params),
         employeesApi.list({ status: 'active' }),
@@ -130,7 +134,7 @@ export default function Training() {
     } finally {
       setLoading(false);
     }
-  }, [search, filterCategory, filterStatus, filterWorkerLine, filterTake]);
+  }, [search, filterCategory, filterStatus, filterWorkerLine, filterTake, filterDateFrom, filterDateTo]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -224,7 +228,7 @@ export default function Training() {
   const handleExport = async () => {
     setExporting(true);
     try {
-      const params = buildFilterParams({ search, filterCategory, filterStatus, filterWorkerLine, filterTake });
+      const params = buildFilterParams({ search, filterCategory, filterStatus, filterWorkerLine, filterTake, filterDateFrom, filterDateTo });
       const res = await reportsApi.exportTrainings(params);
       if (!res.data.length) {
         toast('No records to export for the current filters.', 'warning');
@@ -377,6 +381,24 @@ export default function Training() {
           <option value="">All Takes</option>
           {TAKE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
+        <div className="flex items-center gap-2">
+          <label className="text-xs text-gray-500 whitespace-nowrap">From</label>
+          <input
+            type="date"
+            value={filterDateFrom}
+            onChange={e => setFilterDateFrom(e.target.value)}
+            className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <label className="text-xs text-gray-500 whitespace-nowrap">To</label>
+          <input
+            type="date"
+            value={filterDateTo}
+            onChange={e => setFilterDateTo(e.target.value)}
+            className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
+          />
+        </div>
       </div>
 
       <DataTable
