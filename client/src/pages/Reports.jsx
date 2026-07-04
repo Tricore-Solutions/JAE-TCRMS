@@ -25,6 +25,117 @@ function buildTakesPerMonthRows({ months = [], data = {} } = {}) {
   }));
 }
 
+function mergeExpiringRecords(expiredItems, expiringItems) {
+  const seen = new Set();
+  return [...expiredItems, ...expiringItems]
+    .filter(item => {
+      if (seen.has(item.id)) return false;
+      seen.add(item.id);
+      return true;
+    })
+    .sort((a, b) => a.expiration_date.localeCompare(b.expiration_date));
+}
+
+async function fetchReportData() {
+  const [catRes, facRes, exp30Res, expiredRes, tpmRes] = await Promise.all([
+    reportsApi.byCategory(),
+    reportsApi.byFactory(),
+    reportsApi.expiring({ days: 30 }),
+    reportsApi.expiring({ expired: true }),
+    reportsApi.takesPerMonth(),
+  ]);
+
+  return {
+    byCategory: catRes.data,
+    byFactory: facRes.data,
+    takesPerMonth: tpmRes.data,
+    expiring: mergeExpiringRecords(expiredRes.data, exp30Res.data),
+  };
+}
+
+function sheetFromRows(rows, columns) {
+  const headers = columns.map(col => col.header);
+  const aoa = [
+    headers,
+    ...rows.map(row => columns.map(col => row[col.key] ?? '')),
+  ];
+  return XLSX.utils.aoa_to_sheet(aoa);
+}
+
+function buildReportsWorkbook({ byCategory, byFactory, takesPerMonth, expiring }) {
+  const wb = XLSX.utils.book_new();
+
+  XLSX.utils.book_append_sheet(
+    wb,
+    sheetFromRows(
+      byCategory.map(r => ({ category: r.category, count: r.count })),
+      [{ key: 'category', header: 'Category' }, { key: 'count', header: 'Count' }],
+    ),
+    'By Category',
+  );
+
+  XLSX.utils.book_append_sheet(
+    wb,
+    sheetFromRows(
+      byFactory.map(r => ({
+        factory: r.factory,
+        employees: r.employee_count,
+        trainingRecords: r.training_count,
+      })),
+      [
+        { key: 'factory', header: 'Factory' },
+        { key: 'employees', header: 'Employees' },
+        { key: 'trainingRecords', header: 'Training Records' },
+      ],
+    ),
+    'By Factory',
+  );
+
+  XLSX.utils.book_append_sheet(
+    wb,
+    sheetFromRows(
+      buildTakesPerMonthRows(takesPerMonth).map(({ month, counts }) => ({
+        month,
+        firstTake: counts[0],
+        secondTake: counts[1],
+        thirdTake: counts[2],
+      })),
+      [
+        { key: 'month', header: 'Month' },
+        { key: 'firstTake', header: '1st Take' },
+        { key: 'secondTake', header: '2nd Take' },
+        { key: 'thirdTake', header: '3rd Take' },
+      ],
+    ),
+    'Takes per Month',
+  );
+
+  XLSX.utils.book_append_sheet(
+    wb,
+    sheetFromRows(
+      expiring.map(r => ({
+        employee: r.full_name,
+        training: r.title,
+        factory: r.factory,
+        team: r.team,
+        expiryDate: r.expiration_date,
+        status: r.cert_status,
+      })),
+      [
+        { key: 'employee', header: 'Employee' },
+        { key: 'training', header: 'Training' },
+        { key: 'factory', header: 'Factory' },
+        { key: 'team', header: 'Team' },
+        { key: 'expiryDate', header: 'Expiry Date' },
+        { key: 'status', header: 'Status' },
+      ],
+    ),
+    'Certifications',
+  );
+
+  return wb;
+}
+
 function hexToRgb(hex) {
   return [
     parseInt(hex.slice(1, 3), 16),
@@ -232,25 +343,11 @@ export default function Reports() {
     else setLoading(true);
 
     try {
-      const [catRes, facRes, exp30Res, expiredRes, tpmRes] = await Promise.all([
-        reportsApi.byCategory(),
-        reportsApi.byFactory(),
-        reportsApi.expiring({ days: 30 }),
-        reportsApi.expiring({ expired: true }),
-        reportsApi.takesPerMonth(),
-      ]);
-      setByCategory(catRes.data);
-      setByFactory(facRes.data);
-      const seen = new Set();
-      const mergedExpiring = [...expiredRes.data, ...exp30Res.data]
-        .filter(item => {
-          if (seen.has(item.id)) return false;
-          seen.add(item.id);
-          return true;
-        })
-        .sort((a, b) => a.expiration_date.localeCompare(b.expiration_date));
-      setExpiring(mergedExpiring);
-      setTakesPerMonth(tpmRes.data);
+      const reportData = await fetchReportData();
+      setByCategory(reportData.byCategory);
+      setByFactory(reportData.byFactory);
+      setExpiring(reportData.expiring);
+      setTakesPerMonth(reportData.takesPerMonth);
       if (isRefresh) setContentKey(k => k + 1);
     } catch {
       toast('Failed to load reports.', 'error');
@@ -267,33 +364,20 @@ export default function Reports() {
     if (exportingPdf) return;
     setExportingPdf(true);
     try {
-      const [catRes, facRes, exp30Res, expiredRes, tpmRes] = await Promise.all([
-        reportsApi.byCategory(),
-        reportsApi.byFactory(),
-        reportsApi.expiring({ days: 30 }),
-        reportsApi.expiring({ expired: true }),
-        reportsApi.takesPerMonth(),
-      ]);
+      const reportData = await fetchReportData();
 
-      const pdfCategory = catRes.data;
-      const pdfFactory = facRes.data;
-      const pdfTakesPerMonth = tpmRes.data;
-      const seen = new Set();
-      const pdfExpiring = [...expiredRes.data, ...exp30Res.data]
-        .filter(item => {
-          if (seen.has(item.id)) return false;
-          seen.add(item.id);
-          return true;
-        })
-        .sort((a, b) => a.expiration_date.localeCompare(b.expiration_date));
+      setByCategory(reportData.byCategory);
+      setByFactory(reportData.byFactory);
+      setExpiring(reportData.expiring);
+      setTakesPerMonth(reportData.takesPerMonth);
+
+      const pdfCategory = reportData.byCategory;
+      const pdfFactory = reportData.byFactory;
+      const pdfTakesPerMonth = reportData.takesPerMonth;
+      const pdfExpiring = reportData.expiring;
 
       const pdfMaxCategory = Math.max(...pdfCategory.map(r => r.count), 1);
       const pdfMaxFactory = Math.max(...pdfFactory.map(r => r.employee_count), 1);
-
-      setByCategory(pdfCategory);
-      setByFactory(pdfFactory);
-      setExpiring(pdfExpiring);
-      setTakesPerMonth(pdfTakesPerMonth);
 
       const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
       const PW = pdf.internal.pageSize.getWidth();
@@ -494,51 +578,23 @@ export default function Reports() {
     }
   };
 
-  const exportExcel = () => {
+  const exportExcel = async () => {
     if (exportingXlsx) return;
     setExportingXlsx(true);
     try {
-      const wb = XLSX.utils.book_new();
+      const reportData = await fetchReportData();
 
-      // Sheet 1: Training by Category
-      const catSheet = XLSX.utils.json_to_sheet(
-        byCategory.map(r => ({ Category: r.category, Count: r.count }))
-      );
-      XLSX.utils.book_append_sheet(wb, catSheet, 'By Category');
+      setByCategory(reportData.byCategory);
+      setByFactory(reportData.byFactory);
+      setExpiring(reportData.expiring);
+      setTakesPerMonth(reportData.takesPerMonth);
 
-      // Sheet 2: Employees by Factory
-      const facSheet = XLSX.utils.json_to_sheet(
-        byFactory.map(r => ({ Factory: r.factory, Employees: r.employee_count, 'Training Records': r.training_count }))
-      );
-      XLSX.utils.book_append_sheet(wb, facSheet, 'By Factory');
-
-      // Sheet 3: Takes per Month
-      const tpmSheetRows = buildTakesPerMonthRows(takesPerMonth).map(({ month, counts }) => ({
-        Month: month,
-        '1st Take': counts[0],
-        '2nd Take': counts[1],
-        '3rd Take': counts[2],
-      }));
-      const tpmSheet = XLSX.utils.json_to_sheet(tpmSheetRows);
-      XLSX.utils.book_append_sheet(wb, tpmSheet, 'Takes per Month');
-
-      // Sheet 4: Expiring / Expired Certifications
-      const expSheet = XLSX.utils.json_to_sheet(
-        expiring.map(r => ({
-          Employee: r.full_name,
-          Training: r.title,
-          Factory: r.factory,
-          Team: r.team,
-          'Expiry Date': r.expiration_date,
-          Status: r.cert_status,
-        }))
-      );
-      XLSX.utils.book_append_sheet(wb, expSheet, 'Certifications');
-
+      const wb = buildReportsWorkbook(reportData);
       XLSX.writeFile(wb, `JAE-TCRMS-Reports-${new Date().toISOString().split('T')[0]}.xlsx`);
       toast('Excel exported successfully.', 'success');
-    } catch {
-      toast('Failed to export Excel.', 'error');
+    } catch (err) {
+      console.error('Excel export error:', err);
+      toast(err?.response?.data?.message || err?.message || 'Failed to export Excel.', 'error');
     } finally {
       setExportingXlsx(false);
     }
