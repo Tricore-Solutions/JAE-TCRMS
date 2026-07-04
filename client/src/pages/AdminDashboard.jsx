@@ -57,12 +57,12 @@ export default function AdminDashboard() {
     Promise.all([
       reportsApi.overview(),
       reportsApi.expiring(),
-      reportsApi.expiring({ days: 30 }),
+      reportsApi.expiring({ days: 10 }),
       reportsApi.expiring({ expired: true }),
-    ]).then(([ovRes, exRes, ex30Res, expiredRes]) => {
+    ]).then(([ovRes, exRes, ex10Res, expiredRes]) => {
       setOverview(ovRes.data);
       setExpiring(exRes.data);
-      setExpiring30(ex30Res.data);
+      setExpiring30([...expiredRes.data, ...ex10Res.data]);
       setExpiredCerts(expiredRes.data);
     }).catch(console.error)
       .finally(() => setLoading(false));
@@ -101,7 +101,7 @@ export default function AdminDashboard() {
             color="green"
           />
           <StatCard
-            title="Expiring (30 days)"
+            title="Expiring (10 days)"
             value={overview?.expiring30 ?? '—'}
             icon={AlertTriangle}
             color="amber"
@@ -133,7 +133,7 @@ export default function AdminDashboard() {
           <div className="flex items-center justify-between mb-5">
             <h3 className="font-semibold text-gray-900 flex items-center gap-2">
               <AlertTriangle size={16} className="text-amber-600" />
-              Expiring Soon (60 days)
+              Expiring Soon (10 days)
             </h3>
             <span className="text-xs text-gray-500">{expiring.filter(e => e.cert_status === 'expiring').length} records</span>
           </div>
@@ -144,32 +144,35 @@ export default function AdminDashboard() {
       <Modal
         open={expiring30ModalOpen}
         onClose={() => setExpiring30ModalOpen(false)}
-        title="Expiring in 30 Days"
-        description="Training certifications expiring within the next 30 days."
+        title="Expired & Expiring Within 10 Days"
+        description="Training certifications that have expired or are expiring within the next 10 days."
         size="xl"
       >
         <DataTable
           columns={certColumns}
           data={expiring30}
           loading={loading}
-          emptyMessage="No certifications expiring in the next 30 days."
+          emptyMessage="No expired or soon-to-expire certifications found."
+          rowClassName={(row) =>
+            row.cert_status === 'expired' ? 'bg-red-50 hover:bg-red-100' : ''
+          }
         />
       </Modal>
 
       <Modal
         open={expiredModalOpen}
         onClose={() => setExpiredModalOpen(false)}
-        title="Expired Certifications"
-        description="Training certifications that have already expired."
+        title="Expired & Almost Expired Certifications"
+        description="Training certifications that have already expired or are expiring within 10 days."
         size="xl"
       >
         <DataTable
           columns={certColumns}
-          data={expiredCerts}
+          data={[...expiredCerts, ...expiring30.filter(r => r.cert_status !== 'expired')]}
           loading={loading}
           emptyMessage="No expired certifications found."
           rowClassName={(row) =>
-            row.cert_status === 'expired' ? 'bg-red-50 hover:bg-red-100' : ''
+            row.cert_status === 'expired' ? 'bg-red-50 hover:bg-red-100' : 'bg-amber-50 hover:bg-amber-100'
           }
         />
       </Modal>

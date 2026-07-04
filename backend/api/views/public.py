@@ -57,7 +57,7 @@ def public_employee_trainings(request, pk):
     current = today()
 
     import datetime
-    in60 = current + datetime.timedelta(days=60)
+    in10 = current + datetime.timedelta(days=10)
 
     rows = []
     for t in trainings:
@@ -65,7 +65,7 @@ def public_employee_trainings(request, pk):
             cert_status = 'valid'
         elif t.expiration_date < current:
             cert_status = 'expired'
-        elif t.expiration_date <= in60:
+        elif t.expiration_date <= in10:
             cert_status = 'expiring'
         else:
             cert_status = 'valid'

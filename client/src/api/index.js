@@ -67,6 +67,9 @@ export const trainingsApi = {
   update: (id, data) => api.put(`/trainings/${id}`, data),
   remove: (id) => api.delete(`/trainings/${id}`),
   categories: () => api.get('/trainings/meta/categories'),
+  archived: () => api.get('/trainings/archived'),
+  restore: (id) => api.post(`/trainings/${id}/restore`),
+  deletePermanent: (id) => api.delete(`/trainings/${id}/delete-permanent`),
 };
 
 // Users

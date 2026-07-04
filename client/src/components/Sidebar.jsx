@@ -1,7 +1,7 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Users, ClipboardList, BarChart3,
-  UserCog, LogOut, Eye
+  UserCog, LogOut, Eye, Archive
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -11,6 +11,7 @@ const adminNav = [
   { to: '/employees', icon: Users, label: 'Employees' },
   { to: '/admin/users', icon: UserCog, label: 'User Management' },
   { to: '/admin/reports', icon: BarChart3, label: 'Reports' },
+  { to: '/admin/archive', icon: Archive, label: 'Archive' },
 ];
 
 const encoderNav = [

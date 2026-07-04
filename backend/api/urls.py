@@ -13,6 +13,9 @@ urlpatterns = [
 
     path('trainings/summary', trainings.training_summary),
     path('trainings/meta/categories', trainings.training_categories),
+    path('trainings/archived', trainings.archived_trainings),
+    path('trainings/<int:pk>/restore', trainings.restore_training),
+    path('trainings/<int:pk>/delete-permanent', trainings.delete_archived_training),
     path('trainings', trainings.training_list_create),
     path('trainings/<int:pk>', trainings.training_detail),
 

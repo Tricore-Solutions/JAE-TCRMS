@@ -1,4 +1,5 @@
 import json
+from django.utils import timezone
 from django.db.models import Q
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
@@ -16,7 +17,7 @@ from api.utils import calc_expiration, days_from_today, log_audit, today
 def training_summary(request):
     current = today()
     in30 = days_from_today(30)
-    in60 = days_from_today(60)
+    in10 = days_from_today(10)
 
     total = Training.objects.count()
     expired = Training.objects.filter(
@@ -31,7 +32,7 @@ def training_summary(request):
     expiring60 = Training.objects.filter(
         expiration_date__isnull=False,
         expiration_date__gte=current,
-        expiration_date__lte=in60,
+        expiration_date__lte=in10,
     ).count()
     total_employees = Employee.objects.filter(status='active').count()
 
@@ -60,7 +61,7 @@ def training_categories(request):
 @permission_classes([IsAuthenticated])
 def training_list_create(request):
     if request.method == 'GET':
-        qs = Training.objects.select_related('employee').all()
+        qs = Training.objects.select_related('employee').filter(is_archived=False)
         employee_id = request.query_params.get('employee_id')
         category = request.query_params.get('category')
         search = request.query_params.get('search')
@@ -92,14 +93,14 @@ def training_list_create(request):
             )
 
         current = today()
-        in60 = days_from_today(60)
+        in10 = days_from_today(10)
         if request.query_params.get('expired') == 'true':
             qs = qs.filter(expiration_date__isnull=False, expiration_date__lt=current)
         elif request.query_params.get('expiring_soon') == 'true':
             qs = qs.filter(
                 expiration_date__isnull=False,
                 expiration_date__gte=current,
-                expiration_date__lte=in60,
+                expiration_date__lte=in10,
             )
 
         return Response(
@@ -226,7 +227,48 @@ def training_detail(request, pk):
     if not IsAdmin().has_permission(request, None):
         return Response({'error': 'Insufficient permissions'}, status=status.HTTP_403_FORBIDDEN)
 
+    training.is_archived = True
+    training.archived_at = timezone.now()
+    training.save()
+    log_audit(request.user, 'ARCHIVE', 'trainings', pk, f'Archived training: {training.title}')
+    return Response({'message': 'Training record archived'})
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def archived_trainings(request):
+    if not IsAdmin().has_permission(request, None):
+        return Response({'error': 'Insufficient permissions'}, status=403)
+    qs = Training.objects.select_related('employee').filter(is_archived=True).order_by('-archived_at')
+    return Response(TrainingListSerializer(qs, many=True).data)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def restore_training(request, pk):
+    if not IsAdmin().has_permission(request, None):
+        return Response({'error': 'Insufficient permissions'}, status=403)
+    try:
+        training = Training.objects.get(pk=pk, is_archived=True)
+    except Training.DoesNotExist:
+        return Response({'error': 'Archived record not found'}, status=404)
+    training.is_archived = False
+    training.archived_at = None
+    training.save()
+    log_audit(request.user, 'RESTORE', 'trainings', pk, f'Restored training: {training.title}')
+    return Response({'message': 'Training record restored'})
+
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def delete_archived_training(request, pk):
+    if not IsAdmin().has_permission(request, None):
+        return Response({'error': 'Insufficient permissions'}, status=403)
+    try:
+        training = Training.objects.get(pk=pk, is_archived=True)
+    except Training.DoesNotExist:
+        return Response({'error': 'Archived record not found'}, status=404)
     title = training.title
     training.delete()
-    log_audit(request.user, 'DELETE', 'trainings', pk, f'Deleted training: {title}')
-    return Response({'message': 'Training record deleted'})
+    log_audit(request.user, 'DELETE', 'trainings', pk, f'Permanently deleted training: {title}')
+    return Response({'message': 'Training record permanently deleted'})

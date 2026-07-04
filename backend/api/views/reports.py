@@ -13,8 +13,7 @@ from api.utils import days_from_today, today, user_display_name
 @permission_classes([IsAuthenticated])
 def overview(request):
     current = today()
-    in30 = days_from_today(30)
-    in60 = days_from_today(60)
+    in10 = days_from_today(10)
 
     return Response({
         'totalEmployees': Employee.objects.filter(status='active').count(),
@@ -26,12 +25,12 @@ def overview(request):
         'expiring30': Training.objects.filter(
             expiration_date__isnull=False,
             expiration_date__gte=current,
-            expiration_date__lte=in30,
+            expiration_date__lte=in10,
         ).count(),
         'expiring60': Training.objects.filter(
             expiration_date__isnull=False,
             expiration_date__gte=current,
-            expiration_date__lte=in60,
+            expiration_date__lte=in10,
         ).count(),
         'totalUsers': User.objects.filter(status='active').count(),
     })
@@ -75,7 +74,7 @@ def by_factory(request):
 @permission_classes([IsAuthenticated])
 def expiring(request):
     current = today()
-    in60 = days_from_today(60)
+    in10 = days_from_today(10)
     days = request.query_params.get('days')
     expired_only = request.query_params.get('expired') == 'true'
 
@@ -99,7 +98,7 @@ def expiring(request):
     else:
         trainings = (
             Training.objects.select_related('employee')
-            .filter(expiration_date__isnull=False, expiration_date__lte=in60)
+            .filter(expiration_date__isnull=False, expiration_date__lte=in10)
             .order_by('expiration_date')[:100]
         )
 
@@ -107,7 +106,7 @@ def expiring(request):
     for training in trainings:
         if training.expiration_date < current:
             cert_status = 'expired'
-        elif training.expiration_date <= in60:
+        elif training.expiration_date <= in10:
             cert_status = 'expiring'
         else:
             cert_status = 'valid'
@@ -206,14 +205,14 @@ def export_trainings(request):
         )
 
     current = today()
-    in60 = days_from_today(60)
+    in10 = days_from_today(10)
     if request.query_params.get('expired') == 'true':
         qs = qs.filter(expiration_date__isnull=False, expiration_date__lt=current)
     elif request.query_params.get('expiring_soon') == 'true':
         qs = qs.filter(
             expiration_date__isnull=False,
             expiration_date__gte=current,
-            expiration_date__lte=in60,
+            expiration_date__lte=in10,
         )
 
     rows = []

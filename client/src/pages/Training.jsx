@@ -16,7 +16,7 @@ const VALIDITY_OPTIONS = [3, 6, 12, 18, 24, 36, 60];
 function getCertStatus(expirationDate) {
   if (!expirationDate) return 'valid';
   const today = new Date().toISOString().split('T')[0];
-  const in60 = new Date(Date.now() + 60 * 86400000).toISOString().split('T')[0];
+  const in60 = new Date(Date.now() + 10 * 86400000).toISOString().split('T')[0];
   if (expirationDate < today) return 'expired';
   if (expirationDate <= in60) return 'expiring';
   return 'valid';
@@ -217,11 +217,11 @@ export default function Training() {
   const handleDelete = async (id) => {
     try {
       await trainingsApi.remove(id);
-      toast('Training record deleted.', 'success');
+      toast('Training record archived.', 'success');
       setDeleteConfirm(null);
       load();
     } catch (err) {
-      toast(err.response?.data?.error || 'Failed to delete record.', 'error');
+      toast(err.response?.data?.error || 'Failed to archive record.', 'error');
     }
   };
 
@@ -301,8 +301,8 @@ export default function Training() {
               Edit
             </button>
             {isAdmin && (
-              <button onClick={e => { e.stopPropagation(); setDeleteConfirm(row); }} className="px-2.5 py-1 text-xs font-medium text-gray-500 bg-gray-50 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-                Delete
+              <button onClick={e => { e.stopPropagation(); setDeleteConfirm(row); }} className="px-2.5 py-1 text-xs font-medium text-gray-500 bg-gray-50 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors">
+                Archive
               </button>
             )}
           </>
@@ -641,18 +641,18 @@ export default function Training() {
         )}
       </Modal>
 
-      {/* Delete Confirm */}
-      <Modal open={!!deleteConfirm} onClose={() => setDeleteConfirm(null)} title="Delete Training Record" size="sm">
+      {/* Archive Confirm */}
+      <Modal open={!!deleteConfirm} onClose={() => setDeleteConfirm(null)} title="Archive Training Record" size="sm">
         <p className="text-gray-700 text-sm">
-          Are you sure you want to delete the training record "<span className="text-gray-900 font-medium">{deleteConfirm?.title}</span>" for <span className="text-gray-900 font-medium">{deleteConfirm?.employee_name}</span>?
-          This action cannot be undone.
+          Are you sure you want to archive the training record "<span className="text-gray-900 font-medium">{deleteConfirm?.title}</span>" for <span className="text-gray-900 font-medium">{deleteConfirm?.employee_name}</span>?
+          You can restore it from the Archive page.
         </p>
         <div className="flex justify-end gap-3 mt-6">
           <button onClick={() => setDeleteConfirm(null)} className="px-4 py-2 text-sm text-gray-500 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
             Cancel
           </button>
-          <button onClick={() => handleDelete(deleteConfirm.id)} className="px-4 py-2 text-sm text-gray-900 bg-red-600 hover:bg-red-500 rounded-lg transition-colors">
-            Delete
+          <button onClick={() => handleDelete(deleteConfirm.id)} className="px-4 py-2 text-sm text-white bg-amber-600 hover:bg-amber-500 rounded-lg transition-colors">
+            Archive
           </button>
         </div>
       </Modal>

@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
-import { BarChart3, Factory, Tag, AlertTriangle, RefreshCw } from 'lucide-react';
+import { BarChart3, Factory, Tag, AlertTriangle, RefreshCw, FileDown, Sheet } from 'lucide-react';
+import jsPDF from 'jspdf';
+import * as XLSX from 'xlsx';
 import Layout from '../components/Layout';
 import StatusBadge from '../components/StatusBadge';
 import { reportsApi } from '../api';
@@ -179,6 +181,8 @@ export default function Reports() {
   const [contentKey, setContentKey] = useState(0);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [exportingPdf, setExportingPdf] = useState(false);
+  const [exportingXlsx, setExportingXlsx] = useState(false);
   const isInitialLoad = useRef(true);
 
   const load = async () => {
@@ -218,6 +222,261 @@ export default function Reports() {
 
   useEffect(() => { load(); }, []);
 
+  const exportPdf = () => {
+    if (exportingPdf) return;
+    setExportingPdf(true);
+    try {
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const PW = pdf.internal.pageSize.getWidth();
+      const PH = pdf.internal.pageSize.getHeight();
+      const M = 14;
+      const usableW = PW - M * 2;
+      let y = M;
+
+      const checkPage = (needed = 10) => {
+        if (y + needed > PH - M) { pdf.addPage(); y = M; }
+      };
+
+      const sectionTitle = (text, icon = '') => {
+        checkPage(14);
+        pdf.setFillColor(240, 245, 255);
+        pdf.roundedRect(M, y, usableW, 8, 1, 1, 'F');
+        pdf.setFontSize(10);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setTextColor(29, 114, 184);
+        pdf.text((icon ? icon + '  ' : '') + text, M + 3, y + 5.5);
+        pdf.setTextColor(0);
+        y += 11;
+      };
+
+      const drawBarRow = (label, value, max, colorHex) => {
+        checkPage(8);
+        pdf.setFontSize(8.5);
+        pdf.setFont('helvetica', 'normal');
+        pdf.setTextColor(60);
+        pdf.text(String(label).slice(0, 28), M, y + 3.5);
+
+        const barX = M + 48;
+        const barW = usableW - 48 - 16;
+        const fill = max > 0 ? (value / max) * barW : 0;
+
+        pdf.setFillColor(230, 230, 230);
+        pdf.roundedRect(barX, y + 1, barW, 4, 1, 1, 'F');
+
+        if (fill > 0) {
+          const r = parseInt(colorHex.slice(1, 3), 16);
+          const g = parseInt(colorHex.slice(3, 5), 16);
+          const b = parseInt(colorHex.slice(5, 7), 16);
+          pdf.setFillColor(r, g, b);
+          pdf.roundedRect(barX, y + 1, fill, 4, 1, 1, 'F');
+        }
+
+        pdf.setFontSize(8.5);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setTextColor(30);
+        pdf.text(String(value), barX + barW + 3, y + 3.8);
+
+        y += 8;
+      };
+
+      const tableHeader = (cols) => {
+        checkPage(8);
+        pdf.setFillColor(245, 247, 250);
+        pdf.rect(M, y, usableW, 7, 'F');
+        pdf.setFontSize(7.5);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setTextColor(100);
+        let x = M + 2;
+        cols.forEach(({ label, w }) => {
+          pdf.text(label.toUpperCase(), x, y + 4.8);
+          x += w;
+        });
+        y += 7;
+        pdf.setTextColor(30);
+      };
+
+      const tableRow = (cols, vals, shade) => {
+        checkPage(7);
+        if (shade) { pdf.setFillColor(252, 252, 252); pdf.rect(M, y, usableW, 6.5, 'F'); }
+        pdf.setFontSize(8);
+        pdf.setFont('helvetica', 'normal');
+        let x = M + 2;
+        cols.forEach(({ w }, i) => {
+          const raw = vals[i] != null ? String(vals[i]) : '—';
+          const text = pdf.splitTextToSize(raw, w - 2)[0];
+          pdf.text(text, x, y + 4.5);
+          x += w;
+        });
+        pdf.setDrawColor(230);
+        pdf.line(M, y + 6.5, M + usableW, y + 6.5);
+        y += 6.5;
+      };
+
+      // ── Cover / Header ──────────────────────────────────────────────
+      pdf.setFontSize(18);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(29, 114, 184);
+      pdf.text('JAE TCRMS', M, y + 6);
+      pdf.setFontSize(12);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(80);
+      pdf.text('Training & Certification Report', M, y + 13);
+      pdf.setFontSize(8.5);
+      pdf.setTextColor(150);
+      pdf.text(`Generated: ${new Date().toLocaleString()}`, M, y + 19);
+      pdf.setDrawColor(29, 114, 184);
+      pdf.setLineWidth(0.5);
+      pdf.line(M, y + 22, M + usableW, y + 22);
+      y += 28;
+
+      // ── Training by Category ────────────────────────────────────────
+      const catColors = ['#3B82F6', '#22C55E', '#F59E0B', '#A855F7', '#EF4444', '#06B6D4'];
+      sectionTitle('Training by Category');
+      if (byCategory.length === 0) {
+        pdf.setFontSize(8.5); pdf.setTextColor(150);
+        pdf.text('No data available.', M + 2, y + 4); y += 10;
+      } else {
+        byCategory.forEach((row, i) => drawBarRow(row.category, row.count, maxCategory, catColors[i % catColors.length]));
+      }
+      y += 4;
+
+      // ── Employees by Factory ────────────────────────────────────────
+      sectionTitle('Employees by Factory');
+      if (byFactory.length === 0) {
+        pdf.setFontSize(8.5); pdf.setTextColor(150);
+        pdf.text('No data available.', M + 2, y + 4); y += 10;
+      } else {
+        byFactory.forEach(row => {
+          drawBarRow(row.factory, row.employee_count, maxFactory, '#22C55E');
+          checkPage(5);
+          pdf.setFontSize(7.5); pdf.setFont('helvetica', 'italic'); pdf.setTextColor(130);
+          pdf.text(`${row.training_count} training records`, M + 50, y - 3);
+          pdf.setTextColor(30);
+        });
+      }
+      y += 4;
+
+      // ── Takes per Month ─────────────────────────────────────────────
+      sectionTitle('Takes per Month');
+      const { months = [], data = {} } = takesPerMonth;
+      if (months.length === 0) {
+        pdf.setFontSize(8.5); pdf.setTextColor(150);
+        pdf.text('No data available.', M + 2, y + 4); y += 10;
+      } else {
+        const tpmCols = [
+          { label: 'Month', w: 40 },
+          { label: '1st Take', w: 30 },
+          { label: '2nd Take', w: 30 },
+          { label: '3rd Take', w: 30 },
+        ];
+        tableHeader(tpmCols);
+        months.forEach((month, i) => tableRow(tpmCols, [
+          month,
+          data[month]?.['1'] || 0,
+          data[month]?.['2'] || 0,
+          data[month]?.['3'] || 0,
+        ], i % 2 === 1));
+      }
+      y += 4;
+
+      // ── Certifications Requiring Attention ──────────────────────────
+      sectionTitle('Certifications Requiring Attention');
+      if (expiring.length === 0) {
+        pdf.setFontSize(8.5); pdf.setTextColor(150);
+        pdf.text('No expiring or expired certifications found.', M + 2, y + 4); y += 10;
+      } else {
+        const expCols = [
+          { label: 'Employee', w: 46 },
+          { label: 'Training', w: 54 },
+          { label: 'Factory/Team', w: 36 },
+          { label: 'Expiry', w: 24 },
+          { label: 'Status', w: 22 },
+        ];
+        tableHeader(expCols);
+        expiring.forEach((item, i) => tableRow(expCols, [
+          item.full_name,
+          item.title,
+          `${item.factory} / ${item.team}`,
+          item.expiration_date,
+          item.cert_status,
+        ], i % 2 === 1));
+      }
+
+      // Page numbers
+      const pageCount = pdf.internal.getNumberOfPages();
+      for (let p = 1; p <= pageCount; p++) {
+        pdf.setPage(p);
+        pdf.setFontSize(7.5);
+        pdf.setFont('helvetica', 'normal');
+        pdf.setTextColor(160);
+        pdf.text(`Page ${p} of ${pageCount}`, PW - M, PH - 6, { align: 'right' });
+        pdf.text('JAE TCRMS — Confidential', M, PH - 6);
+      }
+
+      pdf.save(`JAE-TCRMS-Reports-${new Date().toISOString().split('T')[0]}.pdf`);
+      toast('PDF exported successfully.', 'success');
+    } catch (err) {
+      console.error('PDF export error:', err);
+      toast('Failed to export PDF.', 'error');
+    } finally {
+      setExportingPdf(false);
+    }
+  };
+
+  const exportExcel = () => {
+    if (exportingXlsx) return;
+    setExportingXlsx(true);
+    try {
+      const wb = XLSX.utils.book_new();
+
+      // Sheet 1: Training by Category
+      const catSheet = XLSX.utils.json_to_sheet(
+        byCategory.map(r => ({ Category: r.category, Count: r.count }))
+      );
+      XLSX.utils.book_append_sheet(wb, catSheet, 'By Category');
+
+      // Sheet 2: Employees by Factory
+      const facSheet = XLSX.utils.json_to_sheet(
+        byFactory.map(r => ({ Factory: r.factory, Employees: r.employee_count, 'Training Records': r.training_count }))
+      );
+      XLSX.utils.book_append_sheet(wb, facSheet, 'By Factory');
+
+      // Sheet 3: Takes per Month
+      const tpmRows = [];
+      const { months = [], data = {} } = takesPerMonth;
+      for (const month of months) {
+        tpmRows.push({
+          Month: month,
+          '1st Take': data[month]?.['1'] || 0,
+          '2nd Take': data[month]?.['2'] || 0,
+          '3rd Take': data[month]?.['3'] || 0,
+        });
+      }
+      const tpmSheet = XLSX.utils.json_to_sheet(tpmRows);
+      XLSX.utils.book_append_sheet(wb, tpmSheet, 'Takes per Month');
+
+      // Sheet 4: Expiring / Expired Certifications
+      const expSheet = XLSX.utils.json_to_sheet(
+        expiring.map(r => ({
+          Employee: r.full_name,
+          Training: r.title,
+          Factory: r.factory,
+          Team: r.team,
+          'Expiry Date': r.expiration_date,
+          Status: r.cert_status,
+        }))
+      );
+      XLSX.utils.book_append_sheet(wb, expSheet, 'Certifications');
+
+      XLSX.writeFile(wb, `JAE-TCRMS-Reports-${new Date().toISOString().split('T')[0]}.xlsx`);
+      toast('Excel exported successfully.', 'success');
+    } catch {
+      toast('Failed to export Excel.', 'error');
+    } finally {
+      setExportingXlsx(false);
+    }
+  };
+
   const maxCategory = Math.max(...byCategory.map(r => r.count), 1);
   const maxFactory = Math.max(...byFactory.map(r => r.employee_count), 1);
 
@@ -227,9 +486,29 @@ export default function Reports() {
     <Layout
       title="Reports"
       actions={
-        <button onClick={load} disabled={loading || refreshing} className="flex items-center gap-2 text-gray-500 hover:text-gray-900 text-sm px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-40">
-          <RefreshCw size={14} className={loading || refreshing ? 'animate-spin' : ''} /> Refresh
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={exportExcel}
+            disabled={loading || exportingXlsx || byCategory.length === 0}
+            className="flex items-center gap-2 text-gray-500 hover:text-green-700 text-sm px-3 py-2 rounded-lg hover:bg-green-50 border border-gray-200 hover:border-green-200 transition-colors disabled:opacity-40"
+            title="Export raw data to Excel"
+          >
+            <Sheet size={14} />
+            {exportingXlsx ? 'Exporting…' : 'Excel'}
+          </button>
+          <button
+            onClick={exportPdf}
+            disabled={loading || exportingPdf || byCategory.length === 0}
+            className="flex items-center gap-2 text-gray-500 hover:text-red-700 text-sm px-3 py-2 rounded-lg hover:bg-red-50 border border-gray-200 hover:border-red-200 transition-colors disabled:opacity-40"
+            title="Export charts to PDF"
+          >
+            <FileDown size={14} />
+            {exportingPdf ? 'Exporting…' : 'PDF'}
+          </button>
+          <button onClick={load} disabled={loading || refreshing} className="flex items-center gap-2 text-gray-500 hover:text-gray-900 text-sm px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-40">
+            <RefreshCw size={14} className={loading || refreshing ? 'animate-spin' : ''} /> Refresh
+          </button>
+        </div>
       }
     >
       <div key={contentKey} className={contentKey > 0 ? 'page-enter' : undefined}>

@@ -11,6 +11,7 @@ import EncoderDashboard from './pages/EncoderDashboard';
 import ViewerDashboard from './pages/ViewerDashboard';
 import Employees from './pages/Employees';
 import Training from './pages/Training';
+import Archive from './pages/Archive';
 import Users from './pages/Users';
 import Reports from './pages/Reports';
 
@@ -98,6 +99,9 @@ function AppRoutes() {
       <Route path="/admin/reports" element={
         <RequireAuth roles={['admin']}><Reports /></RequireAuth>
       } />
+      <Route path="/admin/archive" element={
+        <RequireAuth roles={['admin']}><Archive /></RequireAuth>
+      } />
 
       {/* Encoder routes */}
       <Route path="/encoder/dashboard" element={
@@ -116,6 +120,9 @@ function AppRoutes() {
       } />
       <Route path="/training" element={
         <RequireAuth roles={['admin', 'encoder']}><Training /></RequireAuth>
+      } />
+      <Route path="/archive" element={
+        <RequireAuth roles={['admin']}><Archive /></RequireAuth>
       } />
 
       <Route path="*" element={<Navigate to="/login" replace />} />

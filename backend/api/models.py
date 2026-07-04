@@ -88,6 +88,8 @@ class Training(models.Model):
     remarks = models.TextField(default='')
     worker_line_status = models.CharField(max_length=50, choices=WORKER_LINE_STATUS_CHOICES, default='Floating')
     take = models.PositiveIntegerField(default=1)
+    is_archived = models.BooleanField(default=False)
+    archived_at = models.DateTimeField(null=True, blank=True)
     created_by = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,
