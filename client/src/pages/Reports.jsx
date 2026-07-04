@@ -617,7 +617,7 @@ export default function Reports() {
             title="Export raw data to Excel"
           >
             <Sheet size={14} />
-            {exportingXlsx ? 'Exporting…' : 'Excel'}
+            {exportingXlsx ? 'Exporting Excel…' : 'Export Excel'}
           </button>
           <button
             onClick={exportPdf}
@@ -626,7 +626,7 @@ export default function Reports() {
             title="Export charts to PDF"
           >
             <FileDown size={14} />
-            {exportingPdf ? 'Exporting…' : 'PDF'}
+            {exportingPdf ? 'Exporting PDF…' : 'Export PDF'}
           </button>
           <button onClick={load} disabled={loading || refreshing} className="flex items-center gap-2 text-gray-500 hover:text-gray-900 text-sm px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-40">
             <RefreshCw size={14} className={loading || refreshing ? 'animate-spin' : ''} /> Refresh
