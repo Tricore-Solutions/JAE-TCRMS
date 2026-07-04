@@ -1,5 +1,5 @@
 from django.db.models import Count, Q
-from django.db.models.functions import TruncMonth
+from django.db.models.functions import ExtractMonth, ExtractYear
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -254,10 +254,14 @@ def takes_per_month(request):
 
     rows = (
         Training.objects
-        .annotate(month=TruncMonth('training_date'))
-        .values('month', 'take')
+        .filter(is_archived=False, take__in=[1, 2, 3])
+        .annotate(
+            year=ExtractYear('training_date'),
+            month_num=ExtractMonth('training_date'),
+        )
+        .values('year', 'month_num', 'take')
         .annotate(count=Count('id'))
-        .order_by('month', 'take')
+        .order_by('year', 'month_num', 'take')
     )
 
     # Build month → {take: count} map
@@ -265,15 +269,14 @@ def takes_per_month(request):
     month_map = defaultdict(dict)
     month_order = []
     for row in rows:
-        if not row['month']:
+        if not row['year'] or not row['month_num']:
             continue
-        label = MONTH_NAMES[row['month'].month - 1] + ' ' + str(row['month'].year)
+        label = MONTH_NAMES[row['month_num'] - 1] + ' ' + str(row['year'])
         if label not in month_map:
             month_order.append(label)
         month_map[label][row['take']] = row['count']
 
-    # All take numbers that appear
-    all_takes = sorted({t for m in month_map.values() for t in m})
+    all_takes = [1, 2, 3]
 
     return Response({
         'months': month_order,

@@ -10,6 +10,47 @@ import { useToast } from '../components/Toast';
 const TAKE_AXIS = [1, 2, 3];
 const TAKE_LABELS = { 1: '1st Take', 2: '2nd Take', 3: '3rd Take' };
 const TAKE_BAR_COLORS = ['#1D72B8', '#5A9FD4', '#A8CCE8'];
+
+function getTakeCount(data, month, take) {
+  const monthData = data?.[month];
+  if (!monthData) return 0;
+  const key = String(take);
+  return monthData[key] ?? monthData[take] ?? 0;
+}
+
+function buildTakesPerMonthRows({ months = [], data = {} } = {}) {
+  return months.map(month => ({
+    month,
+    counts: TAKE_AXIS.map(take => getTakeCount(data, month, take)),
+  }));
+}
+
+function hexToRgb(hex) {
+  return [
+    parseInt(hex.slice(1, 3), 16),
+    parseInt(hex.slice(3, 5), 16),
+    parseInt(hex.slice(5, 7), 16),
+  ];
+}
+
+function drawTakesPerMonthTableInPdf(tpmData, layout) {
+  let y = layout.y;
+  const tpmRows = buildTakesPerMonthRows(tpmData);
+  if (tpmRows.length === 0) return y;
+
+  const tpmCols = [
+    { label: 'Month', w: 52 },
+    ...TAKE_AXIS.map(take => ({ label: TAKE_LABELS[take], w: 36 })),
+  ];
+  y = layout.tableHeader(tpmCols, y);
+  layout.y = y;
+  tpmRows.forEach(({ month, counts }, i) => {
+    y = layout.tableRow(tpmCols, [month, ...counts], i % 2 === 1, y);
+    layout.y = y;
+  });
+
+  return y + 4;
+}
 const BAR_ANIM_MS = 500;
 const SIMPLE_BAR_ANIM_MS = 850;
 const PAGE_ENTER_MS = 320;
@@ -30,7 +71,7 @@ function TakesPerMonthChart({ months, data }) {
 
   const maxCount = Math.max(
     1,
-    ...months.flatMap(month => TAKE_AXIS.map(t => data[month]?.[String(t)] || 0)),
+    ...months.flatMap(month => TAKE_AXIS.map(t => getTakeCount(data, month, t))),
   );
   const yTicks = buildYTicks(maxCount);
 
@@ -44,7 +85,7 @@ function TakesPerMonthChart({ months, data }) {
     setBarsVisible(false);
     const timer = setTimeout(() => setBarsVisible(true), PAGE_ENTER_MS + 80);
     return () => clearTimeout(timer);
-  }, []);
+  }, [months, data]);
 
   return (
     <div>
@@ -84,7 +125,7 @@ function TakesPerMonthChart({ months, data }) {
               {months.map((month, monthIdx) => (
                 <div key={month} className="flex-1 flex items-end justify-center gap-1.5 sm:gap-2 h-full px-1 overflow-visible">
                   {TAKE_AXIS.map((t, i) => {
-                    const val = data[month]?.[String(t)] || 0;
+                    const val = getTakeCount(data, month, t);
                     const heightPct = val > 0 ? Math.max((val / maxCount) * 100, 6) : 0;
                     const delay = monthIdx * 50 + i * 35;
                     const barId = `${month}-${t}`;
@@ -222,184 +263,214 @@ export default function Reports() {
 
   useEffect(() => { load(); }, []);
 
-  const exportPdf = () => {
+  const exportPdf = async () => {
     if (exportingPdf) return;
     setExportingPdf(true);
     try {
-      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const [catRes, facRes, exp30Res, expiredRes, tpmRes] = await Promise.all([
+        reportsApi.byCategory(),
+        reportsApi.byFactory(),
+        reportsApi.expiring({ days: 30 }),
+        reportsApi.expiring({ expired: true }),
+        reportsApi.takesPerMonth(),
+      ]);
+
+      const pdfCategory = catRes.data;
+      const pdfFactory = facRes.data;
+      const pdfTakesPerMonth = tpmRes.data;
+      const seen = new Set();
+      const pdfExpiring = [...expiredRes.data, ...exp30Res.data]
+        .filter(item => {
+          if (seen.has(item.id)) return false;
+          seen.add(item.id);
+          return true;
+        })
+        .sort((a, b) => a.expiration_date.localeCompare(b.expiration_date));
+
+      const pdfMaxCategory = Math.max(...pdfCategory.map(r => r.count), 1);
+      const pdfMaxFactory = Math.max(...pdfFactory.map(r => r.employee_count), 1);
+
+      setByCategory(pdfCategory);
+      setByFactory(pdfFactory);
+      setExpiring(pdfExpiring);
+      setTakesPerMonth(pdfTakesPerMonth);
+
+      const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
       const PW = pdf.internal.pageSize.getWidth();
       const PH = pdf.internal.pageSize.getHeight();
       const M = 14;
       const usableW = PW - M * 2;
-      let y = M;
 
-      const checkPage = (needed = 10) => {
-        if (y + needed > PH - M) { pdf.addPage(); y = M; }
+      const layout = {
+        M,
+        usableW,
+        PH,
+        y: M,
+        checkPage(needed = 10) {
+          if (this.y + needed > PH - M) {
+            pdf.addPage('a4', 'landscape');
+            this.y = M;
+          }
+        },
+        tableHeader(cols, startY = this.y) {
+          let rowY = startY;
+          this.y = rowY;
+          this.checkPage(8);
+          rowY = this.y;
+          pdf.setFillColor(245, 247, 250);
+          pdf.rect(M, rowY, usableW, 7, 'F');
+          pdf.setFontSize(7.5);
+          pdf.setFont('helvetica', 'bold');
+          pdf.setTextColor(100);
+          let x = M + 2;
+          cols.forEach(({ label, w }) => {
+            pdf.text(label.toUpperCase(), x, rowY + 4.8);
+            x += w;
+          });
+          pdf.setTextColor(30);
+          this.y = rowY + 7;
+          return this.y;
+        },
+        tableRow(cols, vals, shade, startY = this.y) {
+          let rowY = startY;
+          this.y = rowY;
+          this.checkPage(7);
+          rowY = this.y;
+          if (shade) {
+            pdf.setFillColor(252, 252, 252);
+            pdf.rect(M, rowY, usableW, 6.5, 'F');
+          }
+          pdf.setFontSize(8);
+          pdf.setFont('helvetica', 'normal');
+          let x = M + 2;
+          cols.forEach(({ w }, i) => {
+            const raw = vals[i] != null ? String(vals[i]) : '—';
+            const text = pdf.splitTextToSize(raw, w - 2)[0];
+            pdf.text(text, x, rowY + 4.5);
+            x += w;
+          });
+          pdf.setDrawColor(230);
+          pdf.line(M, rowY + 6.5, M + usableW, rowY + 6.5);
+          this.y = rowY + 6.5;
+          return this.y;
+        },
       };
 
-      const sectionTitle = (text, icon = '') => {
-        checkPage(14);
+      const sectionTitle = (text) => {
+        layout.checkPage(14);
         pdf.setFillColor(240, 245, 255);
-        pdf.roundedRect(M, y, usableW, 8, 1, 1, 'F');
+        pdf.roundedRect(M, layout.y, usableW, 8, 1, 1, 'F');
         pdf.setFontSize(10);
         pdf.setFont('helvetica', 'bold');
         pdf.setTextColor(29, 114, 184);
-        pdf.text((icon ? icon + '  ' : '') + text, M + 3, y + 5.5);
+        pdf.text(text, M + 3, layout.y + 5.5);
         pdf.setTextColor(0);
-        y += 11;
+        layout.y += 11;
       };
 
       const drawBarRow = (label, value, max, colorHex) => {
-        checkPage(8);
+        layout.checkPage(8);
         pdf.setFontSize(8.5);
         pdf.setFont('helvetica', 'normal');
         pdf.setTextColor(60);
-        pdf.text(String(label).slice(0, 28), M, y + 3.5);
+        pdf.text(String(label).slice(0, 36), M, layout.y + 3.5);
 
-        const barX = M + 48;
-        const barW = usableW - 48 - 16;
+        const barX = M + 56;
+        const barW = usableW - 56 - 16;
         const fill = max > 0 ? (value / max) * barW : 0;
 
         pdf.setFillColor(230, 230, 230);
-        pdf.roundedRect(barX, y + 1, barW, 4, 1, 1, 'F');
+        pdf.roundedRect(barX, layout.y + 1, barW, 4, 1, 1, 'F');
 
         if (fill > 0) {
-          const r = parseInt(colorHex.slice(1, 3), 16);
-          const g = parseInt(colorHex.slice(3, 5), 16);
-          const b = parseInt(colorHex.slice(5, 7), 16);
+          const [r, g, b] = hexToRgb(colorHex);
           pdf.setFillColor(r, g, b);
-          pdf.roundedRect(barX, y + 1, fill, 4, 1, 1, 'F');
+          pdf.roundedRect(barX, layout.y + 1, fill, 4, 1, 1, 'F');
         }
 
         pdf.setFontSize(8.5);
         pdf.setFont('helvetica', 'bold');
         pdf.setTextColor(30);
-        pdf.text(String(value), barX + barW + 3, y + 3.8);
-
-        y += 8;
-      };
-
-      const tableHeader = (cols) => {
-        checkPage(8);
-        pdf.setFillColor(245, 247, 250);
-        pdf.rect(M, y, usableW, 7, 'F');
-        pdf.setFontSize(7.5);
-        pdf.setFont('helvetica', 'bold');
-        pdf.setTextColor(100);
-        let x = M + 2;
-        cols.forEach(({ label, w }) => {
-          pdf.text(label.toUpperCase(), x, y + 4.8);
-          x += w;
-        });
-        y += 7;
-        pdf.setTextColor(30);
-      };
-
-      const tableRow = (cols, vals, shade) => {
-        checkPage(7);
-        if (shade) { pdf.setFillColor(252, 252, 252); pdf.rect(M, y, usableW, 6.5, 'F'); }
-        pdf.setFontSize(8);
-        pdf.setFont('helvetica', 'normal');
-        let x = M + 2;
-        cols.forEach(({ w }, i) => {
-          const raw = vals[i] != null ? String(vals[i]) : '—';
-          const text = pdf.splitTextToSize(raw, w - 2)[0];
-          pdf.text(text, x, y + 4.5);
-          x += w;
-        });
-        pdf.setDrawColor(230);
-        pdf.line(M, y + 6.5, M + usableW, y + 6.5);
-        y += 6.5;
+        pdf.text(String(value), barX + barW + 3, layout.y + 3.8);
+        layout.y += 8;
       };
 
       // ── Cover / Header ──────────────────────────────────────────────
       pdf.setFontSize(18);
       pdf.setFont('helvetica', 'bold');
       pdf.setTextColor(29, 114, 184);
-      pdf.text('JAE TCRMS', M, y + 6);
+      pdf.text('JAE TCRMS', M, layout.y + 6);
       pdf.setFontSize(12);
       pdf.setFont('helvetica', 'normal');
       pdf.setTextColor(80);
-      pdf.text('Training & Certification Report', M, y + 13);
+      pdf.text('Training & Certification Report', M, layout.y + 13);
       pdf.setFontSize(8.5);
       pdf.setTextColor(150);
-      pdf.text(`Generated: ${new Date().toLocaleString()}`, M, y + 19);
+      pdf.text(`Generated: ${new Date().toLocaleString()}`, M, layout.y + 19);
       pdf.setDrawColor(29, 114, 184);
       pdf.setLineWidth(0.5);
-      pdf.line(M, y + 22, M + usableW, y + 22);
-      y += 28;
+      pdf.line(M, layout.y + 22, M + usableW, layout.y + 22);
+      layout.y += 28;
 
       // ── Training by Category ────────────────────────────────────────
       const catColors = ['#3B82F6', '#22C55E', '#F59E0B', '#A855F7', '#EF4444', '#06B6D4'];
       sectionTitle('Training by Category');
-      if (byCategory.length === 0) {
+      if (pdfCategory.length === 0) {
         pdf.setFontSize(8.5); pdf.setTextColor(150);
-        pdf.text('No data available.', M + 2, y + 4); y += 10;
+        pdf.text('No data available.', M + 2, layout.y + 4); layout.y += 10;
       } else {
-        byCategory.forEach((row, i) => drawBarRow(row.category, row.count, maxCategory, catColors[i % catColors.length]));
+        pdfCategory.forEach((row, i) => drawBarRow(row.category, row.count, pdfMaxCategory, catColors[i % catColors.length]));
       }
-      y += 4;
+      layout.y += 4;
 
       // ── Employees by Factory ────────────────────────────────────────
       sectionTitle('Employees by Factory');
-      if (byFactory.length === 0) {
+      if (pdfFactory.length === 0) {
         pdf.setFontSize(8.5); pdf.setTextColor(150);
-        pdf.text('No data available.', M + 2, y + 4); y += 10;
+        pdf.text('No data available.', M + 2, layout.y + 4); layout.y += 10;
       } else {
-        byFactory.forEach(row => {
-          drawBarRow(row.factory, row.employee_count, maxFactory, '#22C55E');
-          checkPage(5);
+        pdfFactory.forEach(row => {
+          drawBarRow(row.factory, row.employee_count, pdfMaxFactory, '#22C55E');
+          layout.checkPage(5);
           pdf.setFontSize(7.5); pdf.setFont('helvetica', 'italic'); pdf.setTextColor(130);
-          pdf.text(`${row.training_count} training records`, M + 50, y - 3);
+          pdf.text(`${row.training_count} training records`, M + 58, layout.y - 3);
           pdf.setTextColor(30);
         });
       }
-      y += 4;
+      layout.y += 4;
 
       // ── Takes per Month ─────────────────────────────────────────────
       sectionTitle('Takes per Month');
-      const { months = [], data = {} } = takesPerMonth;
-      if (months.length === 0) {
+      if (!pdfTakesPerMonth.months?.length) {
         pdf.setFontSize(8.5); pdf.setTextColor(150);
-        pdf.text('No data available.', M + 2, y + 4); y += 10;
+        pdf.text('No data available.', M + 2, layout.y + 4); layout.y += 10;
       } else {
-        const tpmCols = [
-          { label: 'Month', w: 40 },
-          { label: '1st Take', w: 30 },
-          { label: '2nd Take', w: 30 },
-          { label: '3rd Take', w: 30 },
-        ];
-        tableHeader(tpmCols);
-        months.forEach((month, i) => tableRow(tpmCols, [
-          month,
-          data[month]?.['1'] || 0,
-          data[month]?.['2'] || 0,
-          data[month]?.['3'] || 0,
-        ], i % 2 === 1));
+        layout.y = drawTakesPerMonthTableInPdf(pdfTakesPerMonth, layout);
       }
-      y += 4;
 
       // ── Certifications Requiring Attention ──────────────────────────
       sectionTitle('Certifications Requiring Attention');
-      if (expiring.length === 0) {
+      if (pdfExpiring.length === 0) {
         pdf.setFontSize(8.5); pdf.setTextColor(150);
-        pdf.text('No expiring or expired certifications found.', M + 2, y + 4); y += 10;
+        pdf.text('No expiring or expired certifications found.', M + 2, layout.y + 4); layout.y += 10;
       } else {
         const expCols = [
-          { label: 'Employee', w: 46 },
-          { label: 'Training', w: 54 },
-          { label: 'Factory/Team', w: 36 },
-          { label: 'Expiry', w: 24 },
-          { label: 'Status', w: 22 },
+          { label: 'Employee', w: 62 },
+          { label: 'Training', w: 78 },
+          { label: 'Factory/Team', w: 58 },
+          { label: 'Expiry', w: 32 },
+          { label: 'Status', w: 28 },
         ];
-        tableHeader(expCols);
-        expiring.forEach((item, i) => tableRow(expCols, [
-          item.full_name,
-          item.title,
-          `${item.factory} / ${item.team}`,
-          item.expiration_date,
-          item.cert_status,
-        ], i % 2 === 1));
+        layout.tableHeader(expCols);
+        pdfExpiring.forEach((item, i) => {
+          layout.tableRow(expCols, [
+            item.full_name,
+            item.title,
+            `${item.factory} / ${item.team}`,
+            item.expiration_date,
+            item.cert_status,
+          ], i % 2 === 1);
+        });
       }
 
       // Page numbers
@@ -410,14 +481,14 @@ export default function Reports() {
         pdf.setFont('helvetica', 'normal');
         pdf.setTextColor(160);
         pdf.text(`Page ${p} of ${pageCount}`, PW - M, PH - 6, { align: 'right' });
-        pdf.text('JAE TCRMS — Confidential', M, PH - 6);
+        pdf.text('JAE TCRMS - Confidential', M, PH - 6);
       }
 
       pdf.save(`JAE-TCRMS-Reports-${new Date().toISOString().split('T')[0]}.pdf`);
       toast('PDF exported successfully.', 'success');
     } catch (err) {
       console.error('PDF export error:', err);
-      toast('Failed to export PDF.', 'error');
+      toast(err?.response?.data?.message || err?.message || 'Failed to export PDF.', 'error');
     } finally {
       setExportingPdf(false);
     }
@@ -442,17 +513,13 @@ export default function Reports() {
       XLSX.utils.book_append_sheet(wb, facSheet, 'By Factory');
 
       // Sheet 3: Takes per Month
-      const tpmRows = [];
-      const { months = [], data = {} } = takesPerMonth;
-      for (const month of months) {
-        tpmRows.push({
-          Month: month,
-          '1st Take': data[month]?.['1'] || 0,
-          '2nd Take': data[month]?.['2'] || 0,
-          '3rd Take': data[month]?.['3'] || 0,
-        });
-      }
-      const tpmSheet = XLSX.utils.json_to_sheet(tpmRows);
+      const tpmSheetRows = buildTakesPerMonthRows(takesPerMonth).map(({ month, counts }) => ({
+        Month: month,
+        '1st Take': counts[0],
+        '2nd Take': counts[1],
+        '3rd Take': counts[2],
+      }));
+      const tpmSheet = XLSX.utils.json_to_sheet(tpmSheetRows);
       XLSX.utils.book_append_sheet(wb, tpmSheet, 'Takes per Month');
 
       // Sheet 4: Expiring / Expired Certifications
@@ -573,10 +640,36 @@ export default function Reports() {
         {!takesPerMonth.months || takesPerMonth.months.length === 0 ? (
           <p className="text-gray-500 text-sm text-center py-6">No data available</p>
         ) : (
-          <TakesPerMonthChart
-            months={takesPerMonth.months}
-            data={takesPerMonth.data}
-          />
+          <>
+            <TakesPerMonthChart
+              months={takesPerMonth.months}
+              data={takesPerMonth.data}
+            />
+            <div className="mt-8 overflow-x-auto border-t border-gray-200 pt-5">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-200">
+                    <th className="pb-2 text-left text-xs font-semibold text-gray-500 uppercase">Month</th>
+                    {TAKE_AXIS.map(take => (
+                      <th key={take} className="pb-2 text-right text-xs font-semibold text-gray-500 uppercase">
+                        {TAKE_LABELS[take]}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {buildTakesPerMonthRows(takesPerMonth).map(({ month, counts }) => (
+                    <tr key={month}>
+                      <td className="py-2 text-gray-700 font-medium">{month}</td>
+                      {counts.map((count, i) => (
+                        <td key={i} className="py-2 text-right text-gray-900 tabular-nums">{count}</td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
 
