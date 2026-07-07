@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Search, Users, ClipboardList, AlertTriangle, LogIn, ArrowLeft, ChevronRight, XCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import StatusBadge from '../components/StatusBadge';
@@ -23,6 +23,8 @@ export default function ViewerDashboard() {
   const { user } = useAuth();
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const isInitialLoad = useRef(true);
   const [search, setSearch] = useState('');
   const [filterTeam, setFilterTeam] = useState('');
   const [teams, setTeams] = useState([]);
@@ -33,7 +35,10 @@ export default function ViewerDashboard() {
   const [trainingLoading, setTrainingLoading] = useState(false);
 
   const load = useCallback(async () => {
-    setLoading(true);
+    const isRefresh = !isInitialLoad.current;
+    if (isRefresh) setRefreshing(true);
+    else setLoading(true);
+
     try {
       const params = { status: 'active' };
       if (search) params.search = search;
@@ -48,6 +53,8 @@ export default function ViewerDashboard() {
       setEmployees([]);
     } finally {
       setLoading(false);
+      setRefreshing(false);
+      isInitialLoad.current = false;
     }
   }, [search, filterTeam]);
 
@@ -159,7 +166,7 @@ export default function ViewerDashboard() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {loading ? (
+              {loading && !refreshing ? (
                 <tr>
                   <td colSpan={10} className="px-4 py-12 text-center">
                     <div className="flex flex-col items-center gap-2 text-gray-500">
