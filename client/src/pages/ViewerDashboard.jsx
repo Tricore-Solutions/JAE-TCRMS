@@ -237,7 +237,7 @@ export default function ViewerDashboard() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-gray-50">
-                  {['Training Title', 'Category', 'Date', 'Trainer', 'Take', 'Worker Line', 'Expiration', 'Status'].map(h => (
+                  {['Training Title', 'Category', 'Date', 'Expiration', 'Worker Line', 'Take', 'Trainer', 'Status'].map(h => (
                     <th key={h} className="px-3 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
@@ -253,10 +253,7 @@ export default function ViewerDashboard() {
                     </td>
                     <td className="px-3 py-3 text-gray-700 whitespace-nowrap">{t.category || '—'}</td>
                     <td className="px-3 py-3 text-gray-700 whitespace-nowrap">{t.training_date}</td>
-                    <td className="px-3 py-3 text-gray-500 whitespace-nowrap">{t.trainer || '—'}</td>
-                    <td className="px-3 py-3 text-gray-700 whitespace-nowrap">
-                      {TAKE_LABELS[t.take] || `Take ${t.take}`}
-                    </td>
+                    <td className="px-3 py-3 text-gray-500 whitespace-nowrap">{t.expiration_date || 'No expiry'}</td>
                     <td className="px-3 py-3 whitespace-nowrap">
                       <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
                         t.worker_line_status === 'Original'
@@ -266,7 +263,10 @@ export default function ViewerDashboard() {
                         {t.worker_line_status || 'Floating'}
                       </span>
                     </td>
-                    <td className="px-3 py-3 text-gray-500 whitespace-nowrap">{t.expiration_date || 'No expiry'}</td>
+                    <td className="px-3 py-3 text-gray-700 whitespace-nowrap">
+                      {TAKE_LABELS[t.take] || `Take ${t.take}`}
+                    </td>
+                    <td className="px-3 py-3 text-gray-500 whitespace-nowrap">{t.trainer || '—'}</td>
                     <td className="px-3 py-3">
                       <StatusBadge status={getCertStatus(t.expiration_date)} />
                     </td>
