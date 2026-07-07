@@ -31,10 +31,11 @@ def public_employees(request):
 
     current = today()
     rows = qs.annotate(
-        total_trainings=Count('trainings'),
+        total_trainings=Count('trainings', filter=Q(trainings__is_archived=False)),
         expired_count=Count(
             'trainings',
             filter=Q(
+                trainings__is_archived=False,
                 trainings__expiration_date__isnull=False,
                 trainings__expiration_date__lt=current,
             ),
@@ -56,7 +57,7 @@ def public_employee_trainings(request, pk):
     except Employee.DoesNotExist:
         return Response({'error': 'Employee not found'}, status=404)
 
-    trainings = Training.objects.filter(employee=employee).order_by('-training_date')
+    trainings = Training.objects.filter(employee=employee, is_archived=False).order_by('-training_date')
     current = today()
 
     import datetime
