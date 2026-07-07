@@ -251,15 +251,11 @@ export default function ViewerDashboard() {
                         <p className="text-xs text-gray-500 truncate">{t.process_classification}</p>
                       )}
                     </td>
-                    <td className="px-3 py-3">
-                      <span className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full whitespace-nowrap">{t.category || '—'}</span>
-                    </td>
+                    <td className="px-3 py-3 text-gray-700 whitespace-nowrap">{t.category || '—'}</td>
                     <td className="px-3 py-3 text-gray-700 whitespace-nowrap">{t.training_date}</td>
                     <td className="px-3 py-3 text-gray-500 whitespace-nowrap">{t.trainer || '—'}</td>
-                    <td className="px-3 py-3 whitespace-nowrap">
-                      <span className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full">
-                        {TAKE_LABELS[t.take] || `Take ${t.take}`}
-                      </span>
+                    <td className="px-3 py-3 text-gray-700 whitespace-nowrap">
+                      {TAKE_LABELS[t.take] || `Take ${t.take}`}
                     </td>
                     <td className="px-3 py-3 whitespace-nowrap">
                       <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${

@@ -255,7 +255,7 @@ export default function Training() {
       <span className="text-sm text-gray-600">{v}</span>
     )},
     { key: 'category', label: 'Category', render: v => (
-      <span className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full">{v || '—'}</span>
+      <span className="text-sm text-gray-700">{v || '—'}</span>
     )},
     { key: 'process_classification', label: 'Classification', render: v => v ? (
       <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${getClassificationChipClass(v)}`}>{v}</span>
@@ -286,7 +286,7 @@ export default function Training() {
       </span>
     )},
     { key: 'take', label: 'Take', render: v => (
-      <span className="text-xs font-semibold text-gray-700 bg-gray-100 px-2 py-0.5 rounded-full">
+      <span className="text-sm text-gray-700">
         {TAKE_OPTIONS.find(o => o.value === v)?.label || `${v || 1}st Take`}
       </span>
     )},

@@ -105,21 +105,13 @@ export default function Archive() {
     {
       key: 'category',
       label: 'Category',
-      render: (v) => (
-        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">
-          {v}
-        </span>
-      ),
+      render: (v) => <span className="text-sm text-gray-700">{v || '—'}</span>,
     },
     { key: 'training_date', label: 'Date', render: (v) => formatDate(v) },
     {
       key: 'take',
       label: 'Take',
-      render: (v) => (
-        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-blue-100 text-blue-800">
-          {takeLabel(v)}
-        </span>
-      ),
+      render: (v) => <span className="text-sm text-gray-700">{takeLabel(v)}</span>,
     },
     {
       key: 'worker_line_status',
