@@ -13,6 +13,7 @@ def public_employees(request):
     qs = Employee.objects.all()
     status_filter = request.query_params.get('status')
     team = request.query_params.get('team')
+    employment_status = request.query_params.get('employment_status')
     search = request.query_params.get('search')
 
     if status_filter:
@@ -21,6 +22,8 @@ def public_employees(request):
         qs = qs.filter(status='active')
     if team:
         qs = qs.filter(team=team)
+    if employment_status:
+        qs = qs.filter(employment_status=employment_status)
     if search:
         qs = qs.filter(
             Q(full_name__icontains=search) | Q(employee_id__icontains=search)

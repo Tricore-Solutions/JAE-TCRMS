@@ -8,6 +8,13 @@ import { publicApi } from '../api';
 import { useAuth } from '../context/AuthContext';
 
 const TAKE_LABELS = { 1: '1st Take', 2: '2nd Take', 3: '3rd Take' };
+const EMPLOYMENT_STATUSES = [
+  'FAMSI - Proby',
+  'FAMSI - Reg',
+  'MDHII - Proby',
+  'MDHII - Reg',
+  'Regular - JAE',
+];
 
 function getCertStatus(expirationDate) {
   if (!expirationDate) return 'valid';
@@ -27,6 +34,7 @@ export default function ViewerDashboard() {
   const isInitialLoad = useRef(true);
   const [search, setSearch] = useState('');
   const [filterTeam, setFilterTeam] = useState('');
+  const [filterEmploymentStatus, setFilterEmploymentStatus] = useState('');
   const [teams, setTeams] = useState([]);
 
   // Training history modal
@@ -43,9 +51,10 @@ export default function ViewerDashboard() {
       const params = { status: 'active' };
       if (search) params.search = search;
       if (filterTeam) params.team = filterTeam;
+      if (filterEmploymentStatus) params.employment_status = filterEmploymentStatus;
       const res = await publicApi.employees(params);
       setEmployees(res.data);
-      if (!filterTeam && !search) {
+      if (!filterTeam && !search && !filterEmploymentStatus) {
         const uniqueTeams = [...new Set(res.data.map(e => e.team).filter(Boolean))].sort();
         setTeams(uniqueTeams);
       }
@@ -56,7 +65,7 @@ export default function ViewerDashboard() {
       setRefreshing(false);
       isInitialLoad.current = false;
     }
-  }, [search, filterTeam]);
+  }, [search, filterTeam, filterEmploymentStatus]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -134,6 +143,14 @@ export default function ViewerDashboard() {
               {teams.map(t => <option key={t} value={t}>{t}</option>)}
             </select>
           )}
+          <select
+            value={filterEmploymentStatus}
+            onChange={e => setFilterEmploymentStatus(e.target.value)}
+            className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
+          >
+            <option value="">All Employment Status</option>
+            {EMPLOYMENT_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
         </div>
 
         {/* Summary bar */}
@@ -225,7 +242,7 @@ export default function ViewerDashboard() {
         open={!!selected}
         onClose={() => setSelected(null)}
         title={selected?.full_name || ''}
-        description={selected ? `${selected.employee_id} · ${selected.factory || '—'} · ${selected.team || '—'}` : ''}
+        description={selected ? `${selected.employee_id} · ${selected.factory || '—'} Factory · ${selected.line || '—'} · Team ${selected.team || '—'}` : ''}
         size="xl"
       >
         <h3 className="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
