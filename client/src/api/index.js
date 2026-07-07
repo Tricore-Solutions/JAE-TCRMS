@@ -21,10 +21,28 @@ export const api = axios.create({
   timeout: 10000,
 });
 
-// Attach JWT token to every request
+let onUnauthorized = null;
+
+export function setUnauthorizedHandler(handler) {
+  onUnauthorized = handler;
+}
+
+function clearSession() {
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
+  onUnauthorized?.();
+}
+
+function isLoginRequest(config) {
+  return (config?.url || '').includes('/auth/login');
+}
+
+// Attach JWT token to authenticated requests (never on login)
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) config.headers.Authorization = `Bearer ${token}`;
+  if (!isLoginRequest(config)) {
+    const token = localStorage.getItem('token');
+    if (token) config.headers.Authorization = `Bearer ${token}`;
+  }
   return config;
 });
 
@@ -32,10 +50,12 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (res) => res,
   (err) => {
-    if (err.response?.status === 401 || err.response?.status === 403) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.hash = '/login';
+    const status = err.response?.status;
+    if ((status === 401 || status === 403) && !isLoginRequest(err.config)) {
+      clearSession();
+      if (!err.config?.skipAuthRedirect && !window.location.hash.includes('/login')) {
+        window.location.hash = '/login';
+      }
     }
     return Promise.reject(err);
   }
@@ -44,7 +64,7 @@ api.interceptors.response.use(
 // Auth
 export const authApi = {
   login: (credentials) => api.post('/auth/login', credentials),
-  me: () => api.get('/auth/me'),
+  me: (options = {}) => api.get('/auth/me', options),
   logout: () => api.post('/auth/logout'),
 };
 

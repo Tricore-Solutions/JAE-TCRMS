@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { authApi, setServerUrl } from '../api';
+import { authApi, setServerUrl, setUnauthorizedHandler } from '../api';
 
 const AuthContext = createContext(null);
 
@@ -7,19 +7,41 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Restore session on app load
   useEffect(() => {
-    const stored = localStorage.getItem('user');
-    const token = localStorage.getItem('token');
-    if (stored && token) {
+    setUnauthorizedHandler(() => setUser(null));
+    return () => setUnauthorizedHandler(null);
+  }, []);
+
+  // Validate stored token on app load instead of trusting localStorage blindly
+  useEffect(() => {
+    let cancelled = false;
+
+    async function restoreSession() {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setLoading(false);
+        return;
+      }
+
       try {
-        setUser(JSON.parse(stored));
+        const res = await authApi.me({ skipAuthRedirect: true });
+        if (!cancelled) {
+          setUser(res.data);
+          localStorage.setItem('user', JSON.stringify(res.data));
+        }
       } catch {
-        localStorage.removeItem('user');
-        localStorage.removeItem('token');
+        if (!cancelled) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          setUser(null);
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
       }
     }
-    setLoading(false);
+
+    restoreSession();
+    return () => { cancelled = true; };
   }, []);
 
   const login = useCallback(async (username, password) => {
