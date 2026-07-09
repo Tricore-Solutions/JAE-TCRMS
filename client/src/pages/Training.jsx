@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Plus, Search, Sheet } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import Layout from '../components/Layout';
 import DataTable from '../components/DataTable';
 import Modal from '../components/Modal';
@@ -70,24 +71,19 @@ function buildFilterParams({ search, filterCategory, filterStatus, filterWorkerL
   return params;
 }
 
-function exportToCSV(data, filename) {
+function exportToXLSX(data, filename) {
   if (!data.length) return;
-  const headers = Object.keys(data[0]);
-  const rows = data.map(row =>
-    headers.map(h => {
-      const val = row[h] ?? '';
-      const str = String(val).replace(/"/g, '""');
-      return str.includes(',') || str.includes('"') || str.includes('\n') ? `"${str}"` : str;
-    }).join(',')
-  );
-  const csv = [headers.join(','), ...rows].join('\n');
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
+  const worksheet = XLSX.utils.json_to_sheet(data);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'Training Records');
+
+  // Auto-size columns based on content
+  const colWidths = Object.keys(data[0]).map(key => ({
+    wch: Math.max(key.length, ...data.map(row => String(row[key] ?? '').length), 10),
+  }));
+  worksheet['!cols'] = colWidths;
+
+  XLSX.writeFile(workbook, filename);
 }
 
 export default function Training() {
@@ -235,8 +231,8 @@ export default function Training() {
         return;
       }
       const today = new Date().toISOString().split('T')[0];
-      exportToCSV(res.data, `JAE-TCRMS-Training-Report-${today}.csv`);
-      toast(`Exported ${res.data.length} records to CSV.`, 'success');
+      exportToXLSX(res.data, `JAE-TCRMS-Training-Report-${today}.xlsx`);
+      toast(`Exported ${res.data.length} records to Excel.`, 'success');
     } catch {
       toast('Export failed.', 'error');
     } finally {
@@ -320,10 +316,10 @@ export default function Training() {
             onClick={handleExport}
             disabled={exporting}
             className="flex items-center gap-2 text-gray-500 hover:text-green-700 text-sm px-3 py-2 rounded-lg hover:bg-green-50 border border-gray-200 hover:border-green-200 transition-colors disabled:opacity-40"
-            title="Export filtered records to CSV"
+            title="Export filtered records to Excel"
           >
             <Sheet size={14} />
-            {exporting ? 'Exporting CSV…' : 'Export CSV'}
+            {exporting ? 'Exporting…' : 'Export Excel'}
           </button>
           {canEdit && (
             <button onClick={openCreate} className="flex items-center gap-2 bg-[#1D72B8] hover:bg-[#1864a3] text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
