@@ -19,17 +19,18 @@ def training_summary(request):
     in30 = days_from_today(30)
     in10 = days_from_today(10)
 
-    total = Training.objects.count()
-    expired = Training.objects.filter(
+    active_qs = Training.objects.filter(is_archived=False)
+    total = active_qs.count()
+    expired = active_qs.filter(
         expiration_date__isnull=False,
         expiration_date__lt=current,
     ).count()
-    expiring30 = Training.objects.filter(
+    expiring30 = active_qs.filter(
         expiration_date__isnull=False,
         expiration_date__gte=current,
         expiration_date__lte=in30,
     ).count()
-    expiring60 = Training.objects.filter(
+    expiring60 = active_qs.filter(
         expiration_date__isnull=False,
         expiration_date__gte=current,
         expiration_date__lte=in10,
@@ -49,7 +50,7 @@ def training_summary(request):
 @permission_classes([IsAuthenticated])
 def training_categories(request):
     categories = list(
-        Training.objects.exclude(category='')
+        Training.objects.filter(is_archived=False).exclude(category='')
         .values_list('category', flat=True)
         .distinct()
         .order_by('category')

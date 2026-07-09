@@ -169,7 +169,7 @@ def record_audit_logs(request, table_name, record_id):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def export_trainings(request):
-    qs = Training.objects.select_related('employee').all()
+    qs = Training.objects.select_related('employee').filter(is_archived=False)
 
     category = request.query_params.get('category')
     factory = request.query_params.get('factory')
