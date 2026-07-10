@@ -257,7 +257,7 @@ export default function Training() {
   };
 
   const columns = [
-    { key: 'employee_name', label: 'Employee', render: (v, row) => (
+    { key: 'employee_name', label: 'Employee', className: 'w-44 min-w-44', render: (v, row) => (
       <div>
         <p className="text-gray-900 font-medium text-sm">{v}</p>
         <p className="text-xs text-gray-500">{row.emp_code}</p>
