@@ -165,7 +165,7 @@ export default function Training() {
       worker_line_status: record.worker_line_status || 'Floating',
       take: record.take || 1,
     });
-    setWithValidity(record.category !== 'Orientation' || !!record.expiration_date);
+    setWithValidity(record.category !== 'Orientation' || record.validity_months > 0);
     setModalOpen(true);
   };
 

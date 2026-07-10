@@ -126,7 +126,11 @@ def training_list_create(request):
     except Employee.DoesNotExist:
         return Response({'error': 'Employee not found'}, status=status.HTTP_404_NOT_FOUND)
 
-    validity_months = request.data.get('validity_months') or 12
+    validity_months = (
+        request.data['validity_months']
+        if 'validity_months' in request.data
+        else 12
+    )
     expiration_date = calc_expiration(training_date, validity_months)
 
     training = Training.objects.create(
