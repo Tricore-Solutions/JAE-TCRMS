@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Search, ArchiveRestore, Trash2 } from 'lucide-react';
+import { formatValidityLabel } from '../utils/validity';
 import Layout from '../components/Layout';
 import DataTable from '../components/DataTable';
 import Modal from '../components/Modal';
@@ -169,7 +170,7 @@ export default function Archive() {
     { label: 'Trainer', value: selected.trainer || '—' },
     { label: 'Take', value: takeLabel(selected.take) },
     { label: 'Worker Line Status', value: selected.worker_line_status || '—' },
-    { label: 'Validity (months)', value: selected.validity_months || '—' },
+    { label: 'Validity', value: formatValidityLabel(selected) },
     { label: 'Expiration Date', value: formatDate(selected.expiration_date) },
     { label: 'Process Classification', value: selected.process_classification || '—' },
     { label: 'Remarks', value: selected.remarks || '—' },

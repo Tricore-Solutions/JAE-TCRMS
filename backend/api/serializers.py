@@ -39,7 +39,7 @@ class TrainingSerializer(serializers.ModelSerializer):
         model = Training
         fields = [
             'id', 'employee_id', 'title', 'category', 'training_date', 'trainer',
-            'validity_months', 'expiration_date', 'process_classification',
+            'validity_months', 'validity_days', 'expiration_date', 'process_classification',
             'remarks', 'worker_line_status', 'take', 'created_by', 'created_at', 'updated_at',
         ]
 
@@ -55,7 +55,7 @@ class TrainingListSerializer(serializers.ModelSerializer):
         model = Training
         fields = [
             'id', 'employee_id', 'title', 'category', 'training_date', 'trainer',
-            'validity_months', 'expiration_date', 'process_classification',
+            'validity_months', 'validity_days', 'expiration_date', 'process_classification',
             'remarks', 'worker_line_status', 'take', 'created_by', 'created_at', 'updated_at',
             'is_archived', 'archived_at',
             'employee_name', 'emp_code', 'factory', 'line', 'team',

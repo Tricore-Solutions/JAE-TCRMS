@@ -10,6 +10,7 @@ export default function DataTable({
   onRowClick,
   rowClassName,
   pageSize = 10,
+  tableClassName = '',
 }) {
   const [sort, setSort] = useState({ key: null, dir: 'asc' });
   const [page, setPage] = useState(1);
@@ -46,7 +47,7 @@ export default function DataTable({
   return (
     <div className="flex flex-col">
       <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
-        <table className="w-full text-sm">
+        <table className={`w-full text-sm ${tableClassName}`}>
           <thead>
             <tr className="bg-gray-50">
               {columns.map((col) => (

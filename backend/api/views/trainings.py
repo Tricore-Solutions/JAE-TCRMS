@@ -9,7 +9,7 @@ from rest_framework.response import Response
 from api.models import Employee, Training
 from api.permissions import IsAdmin, IsAdminOrEncoder
 from api.serializers import TrainingListSerializer, TrainingSerializer
-from api.utils import calc_expiration, days_from_today, log_audit, today
+from api.utils import calc_expiration, days_from_today, log_audit, parse_training_validity, today
 
 
 @api_view(['GET'])
@@ -126,12 +126,12 @@ def training_list_create(request):
     except Employee.DoesNotExist:
         return Response({'error': 'Employee not found'}, status=status.HTTP_404_NOT_FOUND)
 
-    validity_months = (
-        request.data['validity_months']
-        if 'validity_months' in request.data
-        else 12
+    validity_months, validity_days = parse_training_validity(request.data)
+    expiration_date = calc_expiration(
+        training_date,
+        validity_months=validity_months,
+        validity_days=validity_days,
     )
-    expiration_date = calc_expiration(training_date, validity_months)
 
     training = Training.objects.create(
         employee=employee,
@@ -140,6 +140,7 @@ def training_list_create(request):
         training_date=training_date,
         trainer=request.data.get('trainer') or '',
         validity_months=validity_months,
+        validity_days=validity_days,
         expiration_date=expiration_date,
         process_classification=request.data.get('process_classification') or '',
         remarks=request.data.get('remarks') or '',
@@ -175,7 +176,10 @@ def training_detail(request, pk):
             'category': training.category,
             'training_date': str(training.training_date),
             'trainer': training.trainer,
-            'validity_months': training.validity_months,
+            'validity_months': (
+                float(training.validity_months) if training.validity_months is not None else None
+            ),
+            'validity_days': training.validity_days,
             'expiration_date': str(training.expiration_date) if training.expiration_date else None,
             'process_classification': training.process_classification,
             'worker_line_status': training.worker_line_status,
@@ -184,10 +188,9 @@ def training_detail(request, pk):
         }
 
         new_date = request.data.get('training_date') or training.training_date
-        new_validity = (
-            request.data['validity_months']
-            if 'validity_months' in request.data
-            else training.validity_months
+        validity_months, validity_days = parse_training_validity(
+            request.data,
+            default_months=training.validity_months if training.validity_months is not None else 12,
         )
 
         training.title = request.data.get('title') or training.title
@@ -196,8 +199,13 @@ def training_detail(request, pk):
         training.training_date = new_date
         if 'trainer' in request.data:
             training.trainer = request.data['trainer']
-        training.validity_months = new_validity
-        training.expiration_date = calc_expiration(new_date, new_validity)
+        training.validity_months = validity_months
+        training.validity_days = validity_days
+        training.expiration_date = calc_expiration(
+            new_date,
+            validity_months=validity_months,
+            validity_days=validity_days,
+        )
         if 'process_classification' in request.data:
             training.process_classification = request.data['process_classification']
         if 'remarks' in request.data:
@@ -213,7 +221,10 @@ def training_detail(request, pk):
             'category': training.category,
             'training_date': str(training.training_date),
             'trainer': training.trainer,
-            'validity_months': training.validity_months,
+            'validity_months': (
+                float(training.validity_months) if training.validity_months is not None else None
+            ),
+            'validity_days': training.validity_days,
             'expiration_date': str(training.expiration_date) if training.expiration_date else None,
             'process_classification': training.process_classification,
             'worker_line_status': training.worker_line_status,

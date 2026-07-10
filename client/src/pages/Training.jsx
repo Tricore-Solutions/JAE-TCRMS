@@ -12,7 +12,15 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/Toast';
 
 const CATEGORIES = ['Safety', 'Technical', 'Quality', 'Management', 'Regulatory', 'Orientation', 'Other'];
-const VALIDITY_OPTIONS = [3, 6, 12, 18, 24, 36, 60];
+import {
+  DEFAULT_VALIDITY_OPTION,
+  calcExpirationPreview,
+  formatValidityLabel,
+  getValidityOptionsForForm,
+  getValidityPreviewLabel,
+  recordToValidityOption,
+  validityOptionToPayload,
+} from '../utils/validity';
 
 function getCertStatus(expirationDate) {
   if (!expirationDate) return 'valid';
@@ -54,7 +62,7 @@ const TAKE_OPTIONS = [
 
 const emptyForm = {
   employee_id: '', title: '', category: '', training_date: '',
-  trainer: '', validity_months: 12, process_classification: '', remarks: '',
+  trainer: '', validity_option: DEFAULT_VALIDITY_OPTION, process_classification: '', remarks: '',
   worker_line_status: 'Floating', take: 1,
 };
 
@@ -159,13 +167,17 @@ export default function Training() {
       category: record.category,
       training_date: record.training_date,
       trainer: record.trainer,
-      validity_months: record.validity_months,
+      validity_option: recordToValidityOption(record),
       process_classification: record.process_classification,
       remarks: record.remarks,
       worker_line_status: record.worker_line_status || 'Floating',
       take: record.take || 1,
     });
-    setWithValidity(record.category !== 'Orientation' || record.validity_months > 0);
+    setWithValidity(
+      record.category !== 'Orientation'
+        || Number(record.validity_months) > 0
+        || Number(record.validity_days) > 0,
+    );
     setModalOpen(true);
   };
 
@@ -189,10 +201,14 @@ export default function Training() {
       return;
     }
     setSaving(true);
+    const validity = form.category === 'Orientation' && !withValidity
+      ? { validity_months: 0, validity_days: null }
+      : validityOptionToPayload(form.validity_option);
     const payload = {
       ...form,
-      validity_months: form.category === 'Orientation' && !withValidity ? 0 : form.validity_months,
+      ...validity,
     };
+    delete payload.validity_option;
     try {
       if (selected) {
         await trainingsApi.update(selected.id, payload);
@@ -259,6 +275,9 @@ export default function Training() {
       <span className="text-xs text-gray-400">—</span>
     )},
     { key: 'training_date', label: 'Date' },
+    { key: 'validity', label: 'Validity', render: (_, row) => (
+      <span className="text-sm text-gray-700">{formatValidityLabel(row)}</span>
+    )},
     { key: 'expiration_date', label: 'Expiration', render: v => {
       const urgency = getExpirationUrgency(v);
       const colorClass = urgency === 'valid'
@@ -272,7 +291,7 @@ export default function Training() {
         </span>
       );
     }},
-    { key: 'worker_line_status', label: 'Worker Line Status', render: v => (
+    { key: 'worker_line_status', label: 'Line Status', className: 'w-24 max-w-24 px-2', render: v => (
       <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
         v === 'Original'
           ? 'bg-blue-50 text-[#1D72B8] border border-blue-200'
@@ -398,6 +417,7 @@ export default function Training() {
         columns={columns}
         data={records}
         loading={loading}
+        tableClassName="table-fixed"
         emptyMessage="No training records found."
         rowClassName={(row) =>
           getExpirationUrgency(row.expiration_date) === 'expired'
@@ -475,13 +495,15 @@ export default function Training() {
           {!(form.category === 'Orientation' && !withValidity) && (
             <>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Validity (months)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Validity</label>
                 <select
-                  value={form.validity_months}
-                  onChange={e => setForm(f => ({ ...f, validity_months: parseInt(e.target.value) }))}
+                  value={form.validity_option}
+                  onChange={e => setForm(f => ({ ...f, validity_option: e.target.value }))}
                   className="w-full app-input px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
                 >
-                  {VALIDITY_OPTIONS.map(v => <option key={v} value={v}>{v} months</option>)}
+                  {getValidityOptionsForForm(selected).map(o => (
+                    <option key={o.id} value={o.id}>{o.label}</option>
+                  ))}
                 </select>
               </div>
               <div>
@@ -533,16 +555,12 @@ export default function Training() {
             />
           </div>
         </div>
-        {form.training_date && form.validity_months && !(form.category === 'Orientation' && !withValidity) && (
+        {form.training_date && form.validity_option && !(form.category === 'Orientation' && !withValidity) && (
           <div className="mt-4 bg-gray-100/50 rounded-lg p-3">
             <p className="text-xs text-gray-500">
               Calculated expiration: <span className="text-gray-900 font-medium">
-                {(() => {
-                  const d = new Date(form.training_date);
-                  d.setMonth(d.getMonth() + parseInt(form.validity_months));
-                  return d.toISOString().split('T')[0];
-                })()}
-              </span> ({form.validity_months} months from training date)
+                {calcExpirationPreview(form.training_date, form.validity_option)}
+              </span> ({getValidityPreviewLabel(form.validity_option)} from training date)
             </p>
           </div>
         )}
@@ -583,7 +601,7 @@ export default function Training() {
                   { label: 'Category', value: selected.category || '—' },
                   { label: 'Training Date', value: selected.training_date },
                   { label: 'Trainer', value: selected.trainer || '—' },
-                  { label: 'Validity', value: `${selected.validity_months} months` },
+                  { label: 'Validity', value: formatValidityLabel(selected) },
                   { label: 'Expiration Date', value: selected.expiration_date || '—' },
                   { label: 'Status', value: <StatusBadge status={getCertStatus(selected.expiration_date)} /> },
                   { label: 'Process Classification', value: selected.process_classification || '—' },
