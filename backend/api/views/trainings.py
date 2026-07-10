@@ -58,6 +58,18 @@ def training_categories(request):
     return Response(categories)
 
 
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def training_titles(request):
+    titles = list(
+        Training.objects.filter(is_archived=False).exclude(title='')
+        .values_list('title', flat=True)
+        .distinct()
+        .order_by('title')
+    )
+    return Response(titles)
+
+
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
 def training_list_create(request):
@@ -288,3 +300,49 @@ def delete_archived_training(request, pk):
     training.delete()
     log_audit(request.user, 'DELETE', 'trainings', pk, f'Permanently deleted training: {title}')
     return Response({'message': 'Training record permanently deleted'})
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def bulk_archive_trainings(request):
+    if not IsAdmin().has_permission(request, None):
+        return Response({'error': 'Insufficient permissions'}, status=403)
+    ids = request.data.get('ids', [])
+    if not ids or not isinstance(ids, list):
+        return Response({'error': 'A list of ids is required'}, status=400)
+    from django.utils import timezone
+    qs = Training.objects.filter(pk__in=ids, is_archived=False)
+    count = qs.count()
+    qs.update(is_archived=True, archived_at=timezone.now())
+    log_audit(request.user, 'DELETE', 'trainings', None, f'Bulk archived {count} training record(s)')
+    return Response({'message': f'{count} record(s) archived', 'count': count})
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def bulk_restore_trainings(request):
+    if not IsAdmin().has_permission(request, None):
+        return Response({'error': 'Insufficient permissions'}, status=403)
+    ids = request.data.get('ids', [])
+    if not ids or not isinstance(ids, list):
+        return Response({'error': 'A list of ids is required'}, status=400)
+    qs = Training.objects.filter(pk__in=ids, is_archived=True)
+    count = qs.count()
+    qs.update(is_archived=False, archived_at=None)
+    log_audit(request.user, 'RESTORE', 'trainings', None, f'Bulk restored {count} training record(s)')
+    return Response({'message': f'{count} record(s) restored', 'count': count})
+
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def bulk_delete_trainings(request):
+    if not IsAdmin().has_permission(request, None):
+        return Response({'error': 'Insufficient permissions'}, status=403)
+    ids = request.data.get('ids', [])
+    if not ids or not isinstance(ids, list):
+        return Response({'error': 'A list of ids is required'}, status=400)
+    qs = Training.objects.filter(pk__in=ids, is_archived=True)
+    count = qs.count()
+    qs.delete()
+    log_audit(request.user, 'DELETE', 'trainings', None, f'Bulk permanently deleted {count} training record(s)')
+    return Response({'message': f'{count} record(s) permanently deleted', 'count': count})

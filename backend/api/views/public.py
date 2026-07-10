@@ -1,3 +1,5 @@
+import datetime
+
 from django.db.models import Count, Q
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
@@ -15,6 +17,10 @@ def public_employees(request):
     team = request.query_params.get('team')
     employment_status = request.query_params.get('employment_status')
     search = request.query_params.get('search')
+    training_title = request.query_params.get('training_title')
+    expiry_from = request.query_params.get('expiry_from')
+    expiry_to = request.query_params.get('expiry_to')
+    cert_status = request.query_params.get('cert_status')  # expired | expiring30 | expiring60
 
     if status_filter:
         qs = qs.filter(status=status_filter)
@@ -29,7 +35,52 @@ def public_employees(request):
             Q(full_name__icontains=search) | Q(employee_id__icontains=search)
         )
 
+    # Training title — keep only employees who have at least one matching training
+    if training_title:
+        qs = qs.filter(
+            trainings__title__icontains=training_title,
+            trainings__is_archived=False,
+        ).distinct()
+
+    # Expiration date range filter
     current = today()
+    if expiry_from:
+        qs = qs.filter(
+            trainings__is_archived=False,
+            trainings__expiration_date__isnull=False,
+            trainings__expiration_date__gte=expiry_from,
+        ).distinct()
+    if expiry_to:
+        qs = qs.filter(
+            trainings__is_archived=False,
+            trainings__expiration_date__isnull=False,
+            trainings__expiration_date__lte=expiry_to,
+        ).distinct()
+
+    # Cert status shortcut filters
+    if cert_status == 'expired':
+        qs = qs.filter(
+            trainings__is_archived=False,
+            trainings__expiration_date__isnull=False,
+            trainings__expiration_date__lt=current,
+        ).distinct()
+    elif cert_status == 'expiring30':
+        in30 = current + datetime.timedelta(days=30)
+        qs = qs.filter(
+            trainings__is_archived=False,
+            trainings__expiration_date__isnull=False,
+            trainings__expiration_date__gte=current,
+            trainings__expiration_date__lte=in30,
+        ).distinct()
+    elif cert_status == 'expiring60':
+        in60 = current + datetime.timedelta(days=60)
+        qs = qs.filter(
+            trainings__is_archived=False,
+            trainings__expiration_date__isnull=False,
+            trainings__expiration_date__gte=current,
+            trainings__expiration_date__lte=in60,
+        ).distinct()
+
     rows = qs.annotate(
         total_trainings=Count('trainings', filter=Q(trainings__is_archived=False)),
         expired_count=Count(
@@ -47,6 +98,20 @@ def public_employees(request):
     )
 
     return Response(list(rows))
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def public_training_titles(request):
+    """Return distinct training titles for the public filter dropdown."""
+    titles = list(
+        Training.objects.filter(is_archived=False)
+        .exclude(title='')
+        .values_list('title', flat=True)
+        .distinct()
+        .order_by('title')
+    )
+    return Response(titles)
 
 
 @api_view(['GET'])
