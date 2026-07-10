@@ -37,10 +37,10 @@ function mergeExpiringRecords(expiredItems, expiringItems) {
 }
 
 async function fetchReportData() {
-  const [catRes, facRes, exp30Res, expiredRes, tpmRes] = await Promise.all([
+  const [catRes, facRes, exp10Res, expiredRes, tpmRes] = await Promise.all([
     reportsApi.byCategory(),
     reportsApi.byFactory(),
-    reportsApi.expiring({ days: 30 }),
+    reportsApi.expiring({ days: 10 }),
     reportsApi.expiring({ expired: true }),
     reportsApi.takesPerMonth(),
   ]);
@@ -49,7 +49,7 @@ async function fetchReportData() {
     byCategory: catRes.data,
     byFactory: facRes.data,
     takesPerMonth: tpmRes.data,
-    expiring: mergeExpiringRecords(expiredRes.data, exp30Res.data),
+    expiring: mergeExpiringRecords(expiredRes.data, exp10Res.data),
   };
 }
 
@@ -533,7 +533,7 @@ export default function Reports() {
       }
 
       // ── Certifications Requiring Attention ──────────────────────────
-      sectionTitle('Certifications Requiring Attention');
+      sectionTitle('Certifications Requiring Attention (next 10 days + expired)');
       if (pdfExpiring.length === 0) {
         pdf.setFontSize(8.5); pdf.setTextColor(150);
         pdf.text('No expiring or expired certifications found.', M + 2, layout.y + 4); layout.y += 10;
@@ -732,7 +732,7 @@ export default function Reports() {
       {/* Expiring certifications list */}
       <div className="app-panel p-6 mb-6">
         <h3 className="font-semibold text-gray-900 mb-5 flex items-center gap-2">
-          <AlertTriangle size={16} className="text-amber-600" /> Certifications Requiring Attention (next 30 days + expired)
+          <AlertTriangle size={16} className="text-amber-600" /> Certifications Requiring Attention (next 10 days + expired)
         </h3>
         {expiring.length === 0 ? (
           <p className="text-gray-500 text-sm text-center py-6">No expiring or expired certifications found.</p>
