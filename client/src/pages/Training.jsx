@@ -269,6 +269,9 @@ export default function Training() {
     { key: 'category', label: 'Category', render: v => (
       <span className="text-sm text-gray-700">{v || '—'}</span>
     )},
+    { key: 'trainer', label: 'Trainer', render: v => (
+      <span className="text-sm text-gray-600">{v || '—'}</span>
+    )},
     { key: 'process_classification', label: 'Classification', render: v => v ? (
       <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${getClassificationChipClass(v)}`}>{v}</span>
     ) : (
