@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Users, ClipboardList, AlertTriangle, XCircle } from 'lucide-react';
+import { Users, AlertTriangle, BadgeCheck, TrendingUp, XCircle } from 'lucide-react';
 import Layout from '../components/Layout';
 import StatCard from '../components/StatCard';
 import StatusBadge from '../components/StatusBadge';
@@ -48,10 +48,8 @@ export default function AdminDashboard() {
   const [overview, setOverview] = useState(null);
   const [expiring, setExpiring] = useState([]);
   const [expiring30, setExpiring30] = useState([]);
-  const [expiredCerts, setExpiredCerts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [expiring30ModalOpen, setExpiring30ModalOpen] = useState(false);
-  const [expiredModalOpen, setExpiredModalOpen] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -63,7 +61,6 @@ export default function AdminDashboard() {
       setOverview(ovRes.data);
       setExpiring(exRes.data);
       setExpiring30([...expiredRes.data, ...ex10Res.data]);
-      setExpiredCerts(expiredRes.data);
     }).catch(console.error)
       .finally(() => setLoading(false));
   }, []);
@@ -89,30 +86,31 @@ export default function AdminDashboard() {
       ) : (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
           <StatCard
-            title="Active Employees"
-            value={overview?.totalEmployees ?? '—'}
+            title="Total Employees"
+            value={overview?.employeeTotal ?? '—'}
             icon={Users}
             color="blue"
           />
           <StatCard
-            title="Training Records"
-            value={overview?.totalTrainings ?? '—'}
-            icon={ClipboardList}
+            title="Active Certifications"
+            value={overview?.activeCertifications ?? '—'}
+            icon={BadgeCheck}
             color="green"
           />
           <StatCard
-            title="Expiring (10 days)"
-            value={overview?.expiring30 ?? '—'}
+            title="Training Completion Rate"
+            value={overview?.trainingCompletionRate != null ? `${overview.trainingCompletionRate}%` : '—'}
+            subtitle="Active employees with training"
+            icon={TrendingUp}
+            color="purple"
+          />
+          <StatCard
+            title="Expired & Expiring"
+            value={overview?.expiredAndExpiring ?? '—'}
+            subtitle="Expired or within 10 days"
             icon={AlertTriangle}
             color="amber"
             onClick={() => setExpiring30ModalOpen(true)}
-          />
-          <StatCard
-            title="Expired Certifications"
-            value={overview?.expiredCerts ?? '—'}
-            icon={XCircle}
-            color="red"
-            onClick={() => setExpiredModalOpen(true)}
           />
         </div>
       )}
@@ -155,24 +153,6 @@ export default function AdminDashboard() {
           emptyMessage="No expired or soon-to-expire certifications found."
           rowClassName={(row) =>
             row.cert_status === 'expired' ? 'bg-red-50 hover:bg-red-100' : ''
-          }
-        />
-      </Modal>
-
-      <Modal
-        open={expiredModalOpen}
-        onClose={() => setExpiredModalOpen(false)}
-        title="Expired & Almost Expired Certifications"
-        description="Training certifications that have already expired or are expiring within 10 days."
-        size="xl"
-      >
-        <DataTable
-          columns={certColumns}
-          data={[...expiredCerts, ...expiring30.filter(r => r.cert_status !== 'expired')]}
-          loading={loading}
-          emptyMessage="No expired certifications found."
-          rowClassName={(row) =>
-            row.cert_status === 'expired' ? 'bg-red-50 hover:bg-red-100' : 'bg-amber-50 hover:bg-amber-100'
           }
         />
       </Modal>

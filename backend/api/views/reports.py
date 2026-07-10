@@ -15,19 +15,43 @@ def overview(request):
     current = today()
     in10 = days_from_today(10)
 
+    active_training_qs = Training.objects.filter(is_archived=False)
+    active_employees = Employee.objects.filter(status='active')
+    active_employee_count = active_employees.count()
+
+    expired_count = active_training_qs.filter(
+        expiration_date__isnull=False,
+        expiration_date__lt=current,
+    ).count()
+    expiring_count = active_training_qs.filter(
+        expiration_date__isnull=False,
+        expiration_date__gte=current,
+        expiration_date__lte=in10,
+    ).count()
+
+    active_certifications = active_training_qs.filter(
+        Q(expiration_date__isnull=True) | Q(expiration_date__gte=current),
+    ).count()
+
+    employees_with_training = active_employees.filter(
+        trainings__is_archived=False,
+    ).distinct().count()
+    completion_rate = (
+        round(employees_with_training / active_employee_count * 100, 1)
+        if active_employee_count
+        else 0.0
+    )
+
     return Response({
-        'totalEmployees': Employee.objects.filter(status='active').count(),
-        'totalTrainings': Training.objects.count(),
-        'expiredCerts': Training.objects.filter(
-            expiration_date__isnull=False,
-            expiration_date__lt=current,
-        ).count(),
-        'expiring30': Training.objects.filter(
-            expiration_date__isnull=False,
-            expiration_date__gte=current,
-            expiration_date__lte=in10,
-        ).count(),
-        'expiring60': Training.objects.filter(
+        'totalEmployees': active_employee_count,
+        'employeeTotal': Employee.objects.count(),
+        'totalTrainings': active_training_qs.count(),
+        'activeCertifications': active_certifications,
+        'trainingCompletionRate': completion_rate,
+        'expiredCerts': expired_count,
+        'expiring30': expiring_count,
+        'expiredAndExpiring': expired_count + expiring_count,
+        'expiring60': active_training_qs.filter(
             expiration_date__isnull=False,
             expiration_date__gte=current,
             expiration_date__lte=in10,
