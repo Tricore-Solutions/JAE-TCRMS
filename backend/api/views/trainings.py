@@ -84,6 +84,9 @@ def training_list_create(request):
             qs = qs.filter(employee_id=employee_id)
         if category:
             qs = qs.filter(category=category)
+        title = request.query_params.get('title')
+        if title:
+            qs = qs.filter(title=title)
         worker_line_status = request.query_params.get('worker_line_status')
         if worker_line_status:
             qs = qs.filter(worker_line_status=worker_line_status)

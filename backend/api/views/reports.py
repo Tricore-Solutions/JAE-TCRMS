@@ -203,10 +203,13 @@ def export_trainings(request):
     training_date = request.query_params.get('training_date')
     emp_status = request.query_params.get('status')
 
+    title = request.query_params.get('title')
     if factory:
         qs = qs.filter(employee__factory=factory)
     if category:
         qs = qs.filter(category=category)
+    if title:
+        qs = qs.filter(title=title)
     if worker_line_status:
         qs = qs.filter(worker_line_status=worker_line_status)
     if take:

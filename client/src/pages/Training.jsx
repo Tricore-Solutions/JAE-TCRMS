@@ -67,10 +67,11 @@ const emptyForm = {
   worker_line_status: 'Floating', take: 1,
 };
 
-function buildFilterParams({ search, filterCategory, filterStatus, filterWorkerLine, filterTake, filterDateFrom, filterDateTo }) {
+function buildFilterParams({ search, filterCategory, filterTitle, filterStatus, filterWorkerLine, filterTake, filterDateFrom, filterDateTo }) {
   const params = {};
   if (search) params.search = search;
   if (filterCategory) params.category = filterCategory;
+  if (filterTitle) params.title = filterTitle;
   if (filterWorkerLine) params.worker_line_status = filterWorkerLine;
   if (filterTake) params.take = filterTake;
   if (filterDateFrom) params.date_from = filterDateFrom;
@@ -109,6 +110,7 @@ export default function Training() {
   const isInitialLoad = useRef(true);
   const [search, setSearch] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
+  const [filterTitle, setFilterTitle] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [filterWorkerLine, setFilterWorkerLine] = useState('');
   const [filterTake, setFilterTake] = useState('');
@@ -139,7 +141,7 @@ export default function Training() {
     if (isInitialLoad.current) setLoading(true);
     else setRefreshing(true);
     try {
-      const params = buildFilterParams({ search, filterCategory, filterStatus, filterWorkerLine, filterTake, filterDateFrom, filterDateTo });
+      const params = buildFilterParams({ search, filterCategory, filterTitle, filterStatus, filterWorkerLine, filterTake, filterDateFrom, filterDateTo });
       const [trRes, empRes, titlesRes] = await Promise.all([
         trainingsApi.list(params),
         employeesApi.list({ status: 'active' }),
@@ -156,7 +158,7 @@ export default function Training() {
       setRefreshing(false);
       isInitialLoad.current = false;
     }
-  }, [search, filterCategory, filterStatus, filterWorkerLine, filterTake, filterDateFrom, filterDateTo]);
+  }, [search, filterCategory, filterTitle, filterStatus, filterWorkerLine, filterTake, filterDateFrom, filterDateTo]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -260,7 +262,7 @@ export default function Training() {
   const handleExport = async () => {
     setExporting(true);
     try {
-      const params = buildFilterParams({ search, filterCategory, filterStatus, filterWorkerLine, filterTake, filterDateFrom, filterDateTo });
+      const params = buildFilterParams({ search, filterCategory, filterTitle, filterStatus, filterWorkerLine, filterTake, filterDateFrom, filterDateTo });
       const res = await reportsApi.exportTrainings(params);
       if (!res.data.length) {
         toast('No records to export for the current filters.', 'warning');
@@ -515,6 +517,14 @@ export default function Training() {
           >
             <option value="">All Categories</option>
             {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+          <select
+            value={filterTitle}
+            onChange={e => setFilterTitle(e.target.value)}
+            className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D72B8] max-w-56"
+          >
+            <option value="">All Training Titles</option>
+            {trainingTitles.map(t => <option key={t} value={t}>{t}</option>)}
           </select>
           <select
             value={filterStatus}
