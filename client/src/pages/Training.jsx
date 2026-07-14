@@ -105,6 +105,7 @@ export default function Training() {
   const [employees, setEmployees] = useState([]);
   const [trainingTitles, setTrainingTitles] = useState([]);
   const [loading, setLoading] = useState(true);
+  const isInitialLoad = useRef(true);
   const [search, setSearch] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
@@ -134,7 +135,8 @@ export default function Training() {
   const [bulkArchiving, setBulkArchiving] = useState(false);
 
   const load = useCallback(async () => {
-    setLoading(true);
+    const showSpinner = isInitialLoad.current;
+    if (showSpinner) setLoading(true);
     try {
       const params = buildFilterParams({ search, filterCategory, filterStatus, filterWorkerLine, filterTake, filterDateFrom, filterDateTo });
       const [trRes, empRes, titlesRes] = await Promise.all([
@@ -150,6 +152,7 @@ export default function Training() {
       toast('Failed to load training records.', 'error');
     } finally {
       setLoading(false);
+      isInitialLoad.current = false;
     }
   }, [search, filterCategory, filterStatus, filterWorkerLine, filterTake, filterDateFrom, filterDateTo]);
 

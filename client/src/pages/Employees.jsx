@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Plus, Search } from 'lucide-react';
 import Layout from '../components/Layout';
@@ -32,6 +32,7 @@ export default function Employees() {
   const [employees, setEmployees] = useState([]);
   const [filters, setFilters] = useState({ factories: [], lines: [], teams: [] });
   const [loading, setLoading] = useState(true);
+  const isInitialLoad = useRef(true);
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('active');
   const [filterFactory, setFilterFactory] = useState('');
@@ -48,7 +49,8 @@ export default function Employees() {
   const [logsLoading, setLogsLoading] = useState(false);
 
   const load = useCallback(async () => {
-    setLoading(true);
+    const showSpinner = isInitialLoad.current;
+    if (showSpinner) setLoading(true);
     try {
       const params = {};
       if (filterStatus) params.status = filterStatus;
@@ -65,6 +67,7 @@ export default function Employees() {
       toast('Failed to load employees.', 'error');
     } finally {
       setLoading(false);
+      isInitialLoad.current = false;
     }
   }, [search, filterStatus, filterFactory, filterEmploymentStatus]);
 
