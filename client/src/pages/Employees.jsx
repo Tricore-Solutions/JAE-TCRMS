@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Plus, Search } from 'lucide-react';
+import { Plus, Search, Sheet } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import Layout from '../components/Layout';
 import DataTable from '../components/DataTable';
 import Modal from '../components/Modal';
@@ -23,6 +24,20 @@ const emptyForm = {
   factory: '', line: '', team: '', position: '', employment_status: '', status: 'active', hire_date: '',
 };
 
+function exportToXLSX(data, filename) {
+  if (!data.length) return;
+  const worksheet = XLSX.utils.json_to_sheet(data);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'Employees');
+
+  const colWidths = Object.keys(data[0]).map(key => ({
+    wch: Math.max(key.length, ...data.map(row => String(row[key] ?? '').length), 10),
+  }));
+  worksheet['!cols'] = colWidths;
+
+  XLSX.writeFile(workbook, filename);
+}
+
 export default function Employees() {
   const { isAdmin, isEncoder } = useAuth();
   const { show: toast } = useToast();
@@ -33,6 +48,7 @@ export default function Employees() {
   const [filters, setFilters] = useState({ factories: [], lines: [], teams: [] });
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const isInitialLoad = useRef(true);
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('active');
@@ -83,6 +99,34 @@ export default function Employees() {
       setSearchParams({}, { replace: true });
     }
   }, [searchParams, canEdit, setSearchParams]);
+
+  const handleExport = () => {
+    if (!employees.length) {
+      toast('No employees to export for the current filters.', 'warning');
+      return;
+    }
+    setExporting(true);
+    try {
+      const rows = employees.map(emp => ({
+        'Employee ID': emp.employee_id,
+        'Full Name': emp.full_name,
+        'Employment Status': emp.employment_status || '',
+        'Date Hired': emp.hire_date || '',
+        'Team': emp.team || '',
+        'Line': emp.line || '',
+        'Factory': emp.factory || '',
+        'Position': emp.position || '',
+        'Status': emp.status || '',
+      }));
+      const today = new Date().toISOString().split('T')[0];
+      exportToXLSX(rows, `JAE-TCRMS-Employees-${today}.xlsx`);
+      toast(`Exported ${rows.length} employee(s) to Excel.`, 'success');
+    } catch {
+      toast('Export failed.', 'error');
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const openCreate = () => {
     setSelected(null);
@@ -195,10 +239,23 @@ export default function Employees() {
   return (
     <Layout
       title="Employees"
-      actions={canEdit && (
-        <button onClick={openCreate} className="flex items-center gap-2 bg-[#1D72B8] hover:bg-[#1864a3] text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
-          <Plus size={16} /> Add Employee
-        </button>
+      actions={(
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleExport}
+            disabled={exporting}
+            className="flex items-center gap-2 text-gray-500 hover:text-green-700 text-sm px-3 py-2 rounded-lg hover:bg-green-50 border border-gray-200 hover:border-green-200 transition-colors disabled:opacity-40"
+            title="Export filtered employees to Excel"
+          >
+            <Sheet size={14} />
+            {exporting ? 'Exporting…' : 'Export Excel'}
+          </button>
+          {canEdit && (
+            <button onClick={openCreate} className="flex items-center gap-2 bg-[#1D72B8] hover:bg-[#1864a3] text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
+              <Plus size={16} /> Add Employee
+            </button>
+          )}
+        </div>
       )}
     >
       <div className="space-y-3 mb-6">
