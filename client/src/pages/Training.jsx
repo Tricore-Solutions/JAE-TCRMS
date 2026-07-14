@@ -345,23 +345,28 @@ export default function Training() {
         <p className="text-xs text-gray-500">{row.emp_code}</p>
       </div>
     )},
+    { key: 'process_classification', label: 'Classification', render: v => v ? (
+      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${getClassificationChipClass(v)}`}>{v}</span>
+    ) : (
+      <span className="text-xs text-gray-400">—</span>
+    )},
     { key: 'title', label: 'Training Title', render: v => (
       <span className="text-sm text-gray-600">{v}</span>
     )},
     { key: 'category', label: 'Category', render: v => (
       <span className="text-sm text-gray-700">{v || '—'}</span>
     )},
-    { key: 'trainer', label: 'Trainer', render: v => (
-      <span className="text-sm text-gray-600">{v || '—'}</span>
+    { key: 'take', label: 'Take', render: v => (
+      <span className="text-sm text-gray-700">
+        {TAKE_OPTIONS.find(o => o.value === v)?.label || `${v || 1}st Take`}
+      </span>
     )},
-    { key: 'process_classification', label: 'Classification', render: v => v ? (
-      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${getClassificationChipClass(v)}`}>{v}</span>
-    ) : (
-      <span className="text-xs text-gray-400">—</span>
-    )},
-    { key: 'training_date', label: 'Date' },
     { key: 'validity', label: 'Validity', render: (_, row) => (
       <span className="text-sm text-gray-700">{formatValidityLabel(row)}</span>
+    )},
+    { key: 'training_date', label: 'Date' },
+    { key: 'trainer', label: 'Trainer', render: v => (
+      <span className="text-sm text-gray-600">{v || '—'}</span>
     )},
     { key: 'expiration_date', label: 'Expiration', render: v => {
       const urgency = getExpirationUrgency(v);
@@ -383,11 +388,6 @@ export default function Training() {
           : 'bg-amber-50 text-amber-700 border border-amber-200'
       }`}>
         {v || 'Floating'}
-      </span>
-    )},
-    { key: 'take', label: 'Take', render: v => (
-      <span className="text-sm text-gray-700">
-        {TAKE_OPTIONS.find(o => o.value === v)?.label || `${v || 1}st Take`}
       </span>
     )},
     { key: 'actions', label: '', sortable: false, render: (_, row) => (
