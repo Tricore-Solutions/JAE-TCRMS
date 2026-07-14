@@ -47,7 +47,7 @@ export default function DataTable({
   return (
     <div className="flex flex-col">
       <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
-        <table className={`w-full text-sm ${tableClassName}`}>
+        <table className={`min-w-full w-max text-sm ${tableClassName}`}>
           <thead>
             <tr className="bg-gray-50">
               {columns.map((col) => (
@@ -81,19 +81,22 @@ export default function DataTable({
                 </td>
               </tr>
             ) : (
-              paginated.map((row) => (
-                <tr
-                  key={row[rowKey]}
-                  className={`transition-colors ${onRowClick ? 'cursor-pointer' : ''} ${rowClassName?.(row) || 'hover:bg-gray-50'}`}
-                  onClick={() => onRowClick?.(row)}
-                >
-                  {columns.map((col) => (
-                    <td key={col.key} className={`px-4 py-3 text-gray-700 ${col.className || ''}`}>
-                      {col.render ? col.render(row[col.key], row) : (row[col.key] ?? '—')}
-                    </td>
-                  ))}
-                </tr>
-              ))
+              paginated.map((row) => {
+                const rowBg = rowClassName?.(row) || 'hover:bg-gray-50';
+                return (
+                  <tr
+                    key={row[rowKey]}
+                    className={`transition-colors ${onRowClick ? 'cursor-pointer' : ''} ${rowBg}`}
+                    onClick={() => onRowClick?.(row)}
+                  >
+                    {columns.map((col) => (
+                      <td key={col.key} className={`px-4 py-3 text-gray-700 ${rowBg} ${col.className || ''}`}>
+                        {col.render ? col.render(row[col.key], row) : (row[col.key] ?? '—')}
+                      </td>
+                    ))}
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>
