@@ -196,18 +196,18 @@ export default function ViewerDashboard() {
 
         {/* Search and filter */}
         <div className="space-y-3 mb-6">
-          {/* Row 1 — Employee search + Team + Employment Status */}
-          <div className="flex flex-wrap gap-3">
-            <div className="relative flex-1 min-w-56">
-              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search employee name or ID..."
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                className="w-full bg-white border border-gray-200 rounded-lg pl-9 pr-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
-              />
-            </div>
+          <div className="relative w-full">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search employee name or ID..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="w-full bg-white border border-gray-200 rounded-lg pl-9 pr-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
+            />
+          </div>
+
+          <div className="flex flex-wrap gap-3 items-center">
             {teams.length > 0 && (
               <select
                 value={filterTeam}
@@ -226,10 +226,6 @@ export default function ViewerDashboard() {
               <option value="">All Employment Status</option>
               {EMPLOYMENT_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
-          </div>
-
-          {/* Row 2 — Training title + Cert status + Expiry date range */}
-          <div className="flex flex-wrap gap-3 items-center">
             <select
               value={filterTrainingTitle}
               onChange={e => setFilterTrainingTitle(e.target.value)}

@@ -330,17 +330,17 @@ export default function Archive() {
 
         {/* Filters */}
         <div className="space-y-3">
-          {/* Row 1 — Search + Category + Take + Line Status */}
+          <div className="relative w-full">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <input
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search by employee, title, trainer..."
+              className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
           <div className="flex flex-wrap gap-3">
-            <div className="relative flex-1 min-w-52">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <input
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                placeholder="Search by employee, title, trainer..."
-                className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
             <select
               value={filterCategory}
               onChange={e => setFilterCategory(e.target.value)}

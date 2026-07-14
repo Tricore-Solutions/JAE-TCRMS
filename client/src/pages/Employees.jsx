@@ -199,8 +199,8 @@ export default function Employees() {
         </button>
       )}
     >
-      <div className="flex flex-wrap gap-3 mb-6">
-        <div className="relative flex-1 min-w-48">
+      <div className="space-y-3 mb-6">
+        <div className="relative w-full">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
           <input
             type="text"
@@ -210,30 +210,32 @@ export default function Employees() {
             className="w-full bg-white border border-gray-200 rounded-lg pl-9 pr-4 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
           />
         </div>
-        <select
-          value={filterStatus}
-          onChange={e => setFilterStatus(e.target.value)}
-          className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
-        >
-          <option value="">All Status</option>
-          {STATUSES.map(s => <option key={s} value={s} className="capitalize">{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
-        </select>
-        <select
-          value={filterFactory}
-          onChange={e => setFilterFactory(e.target.value)}
-          className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
-        >
-          <option value="">All Factories</option>
-          {filters.factories.map(f => <option key={f} value={f}>{f}</option>)}
-        </select>
-        <select
-          value={filterEmploymentStatus}
-          onChange={e => setFilterEmploymentStatus(e.target.value)}
-          className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
-        >
-          <option value="">All Employment Status</option>
-          {EMPLOYMENT_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
-        </select>
+        <div className="flex flex-wrap gap-3">
+          <select
+            value={filterStatus}
+            onChange={e => setFilterStatus(e.target.value)}
+            className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
+          >
+            <option value="">All Status</option>
+            {STATUSES.map(s => <option key={s} value={s} className="capitalize">{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
+          </select>
+          <select
+            value={filterFactory}
+            onChange={e => setFilterFactory(e.target.value)}
+            className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
+          >
+            <option value="">All Factories</option>
+            {filters.factories.map(f => <option key={f} value={f}>{f}</option>)}
+          </select>
+          <select
+            value={filterEmploymentStatus}
+            onChange={e => setFilterEmploymentStatus(e.target.value)}
+            className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
+          >
+            <option value="">All Employment Status</option>
+            {EMPLOYMENT_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
+        </div>
       </div>
 
       <DataTable
