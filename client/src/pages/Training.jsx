@@ -585,6 +585,7 @@ export default function Training() {
         loading={loading}
         tableClassName="table-fixed"
         emptyMessage="No training records found."
+        defaultSort={{ key: 'employee_name', dir: 'asc' }}
         rowClassName={(row) =>
           getExpirationUrgency(row.expiration_date) === 'expired'
             ? 'bg-red-50 hover:bg-red-100'

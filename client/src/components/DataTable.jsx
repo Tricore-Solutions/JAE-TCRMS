@@ -13,9 +13,10 @@ export default function DataTable({
   rowClassName,
   pageSize: initialPageSize = 15,
   pageSizeOptions = DEFAULT_PAGE_SIZE_OPTIONS,
+  defaultSort = null,
   tableClassName = '',
 }) {
-  const [sort, setSort] = useState({ key: null, dir: 'asc' });
+  const [sort, setSort] = useState(defaultSort || { key: null, dir: 'asc' });
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(initialPageSize);
 

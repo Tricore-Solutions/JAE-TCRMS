@@ -57,7 +57,7 @@ def employee_list_create(request):
             qs = qs.filter(
                 Q(full_name__icontains=search) | Q(employee_id__icontains=search)
             )
-        return Response(EmployeeSerializer(qs.order_by('employee_id'), many=True).data)
+        return Response(EmployeeSerializer(qs.order_by('full_name'), many=True).data)
 
     if not IsAdminOrEncoder().has_permission(request, None):
         return Response({'error': 'Insufficient permissions'}, status=status.HTTP_403_FORBIDDEN)

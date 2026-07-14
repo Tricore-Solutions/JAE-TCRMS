@@ -233,7 +233,13 @@ export default function Employees() {
         </select>
       </div>
 
-      <DataTable columns={columns} data={employees} loading={loading} emptyMessage="No employees found." />
+      <DataTable
+        columns={columns}
+        data={employees}
+        loading={loading}
+        emptyMessage="No employees found."
+        defaultSort={{ key: 'full_name', dir: 'asc' }}
+      />
 
       {/* Add/Edit Modal */}
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={selected ? 'Edit Employee' : 'Add Employee'} size="lg">

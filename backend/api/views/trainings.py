@@ -118,7 +118,10 @@ def training_list_create(request):
             )
 
         return Response(
-            TrainingListSerializer(qs.order_by('-training_date'), many=True).data
+            TrainingListSerializer(
+                qs.order_by('employee__full_name', '-training_date'),
+                many=True,
+            ).data
         )
 
     if not IsAdminOrEncoder().has_permission(request, None):
