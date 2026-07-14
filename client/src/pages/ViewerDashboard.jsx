@@ -35,12 +35,22 @@ export default function ViewerDashboard() {
   const [search, setSearch] = useState('');
   const [filterTeam, setFilterTeam] = useState('');
   const [filterEmploymentStatus, setFilterEmploymentStatus] = useState('');
+  const [filterTrainingTitle, setFilterTrainingTitle] = useState('');
+  const [filterCertStatus, setFilterCertStatus] = useState('');
+  const [filterExpiryFrom, setFilterExpiryFrom] = useState('');
+  const [filterExpiryTo, setFilterExpiryTo] = useState('');
   const [teams, setTeams] = useState([]);
+  const [trainingTitles, setTrainingTitles] = useState([]);
 
   // Training history modal
   const [selected, setSelected] = useState(null);
   const [trainings, setTrainings] = useState([]);
   const [trainingLoading, setTrainingLoading] = useState(false);
+
+  // Load training titles once for dropdown
+  useEffect(() => {
+    publicApi.trainingTitles().then(res => setTrainingTitles(res.data)).catch(() => {});
+  }, []);
 
   const load = useCallback(async () => {
     const isRefresh = !isInitialLoad.current;
@@ -52,9 +62,13 @@ export default function ViewerDashboard() {
       if (search) params.search = search;
       if (filterTeam) params.team = filterTeam;
       if (filterEmploymentStatus) params.employment_status = filterEmploymentStatus;
+      if (filterTrainingTitle) params.training_title = filterTrainingTitle;
+      if (filterCertStatus) params.cert_status = filterCertStatus;
+      if (filterExpiryFrom) params.expiry_from = filterExpiryFrom;
+      if (filterExpiryTo) params.expiry_to = filterExpiryTo;
       const res = await publicApi.employees(params);
       setEmployees(res.data);
-      if (!filterTeam && !search && !filterEmploymentStatus) {
+      if (!filterTeam && !search && !filterEmploymentStatus && !filterTrainingTitle && !filterCertStatus) {
         const uniqueTeams = [...new Set(res.data.map(e => e.team).filter(Boolean))].sort();
         setTeams(uniqueTeams);
       }
@@ -65,7 +79,19 @@ export default function ViewerDashboard() {
       setRefreshing(false);
       isInitialLoad.current = false;
     }
-  }, [search, filterTeam, filterEmploymentStatus]);
+  }, [search, filterTeam, filterEmploymentStatus, filterTrainingTitle, filterCertStatus, filterExpiryFrom, filterExpiryTo]);
+
+  const clearFilters = () => {
+    setSearch('');
+    setFilterTeam('');
+    setFilterEmploymentStatus('');
+    setFilterTrainingTitle('');
+    setFilterCertStatus('');
+    setFilterExpiryFrom('');
+    setFilterExpiryTo('');
+  };
+
+  const hasActiveFilters = search || filterTeam || filterEmploymentStatus || filterTrainingTitle || filterCertStatus || filterExpiryFrom || filterExpiryTo;
 
   useEffect(() => { load(); }, [load]);
 
@@ -122,35 +148,89 @@ export default function ViewerDashboard() {
         </div>
 
         {/* Search and filter */}
-        <div className="flex flex-wrap gap-3 mb-6">
-          <div className="relative flex-1 min-w-64">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
-            <input
-              type="text"
-              placeholder="Search employee name or ID..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              className="w-full bg-white border border-gray-200 rounded-lg pl-9 pr-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
-            />
-          </div>
-          {teams.length > 0 && (
+        <div className="space-y-3 mb-6">
+          {/* Row 1 — Employee search + Team + Employment Status */}
+          <div className="flex flex-wrap gap-3">
+            <div className="relative flex-1 min-w-56">
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search employee name or ID..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                className="w-full bg-white border border-gray-200 rounded-lg pl-9 pr-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
+              />
+            </div>
+            {teams.length > 0 && (
+              <select
+                value={filterTeam}
+                onChange={e => setFilterTeam(e.target.value)}
+                className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
+              >
+                <option value="">All Teams</option>
+                {teams.map(t => <option key={t} value={t}>{t}</option>)}
+              </select>
+            )}
             <select
-              value={filterTeam}
-              onChange={e => setFilterTeam(e.target.value)}
+              value={filterEmploymentStatus}
+              onChange={e => setFilterEmploymentStatus(e.target.value)}
               className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
             >
-              <option value="">All Teams</option>
-              {teams.map(t => <option key={t} value={t}>{t}</option>)}
+              <option value="">All Employment Status</option>
+              {EMPLOYMENT_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
-          )}
-          <select
-            value={filterEmploymentStatus}
-            onChange={e => setFilterEmploymentStatus(e.target.value)}
-            className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
-          >
-            <option value="">All Employment Status</option>
-            {EMPLOYMENT_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
-          </select>
+          </div>
+
+          {/* Row 2 — Training title + Cert status + Expiry date range */}
+          <div className="flex flex-wrap gap-3 items-center">
+            <select
+              value={filterTrainingTitle}
+              onChange={e => setFilterTrainingTitle(e.target.value)}
+              className="bg-white border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D72B8] min-w-48 flex-1"
+            >
+              <option value="">All Training Titles</option>
+              {trainingTitles.map(t => <option key={t} value={t}>{t}</option>)}
+            </select>
+
+            <select
+              value={filterCertStatus}
+              onChange={e => setFilterCertStatus(e.target.value)}
+              className="bg-white border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
+            >
+              <option value="">All Cert Status</option>
+              <option value="expired">Expired</option>
+              <option value="expiring30">Expiring in 30 days</option>
+              <option value="expiring60">Expiring in 60 days</option>
+            </select>
+
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-500 whitespace-nowrap">Expiry date:</span>
+              <input
+                type="date"
+                value={filterExpiryFrom}
+                onChange={e => setFilterExpiryFrom(e.target.value)}
+                title="Expiry date from"
+                className="bg-white border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
+              />
+              <span className="text-xs text-gray-400">to</span>
+              <input
+                type="date"
+                value={filterExpiryTo}
+                onChange={e => setFilterExpiryTo(e.target.value)}
+                title="Expiry date to"
+                className="bg-white border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
+              />
+            </div>
+
+            {hasActiveFilters && (
+              <button
+                onClick={clearFilters}
+                className="text-xs text-gray-500 hover:text-red-600 hover:bg-red-50 px-3 py-2.5 rounded-lg border border-gray-200 hover:border-red-200 transition-colors whitespace-nowrap"
+              >
+                Clear filters
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Summary bar */}

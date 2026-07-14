@@ -1,12 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Plus, Search, Sheet } from 'lucide-react';
+import { Plus, Search, Sheet, CheckSquare, Archive } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import Layout from '../components/Layout';
 import DataTable from '../components/DataTable';
 import Modal from '../components/Modal';
 import FieldLabel from '../components/FieldLabel';
 import StatusBadge from '../components/StatusBadge';
+import SearchableSelect from '../components/SearchableSelect';
 import { trainingsApi, employeesApi, reportsApi } from '../api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/Toast';
@@ -102,6 +103,7 @@ export default function Training() {
 
   const [records, setRecords] = useState([]);
   const [employees, setEmployees] = useState([]);
+  const [trainingTitles, setTrainingTitles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
@@ -123,16 +125,24 @@ export default function Training() {
   const [logsLoading, setLogsLoading] = useState(false);
   const [exporting, setExporting] = useState(false);
 
+  // Multi-select
+  const [checkedIds, setCheckedIds] = useState(new Set());
+  const [bulkArchiveConfirm, setBulkArchiveConfirm] = useState(false);
+  const [bulkArchiving, setBulkArchiving] = useState(false);
+
   const load = useCallback(async () => {
     setLoading(true);
     try {
       const params = buildFilterParams({ search, filterCategory, filterStatus, filterWorkerLine, filterTake, filterDateFrom, filterDateTo });
-      const [trRes, empRes] = await Promise.all([
+      const [trRes, empRes, titlesRes] = await Promise.all([
         trainingsApi.list(params),
         employeesApi.list({ status: 'active' }),
+        trainingsApi.titles(),
       ]);
       setRecords(trRes.data);
       setEmployees(empRes.data);
+      setTrainingTitles(titlesRes.data);
+      setCheckedIds(new Set());
     } catch (err) {
       toast('Failed to load training records.', 'error');
     } finally {
@@ -219,6 +229,8 @@ export default function Training() {
       }
       setModalOpen(false);
       load();
+      // Refresh title list so newly added titles appear immediately
+      trainingsApi.titles().then(r => setTrainingTitles(r.data)).catch(() => {});
     } catch (err) {
       toast(err.response?.data?.error || 'Failed to save record.', 'error');
     } finally {
@@ -256,7 +268,77 @@ export default function Training() {
     }
   };
 
+  // Checkbox helpers
+  const toggleCheck = (id) => setCheckedIds(prev => {
+    const next = new Set(prev);
+    next.has(id) ? next.delete(id) : next.add(id);
+    return next;
+  });
+
+  const allChecked = records.length > 0 && records.every(r => checkedIds.has(r.id));
+  const someChecked = records.some(r => checkedIds.has(r.id));
+  const checkedCount = [...checkedIds].filter(id => records.some(r => r.id === id)).length;
+
+  const toggleAll = () => {
+    if (allChecked) {
+      setCheckedIds(prev => {
+        const next = new Set(prev);
+        records.forEach(r => next.delete(r.id));
+        return next;
+      });
+    } else {
+      setCheckedIds(prev => {
+        const next = new Set(prev);
+        records.forEach(r => next.add(r.id));
+        return next;
+      });
+    }
+  };
+
+  const handleBulkArchive = async () => {
+    if (bulkArchiving) return;
+    setBulkArchiving(true);
+    setBulkArchiveConfirm(false);
+    const ids = [...checkedIds];
+    setRecords(prev => prev.filter(r => !checkedIds.has(r.id)));
+    setCheckedIds(new Set());
+    try {
+      const res = await trainingsApi.bulkArchive(ids);
+      toast(`${res.data.count} record(s) archived.`, 'success');
+    } catch (err) {
+      toast(err.response?.data?.error || 'Bulk archive failed.', 'error');
+      load();
+    } finally {
+      setBulkArchiving(false);
+    }
+  };
+
   const columns = [
+    ...(isAdmin ? [{
+      key: '__check__',
+      sortable: false,
+      className: 'w-10',
+      label: (
+        <input
+          type="checkbox"
+          checked={allChecked}
+          ref={el => { if (el) el.indeterminate = someChecked && !allChecked; }}
+          onChange={toggleAll}
+          onClick={e => e.stopPropagation()}
+          className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+          title={allChecked ? 'Deselect all' : 'Select all'}
+        />
+      ),
+      render: (_, row) => (
+        <input
+          type="checkbox"
+          checked={checkedIds.has(row.id)}
+          onChange={() => toggleCheck(row.id)}
+          onClick={e => e.stopPropagation()}
+          className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+        />
+      ),
+    }] : []),
     { key: 'employee_name', label: 'Employee', className: 'w-44 min-w-44', render: (v, row) => (
       <div>
         <p className="text-gray-900 font-medium text-sm">{v}</p>
@@ -416,6 +498,30 @@ export default function Training() {
         </div>
       </div>
 
+      {/* Bulk Action Bar */}
+      {isAdmin && checkedCount > 0 && (
+        <div className="flex items-center gap-3 px-4 py-2.5 mb-2 bg-blue-50 border border-blue-200 rounded-lg">
+          <CheckSquare size={16} className="text-blue-600 shrink-0" />
+          <span className="text-sm text-blue-800 font-medium">{checkedCount} record{checkedCount !== 1 ? 's' : ''} selected</span>
+          <div className="ml-auto flex gap-2">
+            <button
+              onClick={() => setBulkArchiveConfirm(true)}
+              disabled={bulkArchiving}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-amber-600 hover:bg-amber-500 rounded-lg transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              <Archive size={13} />
+              Archive Selected
+            </button>
+            <button
+              onClick={() => setCheckedIds(new Set())}
+              className="px-3 py-1.5 text-xs text-gray-600 hover:text-gray-900 bg-white hover:bg-gray-100 border border-gray-200 rounded-lg transition-colors"
+            >
+              Clear
+            </button>
+          </div>
+        </div>
+      )}
+
       <DataTable
         columns={columns}
         data={records}
@@ -446,12 +552,12 @@ export default function Training() {
           </div>
           <div className="col-span-2">
             <FieldLabel required>Training Title</FieldLabel>
-            <input
-              type="text"
+            <SearchableSelect
               value={form.title}
-              onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
-              className="w-full app-input px-3 py-2.5 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
-              placeholder="e.g. Basic Safety Orientation"
+              onChange={v => setForm(f => ({ ...f, title: v }))}
+              options={trainingTitles}
+              placeholder="Search or enter a training title…"
+              addLabel="Add new title"
             />
           </div>
           <div>
@@ -653,6 +759,30 @@ export default function Training() {
             )}
           </>
         )}
+      </Modal>
+
+      {/* Bulk Archive Confirm */}
+      <Modal open={bulkArchiveConfirm} onClose={() => setBulkArchiveConfirm(false)} title="Archive Selected Records" size="sm">
+        <p className="text-gray-700 text-sm">
+          Archive <span className="font-semibold text-gray-900">{checkedCount} selected record{checkedCount !== 1 ? 's' : ''}</span>?
+          {' '}They can be restored from the Archive page.
+        </p>
+        <div className="flex justify-end gap-3 mt-6">
+          <button
+            onClick={() => setBulkArchiveConfirm(false)}
+            className="px-4 py-2 text-sm text-gray-500 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleBulkArchive}
+            disabled={bulkArchiving}
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm text-white bg-amber-600 hover:bg-amber-500 rounded-lg transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            <Archive className="h-4 w-4" />
+            {bulkArchiving ? 'Archiving…' : `Archive ${checkedCount}`}
+          </button>
+        </div>
       </Modal>
 
       {/* Archive Confirm */}

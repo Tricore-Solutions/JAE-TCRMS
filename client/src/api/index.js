@@ -87,9 +87,13 @@ export const trainingsApi = {
   update: (id, data) => api.put(`/trainings/${id}`, data),
   remove: (id) => api.delete(`/trainings/${id}`),
   categories: () => api.get('/trainings/meta/categories'),
+  titles: () => api.get('/trainings/meta/titles'),
   archived: () => api.get('/trainings/archived'),
   restore: (id) => api.post(`/trainings/${id}/restore`),
   deletePermanent: (id) => api.delete(`/trainings/${id}/delete-permanent`),
+  bulkArchive: (ids) => api.post('/trainings/bulk-archive', { ids }),
+  bulkRestore: (ids) => api.post('/trainings/bulk-restore', { ids }),
+  bulkDelete: (ids) => api.delete('/trainings/bulk-delete', { data: { ids } }),
 };
 
 // Users
@@ -117,6 +121,7 @@ export const reportsApi = {
 export const publicApi = {
   employees: (params) => axios.get(getServerUrl() + '/api/public/employees', { params }),
   employeeTrainings: (id) => axios.get(getServerUrl() + `/api/public/employees/${id}/trainings`),
+  trainingTitles: () => axios.get(getServerUrl() + '/api/public/training-titles'),
 };
 
 // Health check

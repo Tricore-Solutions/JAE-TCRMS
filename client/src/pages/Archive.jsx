@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Search, ArchiveRestore, Trash2 } from 'lucide-react';
+import { Search, ArchiveRestore, Trash2, CheckSquare } from 'lucide-react';
 import { formatValidityLabel } from '../utils/validity';
 import Layout from '../components/Layout';
 import DataTable from '../components/DataTable';
@@ -21,12 +21,30 @@ export default function Archive() {
 
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(false);
+
+  // Filters
   const [search, setSearch] = useState('');
+  const [filterCategory, setFilterCategory] = useState('');
+  const [filterTake, setFilterTake] = useState('');
+  const [filterLineStatus, setFilterLineStatus] = useState('');
+  const [filterDateFrom, setFilterDateFrom] = useState('');
+  const [filterDateTo, setFilterDateTo] = useState('');
+  const [filterArchivedFrom, setFilterArchivedFrom] = useState('');
+  const [filterArchivedTo, setFilterArchivedTo] = useState('');
+
+  // Single-record modal state
   const [selected, setSelected] = useState(null);
   const [restoreConfirm, setRestoreConfirm] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [restoring, setRestoring] = useState(false);
   const [deleting, setDeleting] = useState(false);
+
+  // Multi-select state
+  const [checkedIds, setCheckedIds] = useState(new Set());
+  const [bulkRestoreConfirm, setBulkRestoreConfirm] = useState(false);
+  const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
+  const [bulkRestoring, setBulkRestoring] = useState(false);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -42,15 +60,48 @@ export default function Archive() {
 
   useEffect(() => { load(); }, [load]);
 
+  // Derived category list from loaded records
+  const categories = [...new Set(records.map(r => r.category).filter(Boolean))].sort();
+
+  const hasActiveFilters = search || filterCategory || filterTake || filterLineStatus ||
+    filterDateFrom || filterDateTo || filterArchivedFrom || filterArchivedTo;
+
+  const clearFilters = () => {
+    setSearch('');
+    setFilterCategory('');
+    setFilterTake('');
+    setFilterLineStatus('');
+    setFilterDateFrom('');
+    setFilterDateTo('');
+    setFilterArchivedFrom('');
+    setFilterArchivedTo('');
+    setCheckedIds(new Set());
+  };
+
   const filteredRecords = records.filter(r => {
-    if (!search) return true;
-    const q = search.toLowerCase();
-    return (
-      r.employee_name?.toLowerCase().includes(q) ||
-      r.title?.toLowerCase().includes(q) ||
-      r.category?.toLowerCase().includes(q) ||
-      r.trainer?.toLowerCase().includes(q)
-    );
+    if (search) {
+      const q = search.toLowerCase();
+      const match =
+        r.employee_name?.toLowerCase().includes(q) ||
+        r.title?.toLowerCase().includes(q) ||
+        r.category?.toLowerCase().includes(q) ||
+        r.trainer?.toLowerCase().includes(q);
+      if (!match) return false;
+    }
+    if (filterCategory && r.category !== filterCategory) return false;
+    if (filterTake && String(r.take) !== filterTake) return false;
+    if (filterLineStatus && r.worker_line_status !== filterLineStatus) return false;
+    if (filterDateFrom && r.training_date < filterDateFrom) return false;
+    if (filterDateTo && r.training_date > filterDateTo) return false;
+    if (filterArchivedFrom) {
+      const archivedDay = r.archived_at?.split('T')[0] ?? '';
+      if (archivedDay < filterArchivedFrom) return false;
+    }
+    if (filterArchivedTo) {
+      const archivedDay = r.archived_at?.split('T')[0] ?? '';
+      if (archivedDay > filterArchivedTo) return false;
+    }
+    return true;
   });
 
   const handleRestore = async (id) => {
@@ -87,6 +138,70 @@ export default function Archive() {
     }
   };
 
+  // Checkbox helpers
+  const toggleCheck = (id) => setCheckedIds(prev => {
+    const next = new Set(prev);
+    next.has(id) ? next.delete(id) : next.add(id);
+    return next;
+  });
+
+  const allVisibleChecked = filteredRecords.length > 0 && filteredRecords.every(r => checkedIds.has(r.id));
+  const someChecked = filteredRecords.some(r => checkedIds.has(r.id));
+
+  const toggleAll = () => {
+    if (allVisibleChecked) {
+      setCheckedIds(prev => {
+        const next = new Set(prev);
+        filteredRecords.forEach(r => next.delete(r.id));
+        return next;
+      });
+    } else {
+      setCheckedIds(prev => {
+        const next = new Set(prev);
+        filteredRecords.forEach(r => next.add(r.id));
+        return next;
+      });
+    }
+  };
+
+  const checkedCount = [...checkedIds].filter(id => filteredRecords.some(r => r.id === id)).length;
+
+  const handleBulkRestore = async () => {
+    if (bulkRestoring) return;
+    setBulkRestoring(true);
+    setBulkRestoreConfirm(false);
+    const ids = [...checkedIds];
+    setRecords(prev => prev.filter(r => !checkedIds.has(r.id)));
+    setCheckedIds(new Set());
+    try {
+      const res = await trainingsApi.bulkRestore(ids);
+      toast(`${res.data.count} record(s) restored to Training Records.`, 'success');
+    } catch (err) {
+      toast(err.response?.data?.error || 'Bulk restore failed.', 'error');
+      load();
+    } finally {
+      setBulkRestoring(false);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (bulkDeleting) return;
+    setBulkDeleting(true);
+    setBulkDeleteConfirm(false);
+    const ids = [...checkedIds];
+    setRecords(prev => prev.filter(r => !checkedIds.has(r.id)));
+    setCheckedIds(new Set());
+    try {
+      const res = await trainingsApi.bulkDelete(ids);
+      toast(`${res.data.count} record(s) permanently deleted.`, 'success');
+    } catch (err) {
+      toast(err.response?.data?.error || 'Bulk delete failed.', 'error');
+      load();
+    } finally {
+      setBulkDeleting(false);
+    }
+  };
+
   const formatDate = (d) => d ? new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
   const formatDateTime = (dt) => {
     if (!dt) return '—';
@@ -97,6 +212,31 @@ export default function Archive() {
   const takeLabel = (v) => TAKE_OPTIONS.find(o => o.value === v)?.label || `${v || 1}st Take`;
 
   const columns = [
+    ...(isAdmin ? [{
+      key: '__check__',
+      sortable: false,
+      label: (
+        <input
+          type="checkbox"
+          checked={allVisibleChecked}
+          ref={el => { if (el) el.indeterminate = someChecked && !allVisibleChecked; }}
+          onChange={toggleAll}
+          onClick={e => e.stopPropagation()}
+          className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+          title={allVisibleChecked ? 'Deselect all' : 'Select all'}
+        />
+      ),
+      className: 'w-10',
+      render: (_, row) => (
+        <input
+          type="checkbox"
+          checked={checkedIds.has(row.id)}
+          onChange={() => toggleCheck(row.id)}
+          onClick={e => e.stopPropagation()}
+          className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+        />
+      ),
+    }] : []),
     {
       key: 'employee_name',
       label: 'Employee',
@@ -188,18 +328,129 @@ export default function Archive() {
           </div>
         </div>
 
-        {/* Search */}
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <input
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder="Search archived records..."
-              className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+        {/* Filters */}
+        <div className="space-y-3">
+          {/* Row 1 — Search + Category + Take + Line Status */}
+          <div className="flex flex-wrap gap-3">
+            <div className="relative flex-1 min-w-52">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <input
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Search by employee, title, trainer..."
+                className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <select
+              value={filterCategory}
+              onChange={e => setFilterCategory(e.target.value)}
+              className="border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            >
+              <option value="">All Categories</option>
+              {categories.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+            <select
+              value={filterTake}
+              onChange={e => setFilterTake(e.target.value)}
+              className="border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            >
+              <option value="">All Takes</option>
+              {TAKE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
+            <select
+              value={filterLineStatus}
+              onChange={e => setFilterLineStatus(e.target.value)}
+              className="border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            >
+              <option value="">All Line Status</option>
+              <option value="Floating">Floating</option>
+              <option value="Original">Original</option>
+            </select>
           </div>
+
+          {/* Row 2 — Training date range + Archived date range + Clear */}
+          <div className="flex flex-wrap gap-3 items-center">
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-500 whitespace-nowrap">Training date:</span>
+              <input
+                type="date"
+                value={filterDateFrom}
+                onChange={e => setFilterDateFrom(e.target.value)}
+                className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <span className="text-xs text-gray-400">to</span>
+              <input
+                type="date"
+                value={filterDateTo}
+                onChange={e => setFilterDateTo(e.target.value)}
+                className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-500 whitespace-nowrap">Archived date:</span>
+              <input
+                type="date"
+                value={filterArchivedFrom}
+                onChange={e => setFilterArchivedFrom(e.target.value)}
+                className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <span className="text-xs text-gray-400">to</span>
+              <input
+                type="date"
+                value={filterArchivedTo}
+                onChange={e => setFilterArchivedTo(e.target.value)}
+                className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            {hasActiveFilters && (
+              <button
+                onClick={clearFilters}
+                className="text-xs text-gray-500 hover:text-red-600 hover:bg-red-50 px-3 py-2 rounded-lg border border-gray-200 hover:border-red-200 transition-colors whitespace-nowrap"
+              >
+                Clear filters
+              </button>
+            )}
+          </div>
+
+          {/* Active filter summary */}
+          {hasActiveFilters && (
+            <p className="text-xs text-gray-400">
+              Showing <span className="font-medium text-gray-700">{filteredRecords.length}</span> of {records.length} archived records
+            </p>
+          )}
         </div>
+
+        {/* Bulk Action Bar */}
+        {isAdmin && checkedCount > 0 && (
+          <div className="flex items-center gap-3 px-4 py-2.5 bg-blue-50 border border-blue-200 rounded-lg">
+            <CheckSquare size={16} className="text-blue-600 shrink-0" />
+            <span className="text-sm text-blue-800 font-medium">{checkedCount} record{checkedCount !== 1 ? 's' : ''} selected</span>
+            <div className="ml-auto flex gap-2">
+              <button
+                onClick={() => setBulkRestoreConfirm(true)}
+                disabled={bulkRestoring || bulkDeleting}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-green-600 hover:bg-green-500 rounded-lg transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                <ArchiveRestore size={13} />
+                Restore Selected
+              </button>
+              <button
+                onClick={() => setBulkDeleteConfirm(true)}
+                disabled={bulkRestoring || bulkDeleting}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-red-600 hover:bg-red-500 rounded-lg transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                <Trash2 size={13} />
+                Delete Selected
+              </button>
+              <button
+                onClick={() => setCheckedIds(new Set())}
+                className="px-3 py-1.5 text-xs text-gray-600 hover:text-gray-900 bg-white hover:bg-gray-100 border border-gray-200 rounded-lg transition-colors"
+              >
+                Clear
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Table */}
         <DataTable
@@ -292,6 +543,55 @@ export default function Archive() {
           >
             <Trash2 className="h-4 w-4" />
             {deleting ? 'Deleting…' : 'Delete Permanently'}
+          </button>
+        </div>
+      </Modal>
+      {/* Bulk Restore Confirm */}
+      <Modal open={bulkRestoreConfirm} onClose={() => setBulkRestoreConfirm(false)} title="Restore Selected Records" size="sm">
+        <p className="text-gray-700 text-sm">
+          Restore <span className="font-semibold text-gray-900">{checkedCount} selected record{checkedCount !== 1 ? 's' : ''}</span>?
+          {' '}They will reappear in Training Records.
+        </p>
+        <div className="flex justify-end gap-3 mt-6">
+          <button
+            onClick={() => setBulkRestoreConfirm(false)}
+            className="px-4 py-2 text-sm text-gray-500 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleBulkRestore}
+            disabled={bulkRestoring}
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm text-white bg-green-600 hover:bg-green-500 rounded-lg transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            <ArchiveRestore className="h-4 w-4" />
+            {bulkRestoring ? 'Restoring…' : `Restore ${checkedCount}`}
+          </button>
+        </div>
+      </Modal>
+
+      {/* Bulk Delete Confirm */}
+      <Modal open={bulkDeleteConfirm} onClose={() => setBulkDeleteConfirm(false)} title="Permanently Delete Selected Records" size="sm">
+        <p className="text-gray-700 text-sm">
+          Are you sure you want to <span className="text-red-600 font-semibold">permanently delete</span>{' '}
+          <span className="font-semibold text-gray-900">{checkedCount} selected record{checkedCount !== 1 ? 's' : ''}</span>?
+          <br />
+          <span className="text-red-500 text-xs mt-1 block">This cannot be undone.</span>
+        </p>
+        <div className="flex justify-end gap-3 mt-6">
+          <button
+            onClick={() => setBulkDeleteConfirm(false)}
+            className="px-4 py-2 text-sm text-gray-500 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleBulkDelete}
+            disabled={bulkDeleting}
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm text-white bg-red-600 hover:bg-red-500 rounded-lg transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            <Trash2 className="h-4 w-4" />
+            {bulkDeleting ? 'Deleting…' : `Delete ${checkedCount} Permanently`}
           </button>
         </div>
       </Modal>
