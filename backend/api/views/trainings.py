@@ -9,6 +9,7 @@ from rest_framework.response import Response
 from api.models import Employee, Training
 from api.permissions import IsAdmin, IsAdminOrEncoder
 from api.serializers import TrainingListSerializer, TrainingSerializer
+from api.training_import import import_training_records
 from api.utils import calc_expiration, days_from_today, log_audit, parse_training_validity, today
 
 
@@ -300,6 +301,31 @@ def delete_archived_training(request, pk):
     training.delete()
     log_audit(request.user, 'DELETE', 'trainings', pk, f'Permanently deleted training: {title}')
     return Response({'message': 'Training record permanently deleted'})
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def import_trainings(request):
+    if not IsAdminOrEncoder().has_permission(request, None):
+        return Response({'error': 'Insufficient permissions'}, status=status.HTTP_403_FORBIDDEN)
+
+    upload = request.FILES.get('file')
+    if not upload:
+        return Response({'error': 'Excel file is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+    name = (upload.name or '').lower()
+    if not name.endswith(('.xlsx', '.xlsm')):
+        return Response(
+            {'error': 'Please upload an .xlsx Excel file'},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    try:
+        result = import_training_records(upload, request.user)
+    except ValueError as exc:
+        return Response({'error': str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+
+    return Response(result, status=status.HTTP_200_OK)
 
 
 @api_view(['POST'])

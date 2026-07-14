@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Plus, Search, Sheet, CheckSquare, Archive } from 'lucide-react';
+import { Plus, Search, Sheet, CheckSquare, Archive, Upload } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import Layout from '../components/Layout';
 import DataTable from '../components/DataTable';
@@ -124,6 +124,9 @@ export default function Training() {
   const [recordLogs, setRecordLogs] = useState([]);
   const [logsLoading, setLogsLoading] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState(null);
+  const importInputRef = useRef(null);
 
   // Multi-select
   const [checkedIds, setCheckedIds] = useState(new Set());
@@ -265,6 +268,40 @@ export default function Training() {
       toast('Export failed.', 'error');
     } finally {
       setExporting(false);
+    }
+  };
+
+  const handleImportClick = () => {
+    if (importing) return;
+    importInputRef.current?.click();
+  };
+
+  const handleImportFile = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+
+    const name = file.name.toLowerCase();
+    if (!name.endsWith('.xlsx') && !name.endsWith('.xlsm')) {
+      toast('Please upload an .xlsx Excel file.', 'warning');
+      return;
+    }
+
+    setImporting(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await trainingsApi.importExcel(formData);
+      setImportResult(res.data);
+      toast(
+        `Import complete: ${res.data.trainings_created} training(s), ${res.data.employees_created} employee(s) added.`,
+        'success',
+      );
+      load();
+    } catch (err) {
+      toast(err.response?.data?.error || 'Import failed.', 'error');
+    } finally {
+      setImporting(false);
     }
   };
 
@@ -416,6 +453,26 @@ export default function Training() {
       title="Training & Certification Records"
       actions={(
         <div className="flex items-center gap-2">
+          {canEdit && (
+            <>
+              <input
+                ref={importInputRef}
+                type="file"
+                accept=".xlsx,.xlsm,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                className="hidden"
+                onChange={handleImportFile}
+              />
+              <button
+                onClick={handleImportClick}
+                disabled={importing}
+                className="flex items-center gap-2 text-gray-500 hover:text-[#1D72B8] text-sm px-3 py-2 rounded-lg hover:bg-blue-50 border border-gray-200 hover:border-blue-200 transition-colors disabled:opacity-40"
+                title="Import employees and training records from Excel"
+              >
+                <Upload size={14} />
+                {importing ? 'Importing…' : 'Import Excel'}
+              </button>
+            </>
+          )}
           <button
             onClick={handleExport}
             disabled={exporting}
@@ -783,6 +840,51 @@ export default function Training() {
             {bulkArchiving ? 'Archiving…' : `Archive ${checkedCount}`}
           </button>
         </div>
+      </Modal>
+
+      {/* Import Result */}
+      <Modal open={!!importResult} onClose={() => setImportResult(null)} title="Import Results" size="md">
+        {importResult && (
+          <>
+            <dl className="space-y-2.5">
+              {[
+                { label: 'Rows read', value: importResult.rows_read },
+                { label: 'Employees added', value: importResult.employees_created },
+                { label: 'Employees updated', value: importResult.employees_updated },
+                { label: 'Training records added', value: importResult.trainings_created },
+                { label: 'Duplicates skipped', value: importResult.duplicates_skipped },
+                { label: 'Row errors', value: importResult.error_count },
+              ].map(({ label, value }) => (
+                <div key={label} className="flex justify-between gap-4 border-b border-gray-100 pb-2">
+                  <dt className="text-sm text-gray-500">{label}</dt>
+                  <dd className="text-sm font-medium text-gray-900">{value ?? 0}</dd>
+                </div>
+              ))}
+            </dl>
+            {importResult.errors?.length > 0 && (
+              <div className="mt-4">
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                  Sample errors (first {importResult.errors.length})
+                </p>
+                <div className="max-h-40 overflow-y-auto space-y-1.5 rounded-lg border border-gray-200 bg-gray-50 p-3">
+                  {importResult.errors.map((err, i) => (
+                    <p key={i} className="text-xs text-gray-700">
+                      Row {err.row}: {err.error}
+                    </p>
+                  ))}
+                </div>
+              </div>
+            )}
+            <div className="flex justify-end mt-6">
+              <button
+                onClick={() => setImportResult(null)}
+                className="px-4 py-2 text-sm text-white bg-[#1D72B8] hover:bg-[#1864a3] rounded-lg transition-colors"
+              >
+                Done
+              </button>
+            </div>
+          </>
+        )}
       </Modal>
 
       {/* Archive Confirm */}

@@ -94,8 +94,10 @@ export const trainingsApi = {
   bulkArchive: (ids) => api.post('/trainings/bulk-archive', { ids }),
   bulkRestore: (ids) => api.post('/trainings/bulk-restore', { ids }),
   bulkDelete: (ids) => api.delete('/trainings/bulk-delete', { data: { ids } }),
+  importExcel: (formData) => api.post('/trainings/import', formData, {
+    timeout: 300000,
+  }),
 };
-
 // Users
 export const usersApi = {
   list: () => api.get('/users'),

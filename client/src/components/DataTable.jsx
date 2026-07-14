@@ -1,6 +1,8 @@
 import { ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react';
 import { useState, useMemo, useEffect } from 'react';
 
+const DEFAULT_PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
+
 export default function DataTable({
   columns,
   data,
@@ -9,11 +11,17 @@ export default function DataTable({
   rowKey = 'id',
   onRowClick,
   rowClassName,
-  pageSize = 10,
+  pageSize: initialPageSize = 20,
+  pageSizeOptions = DEFAULT_PAGE_SIZE_OPTIONS,
   tableClassName = '',
 }) {
   const [sort, setSort] = useState({ key: null, dir: 'asc' });
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(initialPageSize);
+
+  useEffect(() => {
+    setPageSize(initialPageSize);
+  }, [initialPageSize]);
 
   useEffect(() => {
     setPage(1);
@@ -103,10 +111,24 @@ export default function DataTable({
       </div>
 
       {!loading && sorted.length > 0 && (
-        <div className="flex items-center justify-between mt-3 px-1">
-          <p className="text-xs text-gray-500">
-            Showing {Math.min((page - 1) * pageSize + 1, sorted.length)}–{Math.min(page * pageSize, sorted.length)} of {sorted.length}
-          </p>
+        <div className="flex flex-wrap items-center justify-between gap-3 mt-3 px-1">
+          <div className="flex items-center gap-3">
+            <p className="text-xs text-gray-500">
+              Showing {Math.min((page - 1) * pageSize + 1, sorted.length)}–{Math.min(page * pageSize, sorted.length)} of {sorted.length}
+            </p>
+            <label className="flex items-center gap-1.5 text-xs text-gray-500">
+              <span className="whitespace-nowrap">Rows per page</span>
+              <select
+                value={pageSize}
+                onChange={(e) => setPageSize(Number(e.target.value))}
+                className="bg-white border border-gray-200 rounded-lg px-2 py-1 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
+              >
+                {pageSizeOptions.map((size) => (
+                  <option key={size} value={size}>{size}</option>
+                ))}
+              </select>
+            </label>
+          </div>
           {totalPages > 1 && (
           <div className="flex items-center gap-1">
             <button
