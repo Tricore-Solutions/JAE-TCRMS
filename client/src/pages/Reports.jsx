@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { BarChart3, Factory, Tag, AlertTriangle, RefreshCw, FileDown, Sheet } from 'lucide-react';
 import jsPDF from 'jspdf';
 import * as XLSX from 'xlsx';
@@ -9,7 +9,7 @@ import { useToast } from '../components/Toast';
 
 const TAKE_AXIS = [1, 2, 3];
 const TAKE_LABELS = { 1: '1st Take', 2: '2nd Take', 3: '3rd Take' };
-const TAKE_BAR_COLORS = ['#1D72B8', '#5A9FD4', '#A8CCE8'];
+const TAKE_BAR_COLORS = ['#1D72B8', '#F59E0B', '#EF4444'];
 
 function getTakeCount(data, month, take) {
   const monthData = data?.[month];
@@ -214,7 +214,7 @@ function TakesPerMonthChart({ months, data }) {
           {yTicks.map(tick => (
             <span
               key={tick}
-              className="absolute right-0 text-[11px] text-gray-400 tabular-nums -translate-y-1/2"
+              className="absolute right-0 text-[11px] text-gray-400 tabular-nums translate-y-1/2"
               style={{ bottom: `${(tick / maxCount) * 100}%` }}
             >
               {tick}
@@ -234,7 +234,7 @@ function TakesPerMonthChart({ months, data }) {
 
             <div className="relative h-full flex items-end overflow-visible">
               {months.map((month, monthIdx) => (
-                <div key={month} className="flex-1 flex items-end justify-center gap-1.5 sm:gap-2 h-full px-1 overflow-visible">
+                <div key={month} className="flex-1 min-w-0 flex items-end justify-center gap-0.5 h-full px-1 overflow-visible">
                   {TAKE_AXIS.map((t, i) => {
                     const val = getTakeCount(data, month, t);
                     const heightPct = val > 0 ? Math.max((val / maxCount) * 100, 6) : 0;
@@ -243,7 +243,7 @@ function TakesPerMonthChart({ months, data }) {
                     return (
                       <div
                         key={t}
-                        className={`relative h-full w-8 sm:w-9 flex flex-col justify-end overflow-visible ${val > 0 ? 'cursor-default' : ''}`}
+                        className={`relative h-full w-3.5 sm:w-4 flex flex-col justify-end overflow-visible ${val > 0 ? 'cursor-default' : ''}`}
                         onMouseEnter={val > 0 ? () => setHoveredBar(barId) : undefined}
                         onMouseLeave={val > 0 ? () => setHoveredBar(null) : undefined}
                       >
@@ -255,10 +255,10 @@ function TakesPerMonthChart({ months, data }) {
                             {val}
                           </span>
                         )}
-                        <div className="h-full bg-[#f2f2f2] rounded-t-md flex flex-col justify-end overflow-hidden">
+                        <div className="h-full bg-[#f2f2f2] flex flex-col justify-end overflow-hidden">
                           {val > 0 && (
                             <div
-                              className="w-full rounded-t-sm origin-bottom"
+                              className="w-full origin-bottom"
                               style={{
                                 height: `${heightPct}%`,
                                 backgroundColor: TAKE_BAR_COLORS[i],
@@ -278,8 +278,8 @@ function TakesPerMonthChart({ months, data }) {
 
           <div className="flex mt-3">
             {months.map(month => (
-              <div key={month} className="flex-1 text-center px-1">
-                <span className="text-[11px] text-gray-500">{month}</span>
+              <div key={month} className="flex-1 min-w-0 text-center px-1">
+                <span className="text-[11px] text-gray-500">{month.split(' ')[0]}</span>
               </div>
             ))}
           </div>
@@ -348,6 +348,29 @@ export default function Reports() {
   useEffect(() => {
     setExpiringPage(1);
   }, [expiring]);
+
+  // Takes per Month — year filter (defaults to current year)
+  const [takesYear, setTakesYear] = useState(String(new Date().getFullYear()));
+  const takesYears = useMemo(() => {
+    const years = new Set();
+    (takesPerMonth.months || []).forEach(m => {
+      const y = m.split(' ').pop();
+      if (y) years.add(y);
+    });
+    return [...years].sort((a, b) => Number(b) - Number(a));
+  }, [takesPerMonth.months]);
+
+  // Fall back to the latest available year if the current year has no data
+  useEffect(() => {
+    if (takesYears.length && !takesYears.includes(takesYear)) {
+      setTakesYear(takesYears[0]);
+    }
+  }, [takesYears, takesYear]);
+
+  const filteredTakesMonths = useMemo(
+    () => (takesPerMonth.months || []).filter(m => m.endsWith(` ${takesYear}`)),
+    [takesPerMonth.months, takesYear],
+  );
 
   const load = async () => {
     const isRefresh = !isInitialLoad.current;
@@ -699,18 +722,30 @@ export default function Reports() {
 
       {/* Takes per Month — X: Month, Y: Count */}
       <div className="app-panel p-6 mb-6">
-        <h3 className="font-semibold text-gray-900 mb-1 flex items-center gap-2">
-          <BarChart3 size={16} className="text-[#1D72B8]" /> Takes per Month
-        </h3>
+        <div className="flex items-start justify-between gap-3 mb-1">
+          <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+            <BarChart3 size={16} className="text-[#1D72B8]" /> Takes per Month
+          </h3>
+          {takesYears.length > 0 && (
+            <select
+              value={takesYear}
+              onChange={e => setTakesYear(e.target.value)}
+              className="bg-white border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
+              title="Filter by year"
+            >
+              {takesYears.map(y => <option key={y} value={y}>{y}</option>)}
+            </select>
+          )}
+        </div>
         <p className="text-sm text-gray-500 mb-5">
-          Training records logged per month, broken down by attempt number.
+          Training records logged per month in {takesYear}, broken down by attempt number.
         </p>
-        {!takesPerMonth.months || takesPerMonth.months.length === 0 ? (
-          <p className="text-gray-500 text-sm text-center py-6">No data available</p>
+        {filteredTakesMonths.length === 0 ? (
+          <p className="text-gray-500 text-sm text-center py-6">No data available for {takesYear}.</p>
         ) : (
           <>
             <TakesPerMonthChart
-              months={takesPerMonth.months}
+              months={filteredTakesMonths}
               data={takesPerMonth.data}
             />
             <div className="mt-8 overflow-x-auto border-t border-gray-200 pt-5">
@@ -726,7 +761,7 @@ export default function Reports() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {buildTakesPerMonthRows(takesPerMonth).map(({ month, counts }) => (
+                  {buildTakesPerMonthRows({ months: filteredTakesMonths, data: takesPerMonth.data }).map(({ month, counts }) => (
                     <tr key={month}>
                       <td className="py-2 text-gray-700 font-medium">{month}</td>
                       {counts.map((count, i) => (
