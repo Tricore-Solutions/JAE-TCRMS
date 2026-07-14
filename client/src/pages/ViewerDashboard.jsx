@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import StatusBadge from '../components/StatusBadge';
 import Modal from '../components/Modal';
 import PageEnter from '../components/PageEnter';
+import DataTable from '../components/DataTable';
 import { publicApi } from '../api';
 import { useAuth } from '../context/AuthContext';
 
@@ -108,6 +109,52 @@ export default function ViewerDashboard() {
       setTrainingLoading(false);
     }
   };
+
+  const columns = [
+    {
+      key: 'employee_id',
+      label: 'Employee ID',
+      render: (v) => <span className="font-mono text-xs text-[#1D72B8]">{v}</span>,
+    },
+    {
+      key: 'full_name',
+      label: 'Full Name',
+      render: (v) => <span className="text-gray-900 font-medium">{v}</span>,
+    },
+    { key: 'factory', label: 'Factory', render: (v) => v || '—' },
+    { key: 'line', label: 'Line', render: (v) => v || '—' },
+    { key: 'team', label: 'Team', render: (v) => v || '—' },
+    {
+      key: 'hire_date',
+      label: 'Date Hired',
+      render: (v) => <span className="whitespace-nowrap">{v || '—'}</span>,
+    },
+    { key: 'employment_status', label: 'Employment Status', render: (v) => v || '—' },
+    {
+      key: 'total_trainings',
+      label: 'Trainings',
+      render: (v) => <span className="text-sm text-gray-900 font-medium">{v || 0}</span>,
+    },
+    {
+      key: 'expired_count',
+      label: 'Cert Status',
+      render: (v) => (
+        v > 0 ? (
+          <span className="inline-flex items-center gap-1 text-xs text-red-600">
+            <XCircle size={12} /> {v} expired
+          </span>
+        ) : (
+          <StatusBadge status="valid" />
+        )
+      ),
+    },
+    {
+      key: 'actions',
+      label: '',
+      sortable: false,
+      render: () => <span className="text-gray-500"><ChevronRight size={14} /></span>,
+    },
+  ];
 
   return (
     <div className="min-h-screen bg-white app-scroll-lock">
@@ -253,64 +300,13 @@ export default function ViewerDashboard() {
         </div>
 
         {/* Employee Table */}
-        <div className="app-panel overflow-hidden">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-gray-50">
-                {['Employee ID', 'Full Name', 'Factory', 'Line', 'Team', 'Date Hired', 'Employment Status', 'Trainings', 'Cert Status', ''].map(h => (
-                  <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {loading && !refreshing ? (
-                <tr>
-                  <td colSpan={10} className="px-4 py-12 text-center">
-                    <div className="flex flex-col items-center gap-2 text-gray-500">
-                      <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                      <span className="text-sm">Loading...</span>
-                    </div>
-                  </td>
-                </tr>
-              ) : employees.length === 0 ? (
-                <tr>
-                  <td colSpan={10} className="px-4 py-12 text-center text-gray-500 text-sm">No employees found.</td>
-                </tr>
-              ) : (
-                employees.map(emp => (
-                  <tr
-                    key={emp.id}
-                    onClick={() => openEmployee(emp)}
-                    className="hover:bg-gray-50 cursor-pointer transition-colors"
-                  >
-                    <td className="px-4 py-3 font-mono text-xs text-[#1D72B8]">{emp.employee_id}</td>
-                    <td className="px-4 py-3 text-gray-900 font-medium">{emp.full_name}</td>
-                    <td className="px-4 py-3 text-gray-500">{emp.factory || '—'}</td>
-                    <td className="px-4 py-3 text-gray-500">{emp.line || '—'}</td>
-                    <td className="px-4 py-3 text-gray-500">{emp.team || '—'}</td>
-                    <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{emp.hire_date || '—'}</td>
-                    <td className="px-4 py-3 text-gray-500">{emp.employment_status || '—'}</td>
-                    <td className="px-4 py-3">
-                      <span className="text-sm text-gray-900 font-medium">{emp.total_trainings || 0}</span>
-                    </td>
-                    <td className="px-4 py-3">
-                      {emp.expired_count > 0 ? (
-                        <span className="inline-flex items-center gap-1 text-xs text-red-600">
-                          <XCircle size={12} /> {emp.expired_count} expired
-                        </span>
-                      ) : (
-                        <StatusBadge status="valid" />
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-gray-500">
-                      <ChevronRight size={14} />
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+        <DataTable
+          columns={columns}
+          data={employees}
+          loading={loading && !refreshing}
+          emptyMessage="No employees found."
+          onRowClick={openEmployee}
+        />
 
         <p className="text-xs text-gray-400 mt-6 text-center">
           JAE Philippines, Inc. — Read-only public view.

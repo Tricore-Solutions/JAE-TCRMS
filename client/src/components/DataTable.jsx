@@ -1,7 +1,7 @@
 import { ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react';
 import { useState, useMemo, useEffect } from 'react';
 
-const DEFAULT_PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
+const DEFAULT_PAGE_SIZE_OPTIONS = [10, 15, 25, 50, 100];
 
 export default function DataTable({
   columns,
@@ -11,7 +11,7 @@ export default function DataTable({
   rowKey = 'id',
   onRowClick,
   rowClassName,
-  pageSize: initialPageSize = 20,
+  pageSize: initialPageSize = 15,
   pageSizeOptions = DEFAULT_PAGE_SIZE_OPTIONS,
   tableClassName = '',
 }) {
