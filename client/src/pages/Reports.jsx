@@ -335,7 +335,19 @@ export default function Reports() {
   const [refreshing, setRefreshing] = useState(false);
   const [exportingPdf, setExportingPdf] = useState(false);
   const [exportingXlsx, setExportingXlsx] = useState(false);
+  const [expiringPage, setExpiringPage] = useState(1);
   const isInitialLoad = useRef(true);
+
+  const EXPIRING_PAGE_SIZE = 15;
+  const expiringTotalPages = Math.max(1, Math.ceil(expiring.length / EXPIRING_PAGE_SIZE));
+  const expiringPageItems = expiring.slice(
+    (expiringPage - 1) * EXPIRING_PAGE_SIZE,
+    expiringPage * EXPIRING_PAGE_SIZE,
+  );
+
+  useEffect(() => {
+    setExpiringPage(1);
+  }, [expiring]);
 
   const load = async () => {
     const isRefresh = !isInitialLoad.current;
@@ -749,7 +761,7 @@ export default function Reports() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {expiring.slice(0, 20).map(item => (
+                {expiringPageItems.map(item => (
                   <tr key={item.id} className="hover:bg-white">
                     <td className="py-3 text-gray-900 font-medium">{item.full_name}</td>
                     <td className="py-3 text-gray-700">{item.title}</td>
@@ -760,9 +772,41 @@ export default function Reports() {
                 ))}
               </tbody>
             </table>
-            {expiring.length > 20 && (
-              <p className="text-xs text-gray-500 text-center mt-4">Showing 20 of {expiring.length} records.</p>
-            )}
+            <div className="flex flex-wrap items-center justify-between gap-3 mt-4">
+              <p className="text-xs text-gray-500">
+                Showing {(expiringPage - 1) * EXPIRING_PAGE_SIZE + 1}–{Math.min(expiringPage * EXPIRING_PAGE_SIZE, expiring.length)} of {expiring.length}
+              </p>
+              {expiringTotalPages > 1 && (
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => setExpiringPage(p => Math.max(1, p - 1))}
+                    disabled={expiringPage === 1}
+                    className="px-3 py-1.5 text-xs rounded-lg bg-white border border-gray-200 text-gray-600 hover:text-gray-900 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Previous
+                  </button>
+                  {Array.from({ length: Math.min(5, expiringTotalPages) }, (_, i) => {
+                    const p = Math.max(1, Math.min(expiringPage - 2, expiringTotalPages - 4)) + i;
+                    return (
+                      <button
+                        key={p}
+                        onClick={() => setExpiringPage(p)}
+                        className={`w-8 h-8 text-xs rounded-lg transition-colors ${p === expiringPage ? 'bg-[#1D72B8] text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900'}`}
+                      >
+                        {p}
+                      </button>
+                    );
+                  })}
+                  <button
+                    onClick={() => setExpiringPage(p => Math.min(expiringTotalPages, p + 1))}
+                    disabled={expiringPage === expiringTotalPages}
+                    className="px-3 py-1.5 text-xs rounded-lg bg-white border border-gray-200 text-gray-600 hover:text-gray-900 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Next
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>
