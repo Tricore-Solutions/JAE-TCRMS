@@ -42,20 +42,18 @@ def public_employees(request):
             trainings__is_archived=False,
         ).distinct()
 
-    # Expiration date range filter
+    # Expiration date range filter — the SAME training must fall within the range
     current = today()
-    if expiry_from:
-        qs = qs.filter(
+    if expiry_from or expiry_to:
+        exp_q = Q(
             trainings__is_archived=False,
             trainings__expiration_date__isnull=False,
-            trainings__expiration_date__gte=expiry_from,
-        ).distinct()
-    if expiry_to:
-        qs = qs.filter(
-            trainings__is_archived=False,
-            trainings__expiration_date__isnull=False,
-            trainings__expiration_date__lte=expiry_to,
-        ).distinct()
+        )
+        if expiry_from:
+            exp_q &= Q(trainings__expiration_date__gte=expiry_from)
+        if expiry_to:
+            exp_q &= Q(trainings__expiration_date__lte=expiry_to)
+        qs = qs.filter(exp_q).distinct()
 
     # Cert status shortcut filters
     if cert_status == 'expired':
@@ -122,10 +120,48 @@ def public_employee_trainings(request, pk):
     except Employee.DoesNotExist:
         return Response({'error': 'Employee not found'}, status=404)
 
-    trainings = Training.objects.filter(employee=employee, is_archived=False).order_by('-training_date')
+    trainings = Training.objects.filter(employee=employee, is_archived=False)
     current = today()
 
-    import datetime
+    # Mirror the directory's record-level filters so the history only shows
+    # the records that made this employee match.
+    training_title = request.query_params.get('training_title')
+    expiry_from = request.query_params.get('expiry_from')
+    expiry_to = request.query_params.get('expiry_to')
+    cert_status = request.query_params.get('cert_status')
+
+    if training_title:
+        trainings = trainings.filter(title__icontains=training_title)
+    if expiry_from:
+        trainings = trainings.filter(
+            expiration_date__isnull=False,
+            expiration_date__gte=expiry_from,
+        )
+    if expiry_to:
+        trainings = trainings.filter(
+            expiration_date__isnull=False,
+            expiration_date__lte=expiry_to,
+        )
+    if cert_status == 'expired':
+        trainings = trainings.filter(
+            expiration_date__isnull=False,
+            expiration_date__lt=current,
+        )
+    elif cert_status == 'expiring30':
+        trainings = trainings.filter(
+            expiration_date__isnull=False,
+            expiration_date__gte=current,
+            expiration_date__lte=current + datetime.timedelta(days=30),
+        )
+    elif cert_status == 'expiring60':
+        trainings = trainings.filter(
+            expiration_date__isnull=False,
+            expiration_date__gte=current,
+            expiration_date__lte=current + datetime.timedelta(days=60),
+        )
+
+    trainings = trainings.order_by('-training_date')
+
     in10 = current + datetime.timedelta(days=10)
 
     rows = []

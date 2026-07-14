@@ -26,6 +26,21 @@ function getCertStatus(expirationDate) {
   return 'valid';
 }
 
+function getTrainingRowClass(expirationDate) {
+  const status = getCertStatus(expirationDate);
+  if (status === 'expired') return 'bg-red-50 hover:bg-red-100';
+  if (status === 'expiring') return 'bg-amber-50 hover:bg-amber-100';
+  return 'hover:bg-gray-50';
+}
+
+function getExpirationTextClass(expirationDate) {
+  const status = getCertStatus(expirationDate);
+  if (status === 'expired') return 'text-red-600 font-medium';
+  if (status === 'expiring') return 'text-amber-700 font-medium';
+  if (!expirationDate) return 'text-gray-500';
+  return 'text-green-600 font-medium';
+}
+
 export default function ViewerDashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -101,7 +116,12 @@ export default function ViewerDashboard() {
     setTrainings([]);
     setTrainingLoading(true);
     try {
-      const res = await publicApi.employeeTrainings(emp.id);
+      const params = {};
+      if (filterTrainingTitle) params.training_title = filterTrainingTitle;
+      if (filterCertStatus) params.cert_status = filterCertStatus;
+      if (filterExpiryFrom) params.expiry_from = filterExpiryFrom;
+      if (filterExpiryTo) params.expiry_to = filterExpiryTo;
+      const res = await publicApi.employeeTrainings(emp.id, params);
       setTrainings(res.data.trainings || []);
     } catch {
       setTrainings([]);
@@ -300,6 +320,7 @@ export default function ViewerDashboard() {
           columns={columns}
           data={employees}
           loading={loading && !refreshing}
+          refreshing={refreshing}
           emptyMessage="No employees found."
           onRowClick={openEmployee}
         />
@@ -340,7 +361,7 @@ export default function ViewerDashboard() {
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {trainings.map(t => (
-                  <tr key={t.id} className="hover:bg-gray-50 transition-colors">
+                  <tr key={t.id} className={`transition-colors ${getTrainingRowClass(t.expiration_date)}`}>
                     <td className="px-3 py-3 text-gray-900 font-medium max-w-[180px]">
                       <p className="truncate">{t.title}</p>
                       {t.process_classification && (
@@ -349,7 +370,9 @@ export default function ViewerDashboard() {
                     </td>
                     <td className="px-3 py-3 text-gray-700 whitespace-nowrap">{t.category || '—'}</td>
                     <td className="px-3 py-3 text-gray-700 whitespace-nowrap">{t.training_date}</td>
-                    <td className="px-3 py-3 text-gray-500 whitespace-nowrap">{t.expiration_date || 'No expiry'}</td>
+                    <td className={`px-3 py-3 whitespace-nowrap ${getExpirationTextClass(t.expiration_date)}`}>
+                      {t.expiration_date || 'No expiry'}
+                    </td>
                     <td className="px-3 py-3 whitespace-nowrap">
                       <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
                         t.worker_line_status === 'Original'

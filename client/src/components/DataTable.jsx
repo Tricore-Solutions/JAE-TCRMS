@@ -7,6 +7,7 @@ export default function DataTable({
   columns,
   data,
   loading,
+  refreshing = false,
   emptyMessage = 'No records found',
   rowKey = 'id',
   onRowClick,
@@ -55,8 +56,15 @@ export default function DataTable({
 
   return (
     <div className="flex flex-col">
-      <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
-        <table className={`min-w-full w-max text-sm ${tableClassName}`}>
+      <div className="relative">
+        {refreshing && !loading && (
+          <div className="absolute top-2 right-2 z-10 flex items-center gap-2 bg-white/95 border border-gray-200 rounded-lg px-2.5 py-1 shadow-sm">
+            <div className="w-3.5 h-3.5 border-2 border-[#1D72B8] border-t-transparent rounded-full animate-spin" />
+            <span className="text-xs text-gray-500">Updating…</span>
+          </div>
+        )}
+        <div className={`overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm transition-opacity ${refreshing && !loading ? 'opacity-60' : ''}`}>
+          <table className={`min-w-full w-max text-sm ${tableClassName}`}>
           <thead>
             <tr className="bg-gray-50">
               {columns.map((col) => (
@@ -107,8 +115,9 @@ export default function DataTable({
                 );
               })
             )}
-          </tbody>
-        </table>
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {!loading && sorted.length > 0 && (

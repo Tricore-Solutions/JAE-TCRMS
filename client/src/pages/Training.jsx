@@ -105,6 +105,7 @@ export default function Training() {
   const [employees, setEmployees] = useState([]);
   const [trainingTitles, setTrainingTitles] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const isInitialLoad = useRef(true);
   const [search, setSearch] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
@@ -135,8 +136,8 @@ export default function Training() {
   const [bulkArchiving, setBulkArchiving] = useState(false);
 
   const load = useCallback(async () => {
-    const showSpinner = isInitialLoad.current;
-    if (showSpinner) setLoading(true);
+    if (isInitialLoad.current) setLoading(true);
+    else setRefreshing(true);
     try {
       const params = buildFilterParams({ search, filterCategory, filterStatus, filterWorkerLine, filterTake, filterDateFrom, filterDateTo });
       const [trRes, empRes, titlesRes] = await Promise.all([
@@ -152,6 +153,7 @@ export default function Training() {
       toast('Failed to load training records.', 'error');
     } finally {
       setLoading(false);
+      setRefreshing(false);
       isInitialLoad.current = false;
     }
   }, [search, filterCategory, filterStatus, filterWorkerLine, filterTake, filterDateFrom, filterDateTo]);
@@ -588,6 +590,7 @@ export default function Training() {
         columns={columns}
         data={records}
         loading={loading}
+        refreshing={refreshing}
         tableClassName="table-fixed"
         emptyMessage="No training records found."
         defaultSort={{ key: 'employee_name', dir: 'asc' }}

@@ -32,6 +32,7 @@ export default function Employees() {
   const [employees, setEmployees] = useState([]);
   const [filters, setFilters] = useState({ factories: [], lines: [], teams: [] });
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const isInitialLoad = useRef(true);
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('active');
@@ -49,8 +50,8 @@ export default function Employees() {
   const [logsLoading, setLogsLoading] = useState(false);
 
   const load = useCallback(async () => {
-    const showSpinner = isInitialLoad.current;
-    if (showSpinner) setLoading(true);
+    if (isInitialLoad.current) setLoading(true);
+    else setRefreshing(true);
     try {
       const params = {};
       if (filterStatus) params.status = filterStatus;
@@ -67,6 +68,7 @@ export default function Employees() {
       toast('Failed to load employees.', 'error');
     } finally {
       setLoading(false);
+      setRefreshing(false);
       isInitialLoad.current = false;
     }
   }, [search, filterStatus, filterFactory, filterEmploymentStatus]);
@@ -242,6 +244,7 @@ export default function Employees() {
         columns={columns}
         data={employees}
         loading={loading}
+        refreshing={refreshing}
         emptyMessage="No employees found."
         defaultSort={{ key: 'full_name', dir: 'asc' }}
       />

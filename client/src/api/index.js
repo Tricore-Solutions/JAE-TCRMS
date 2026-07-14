@@ -122,7 +122,7 @@ export const reportsApi = {
 // Public (no auth)
 export const publicApi = {
   employees: (params) => axios.get(getServerUrl() + '/api/public/employees', { params }),
-  employeeTrainings: (id) => axios.get(getServerUrl() + `/api/public/employees/${id}/trainings`),
+  employeeTrainings: (id, params) => axios.get(getServerUrl() + `/api/public/employees/${id}/trainings`, { params }),
   trainingTitles: () => axios.get(getServerUrl() + '/api/public/training-titles'),
 };
 
