@@ -153,19 +153,18 @@ export default function Employees() {
 
   const columns = [
     { key: 'employee_id', label: 'Employee ID', render: v => <span className="font-mono text-xs text-[#1D72B8]">{v}</span> },
-    { key: 'full_name', label: 'Name', render: v => (
+    { key: 'full_name', label: 'Full Name', render: v => (
       <span className="font-medium text-gray-900 text-sm">{v}</span>
     )},
-    { key: 'factory', label: 'Factory' },
-    { key: 'line', label: 'Line' },
-    { key: 'team', label: 'Team' },
-    { key: 'position', label: 'Position', render: v => <span className="text-sm text-gray-500">{v || '—'}</span> },
     { key: 'employment_status', label: 'Employment Status', render: v => (
       <span className="text-sm text-gray-600">{v || '—'}</span>
     )},
     { key: 'hire_date', label: 'Date Hired', render: v => (
       <span className="text-sm text-gray-500">{v || '—'}</span>
     )},
+    { key: 'team', label: 'Team' },
+    { key: 'line', label: 'Line' },
+    { key: 'factory', label: 'Factory' },
     { key: 'status', label: 'Status', render: v => <StatusBadge status={v} /> },
     { key: 'actions', label: '', sortable: false, render: (_, row) => (
       <div className="flex items-center gap-1">
