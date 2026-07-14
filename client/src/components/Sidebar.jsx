@@ -37,8 +37,8 @@ export default function Sidebar() {
   const config = roleConfig[user?.role] || roleConfig.encoder;
 
   return (
-    <aside className="flex flex-col w-64 bg-white border-r border-gray-200 flex-shrink-0">
-      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto app-scroll-lock">
+    <aside className="flex flex-col w-64 h-full bg-white border-r border-gray-200 flex-shrink-0">
+      <nav className="flex-1 px-3 py-4 space-y-1">
         {config.nav.map(({ to, icon: Icon, label }) => (
           <NavLink
             key={to}
