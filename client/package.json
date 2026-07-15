@@ -34,6 +34,7 @@
       "icon": "public/icon.ico"
     },
     "nsis": {
+      "artifactName": "${productName} Setup.exe",
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "installerIcon": "public/icon.ico",
@@ -66,9 +67,11 @@
   },
   "dependencies": {
     "axios": "^1.18.0",
+    "bcryptjs": "^3.0.3",
     "html2canvas": "^1.4.1",
     "jspdf": "^4.2.1",
     "lucide-react": "^1.21.0",
+    "mysql2": "^3.23.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-router-dom": "^7.18.0",

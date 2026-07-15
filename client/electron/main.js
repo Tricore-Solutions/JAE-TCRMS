@@ -1,34 +1,12 @@
-const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
-const fs = require('fs');
+
+const store = require('./db/store');
+const dbRouter = require('./db');
 
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
 
-// Config file location: %APPDATA%/JAE TCRMS/config.json on Windows
-const CONFIG_FILE = path.join(app.getPath('userData'), 'config.json');
-
-function loadConfig() {
-  try {
-    if (fs.existsSync(CONFIG_FILE)) {
-      return JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf-8'));
-    }
-  } catch (e) {
-    console.error('Failed to read config:', e);
-  }
-  return {};
-}
-
-function saveConfig(config) {
-  try {
-    const dir = path.dirname(CONFIG_FILE);
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-    fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2));
-    return true;
-  } catch (e) {
-    console.error('Failed to write config:', e);
-    return false;
-  }
-}
+let bootstrapPromise = null;
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -37,7 +15,8 @@ function createWindow() {
     minWidth: 1024,
     minHeight: 650,
     title: 'JAE TCRMS — Training & Certification Record Management',
-    icon: path.join(__dirname, '..', 'public', 'icon.png'),
+    // In dev the asset lives in public/; in a packaged build Vite copies it into dist/.
+    icon: path.join(__dirname, '..', isDev ? 'public' : 'dist', 'icon.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -66,6 +45,13 @@ function createWindow() {
 app.whenReady().then(() => {
   createWindow();
 
+  // Connect to the saved MySQL server (if any) in the background so the UI
+  // can render immediately. db:call awaits this before dispatching.
+  bootstrapPromise = dbRouter.bootstrap().catch((e) => {
+    console.error('DB bootstrap failed:', e && e.message);
+    return false;
+  });
+
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
@@ -75,13 +61,22 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
 });
 
-// IPC Handlers — exposed to renderer via preload
-ipcMain.handle('config:get', () => loadConfig());
-ipcMain.handle('config:set', (_, data) => {
-  const current = loadConfig();
-  return saveConfig({ ...current, ...data });
+// Single data channel: the renderer's api layer calls window.electron.db.call(op, payload)
+ipcMain.handle('db:call', async (_event, { op, payload } = {}) => {
+  if (bootstrapPromise) {
+    try { await bootstrapPromise; } catch (_) { /* ignore */ }
+  }
+  try {
+    const data = await dbRouter.call(op, payload);
+    return { ok: true, data };
+  } catch (e) {
+    return { ok: false, error: (e && e.message) || 'Request failed', status: (e && e.status) || 500 };
+  }
 });
-ipcMain.handle('config:get-server-url', () => {
-  const config = loadConfig();
-  return config.serverUrl || null;
+
+// Legacy generic config bridge (kept for compatibility)
+ipcMain.handle('config:get', () => store.load());
+ipcMain.handle('config:set', (_event, data) => {
+  const current = store.load();
+  return store.save({ ...current, ...data });
 });

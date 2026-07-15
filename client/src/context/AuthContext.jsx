@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { authApi, setServerUrl, setUnauthorizedHandler } from '../api';
+import { authApi, setUnauthorizedHandler } from '../api';
 
 const AuthContext = createContext(null);
 
@@ -12,7 +12,7 @@ export function AuthProvider({ children }) {
     return () => setUnauthorizedHandler(null);
   }, []);
 
-  // Validate stored token on app load instead of trusting localStorage blindly
+  // Validate the persisted session on app load instead of trusting localStorage blindly
   useEffect(() => {
     let cancelled = false;
 
@@ -60,18 +60,11 @@ export function AuthProvider({ children }) {
     setUser(null);
   }, []);
 
-  const configureServer = useCallback((url) => {
-    const trimmed = url.replace(/\/$/, '');
-    setServerUrl(trimmed);
-    localStorage.setItem('serverUrl', trimmed);
-  }, []);
-
   const value = {
     user,
     loading,
     login,
     logout,
-    configureServer,
     isAdmin: user?.role === 'admin',
     isEncoder: user?.role === 'encoder',
     isViewer: user?.role === 'viewer',

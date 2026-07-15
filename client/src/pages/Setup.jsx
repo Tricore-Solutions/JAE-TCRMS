@@ -1,41 +1,47 @@
 import { useState } from 'react';
-import { Server, CheckCircle, XCircle, Wifi, ArrowRight } from 'lucide-react';
-import { checkServer } from '../api';
-import { useAuth } from '../context/AuthContext';
+import { Database, CheckCircle, XCircle, ArrowRight } from 'lucide-react';
+import { dbConfigApi, DEFAULT_DB_CONFIG } from '../api';
 import PageEnter from '../components/PageEnter';
 
 export default function Setup() {
-  const { configureServer } = useAuth();
-  const [serverIp, setServerIp] = useState(import.meta.env.DEV ? 'localhost' : '');
-  const [port, setPort] = useState('3000');
+  const [form, setForm] = useState({
+    ...DEFAULT_DB_CONFIG,
+    host: import.meta.env.DEV ? 'localhost' : '',
+  });
   const [status, setStatus] = useState('idle'); // idle | testing | success | error
   const [errorMsg, setErrorMsg] = useState('');
 
+  const setField = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
+
   const testAndSave = async () => {
-    const url = `http://${serverIp.trim()}:${port.trim()}`;
     setStatus('testing');
     setErrorMsg('');
+    const cfg = {
+      host: form.host.trim(),
+      port: form.port.trim() || '3306',
+      database: form.database.trim(),
+      user: form.user.trim(),
+      password: form.password,
+    };
     try {
-      await checkServer(url);
-      configureServer(url);
+      await dbConfigApi.test(cfg);
+      await dbConfigApi.set(cfg);
       setStatus('success');
-      // Brief pause then reload to show login
       setTimeout(() => window.location.reload(), 1200);
-    } catch {
+    } catch (err) {
       setStatus('error');
-      setErrorMsg(
-        `Cannot connect to ${url}. Make sure the server is running on that machine and the IP is correct.`
-      );
+      setErrorMsg(err.response?.data?.error || 'Could not connect to the database. Check the details and try again.');
     }
   };
+
+  const busy = status === 'testing' || status === 'success';
 
   return (
     <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6">
       <PageEnter className="w-full max-w-md">
-        {/* Logo / Header */}
         <div className="text-center mb-10">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-600 mb-4">
-            <Server size={32} className="text-white" />
+            <Database size={32} className="text-white" />
           </div>
           <h1 className="text-2xl font-bold text-white">JAE TCRMS</h1>
           <p className="text-slate-400 mt-1 text-sm">
@@ -45,39 +51,70 @@ export default function Setup() {
 
         <div className="bg-slate-800 rounded-2xl p-8 shadow-xl border border-slate-700">
           <div className="flex items-center gap-2 mb-6">
-            <Wifi size={18} className="text-blue-400" />
-            <h2 className="text-lg font-semibold text-white">Server Setup</h2>
+            <Database size={18} className="text-blue-400" />
+            <h2 className="text-lg font-semibold text-white">Database Setup</h2>
           </div>
           <p className="text-slate-400 text-sm mb-6">
-            {import.meta.env.DEV
-              ? 'Could not reach the local server. Make sure npm run server is running, then connect below.'
-              : 'Enter the IP address of the computer running the JAE TCRMS server on your company network.'}
+            Enter the address of the shared MySQL server on your company network. Ask your IT
+            administrator for the server IP if you are unsure — the other fields can usually stay as-is.
           </p>
 
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1.5">
-                Server IP Address
-              </label>
+              <label className="block text-sm font-medium text-slate-300 mb-1.5">Server IP / Host</label>
               <input
                 type="text"
                 className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="e.g. 192.168.1.10"
-                value={serverIp}
-                onChange={(e) => setServerIp(e.target.value)}
+                value={form.host}
+                onChange={setField('host')}
                 onKeyDown={(e) => e.key === 'Enter' && testAndSave()}
               />
             </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-1.5">Port</label>
+                <input
+                  type="text"
+                  className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="3306"
+                  value={form.port}
+                  onChange={setField('port')}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-1.5">Database</label>
+                <input
+                  type="text"
+                  className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="tcrms"
+                  value={form.database}
+                  onChange={setField('database')}
+                />
+              </div>
+            </div>
+
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1.5">
-                Port
-              </label>
+              <label className="block text-sm font-medium text-slate-300 mb-1.5">Username</label>
               <input
                 type="text"
                 className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="3000"
-                value={port}
-                onChange={(e) => setPort(e.target.value)}
+                placeholder="tcrms_user"
+                value={form.user}
+                onChange={setField('user')}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-1.5">Password</label>
+              <input
+                type="password"
+                className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="••••••••"
+                value={form.password}
+                onChange={setField('password')}
+                onKeyDown={(e) => e.key === 'Enter' && testAndSave()}
               />
             </div>
 
@@ -97,7 +134,7 @@ export default function Setup() {
 
             <button
               onClick={testAndSave}
-              disabled={!serverIp.trim() || status === 'testing' || status === 'success'}
+              disabled={!form.host.trim() || !form.database.trim() || !form.user.trim() || busy}
               className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 disabled:text-slate-500 text-white font-medium rounded-lg px-4 py-3 transition-colors"
             >
               {status === 'testing' ? (
@@ -107,7 +144,7 @@ export default function Setup() {
                 </>
               ) : (
                 <>
-                  Connect to Server
+                  Connect to Database
                   <ArrowRight size={16} />
                 </>
               )}
@@ -115,7 +152,8 @@ export default function Setup() {
           </div>
 
           <p className="text-slate-500 text-xs mt-6 text-center">
-            Ask your IT administrator for the server IP address.
+            The first time you connect, the required tables and a default admin account
+            (admin / admin123) are created automatically if they don&apos;t exist yet.
           </p>
         </div>
       </PageEnter>

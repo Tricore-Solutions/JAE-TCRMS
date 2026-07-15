@@ -182,7 +182,7 @@ export default function ViewerDashboard() {
       <header className="bg-white border-b border-gray-200 px-6 py-3">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-4 min-w-0">
-            <img src="/jae-logo.png" alt="JAE" className="h-10 w-auto object-contain flex-shrink-0" />
+            <img src={`${import.meta.env.BASE_URL}jae-logo.png`} alt="JAE" className="h-10 w-auto object-contain flex-shrink-0" />
             <div className="min-w-0">
               <p className="text-base font-bold text-gray-900 leading-tight truncate">Training &amp; Certifications Management</p>
               <p className="text-xs text-gray-500">Public Employee Directory</p>

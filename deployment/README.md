@@ -2,11 +2,14 @@
 
 Production deployment for **Windows only**. Developers work on Mac — see [docs/DEVELOPMENT.md](../docs/DEVELOPMENT.md).
 
+The desktop app now connects **directly to a shared MySQL server** over the LAN.
+There is **no Django/Python API to run anymore** — the server PC only needs MySQL.
+
 ## Who Uses What
 
 | Machine | OS | Software |
 |---------|-----|----------|
-| **Server PC** (1 per site) | Windows | Python, MySQL, Django API |
+| **Server PC** (1 per site) | Windows | MySQL 8.0 only |
 | **Warehouse laptops** (all staff) | Windows | JAE TCRMS desktop app (`.exe`) |
 | **Developer** | macOS | Not used in production |
 
@@ -17,13 +20,13 @@ Production deployment for **Windows only**. Developers work on Mac — see [docs
 ```
 Company LAN
 ├── Windows Server PC
-│   ├── MySQL 8.0 (local)
-│   └── Django REST API (port 3000)
+│   └── MySQL 8.0  →  database "tcrms"  (TCP 3306)
 └── Windows Laptops
-    └── JAE TCRMS Setup.exe → HTTP API
+    └── JAE TCRMS Setup.exe  ──(mysql2, TCP 3306)──►  MySQL
 ```
 
-Staff use the **desktop app only** — no browser, no Python, no MySQL on their laptops.
+Each laptop's Electron app talks straight to MySQL. Staff use the **desktop app only** —
+no browser, no Python, no MySQL on their laptops.
 
 ---
 
@@ -31,24 +34,35 @@ Staff use the **desktop app only** — no browser, no Python, no MySQL on their 
 
 Run these **in order** on the Windows server machine:
 
-### 1. Install prerequisites
+### 1. Install MySQL
 
-- [Python 3.9+](https://python.org) — check **"Add Python to PATH"**
 - [MySQL 8.0+](https://dev.mysql.com/downloads/installer/)
 
-### 2. Install backend
+During install, set a root password you will remember.
 
-Double-click `deployment/install-backend.bat`
+### 2. Allow LAN connections
 
-Creates the Python virtual environment and installs Django dependencies.
+By default MySQL only listens on `localhost`. Edit `my.ini` (usually
+`C:\ProgramData\MySQL\MySQL Server 8.0\my.ini`) and set:
 
-### 3. Set up database
+```
+bind-address = 0.0.0.0
+```
 
-Double-click `deployment/setup-mysql.bat`
+Then restart the **MySQL80** service (Services app, or `net stop MySQL80 && net start MySQL80`).
 
-Creates the `tcrms` database, `tcrms_user`, and runs migrations.
+### 3. Create the database and user
 
-Default credentials (change in production via `backend/.env`):
+Open **MySQL Command Line Client** (or `mysql -u root -p`) and run:
+
+```sql
+CREATE DATABASE tcrms CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER 'tcrms_user'@'%' IDENTIFIED BY 'tcrms_password';
+GRANT ALL PRIVILEGES ON tcrms.* TO 'tcrms_user'@'%';
+FLUSH PRIVILEGES;
+```
+
+Default credentials (change the password in production):
 
 | Setting | Value |
 |---------|-------|
@@ -57,25 +71,22 @@ Default credentials (change in production via `backend/.env`):
 | Password | `tcrms_password` |
 | Port | `3306` |
 
+> **Tables are created automatically.** The first time a laptop connects, the app
+> creates the `users`, `employees`, `trainings`, and `audit_logs` tables if they don't
+> already exist, and seeds the default `admin` / `admin123` account when the `users`
+> table is empty. You do **not** need to run Django migrations. If you are migrating
+> from the old API-based version, point the app at the existing `tcrms` database — the
+> existing data and bcrypt password hashes keep working untouched.
+
 ### 4. Allow firewall
 
 Run in **Administrator** Command Prompt:
 
 ```
-netsh advfirewall firewall add rule name="JAE TCRMS Server" dir=in action=allow protocol=TCP localport=3000
+netsh advfirewall firewall add rule name="JAE TCRMS MySQL" dir=in action=allow protocol=TCP localport=3306
 ```
 
-### 5. Start the server
-
-Double-click `deployment/start-server.bat`
-
-Verify: open http://localhost:3000/health — should show `"status": "ok"`.
-
 Note the server PC's LAN IP (e.g. `192.168.1.10`) — all laptops need this.
-
-### 6. Auto-start on boot (optional)
-
-Double-click `deployment/setup-autostart.bat`
 
 ---
 
@@ -85,10 +96,15 @@ Staff laptops need **only the desktop app**.
 
 1. Copy `JAE TCRMS Setup.exe` to each laptop (build on Windows — see below)
 2. Run the installer
-3. **First launch:** the **Server Setup** screen appears — enter the server PC's IP and port `3000`
-4. Log in with credentials from the admin
+3. **First launch:** the **Database Setup** screen appears. Enter:
+   - **Server IP / Host** — the server PC's LAN IP (e.g. `192.168.1.10`)
+   - **Port** — `3306` (default)
+   - **Database** — `tcrms` (default)
+   - **Username** / **Password** — `tcrms_user` / `tcrms_password` (defaults)
+4. Click **Connect to Database**, then log in with credentials from the admin
 
-> The Server Setup screen appears once per laptop. The app saves the server address locally. It does **not** appear in Mac dev mode (auto-connects to localhost).
+> The Database Setup screen appears once per laptop. The app saves the connection
+> locally (in the app's `config.json`). Use **Change** on the login screen to reconfigure.
 
 ---
 
@@ -96,34 +112,22 @@ Staff laptops need **only the desktop app**.
 
 | Task | Action |
 |------|--------|
-| Start server | Double-click `start-server.bat` |
-| Stop server | Close the command window or Ctrl+C |
+| Start MySQL | Runs as the **MySQL80** Windows service (auto-starts on boot) |
 | Backup database | `mysqldump -u tcrms_user -p tcrms > backup.sql` |
 | Restore database | `mysql -u tcrms_user -p tcrms < backup.sql` |
+
+There is no application server to start or stop — only MySQL runs on the server PC.
 
 ---
 
 ## Default Login
 
-After first migration:
+On the very first connection to an empty database:
 
 - Username: `admin`
 - Password: `admin123`
 
 Change immediately after first login.
-
----
-
-## Script Reference
-
-| Script | Platform | Purpose |
-|--------|----------|---------|
-| `install-backend.bat` | Windows | First-time Python/Django setup |
-| `setup-mysql.bat` | Windows | Create DB + migrate |
-| `start-server.bat` | Windows | Run API server |
-| `setup-autostart.bat` | Windows | Start server on Windows login |
-| `setup-mysql.command` | macOS (dev) | Local dev database setup |
-| `start-server.command` | macOS (dev) | Local dev server |
 
 ---
 
@@ -142,15 +146,26 @@ Distribute this file to all warehouse laptops. Staff do not need Node, Python, o
 
 ---
 
+## Security Note
+
+Because the app connects straight to MySQL, each laptop stores the database
+credentials locally and enforces user roles in the app. On a trusted LAN this is the
+accepted trade-off for dropping the API. To limit exposure, keep `tcrms_user`
+privileges scoped to the `tcrms` database only (as in the `GRANT` above) and use a
+strong password.
+
+---
+
 ## Troubleshooting (Windows)
 
 | Problem | Fix |
 |---------|-----|
-| Client "Cannot connect to server" | Confirm `start-server.bat` is running; check firewall rule |
-| Wrong server IP on laptop | Delete app data / reinstall, or clear saved config on re-setup |
-| MySQL connection failed on server | Verify MySQL service is running; check `backend/.env` |
-| Port 3000 blocked | Run the firewall command above |
-| Health check fails | Run `setup-mysql.bat` again; check MySQL credentials in `.env` |
+| "Connection refused" | Confirm MySQL is running and `bind-address = 0.0.0.0`; check the firewall rule |
+| "Could not reach the database host" | Verify the server IP and that both machines are on the same LAN |
+| "Access denied" | Check the MySQL username/password entered on the Database Setup screen |
+| "Database not found" | Confirm the `tcrms` database exists (step 3) |
+| Wrong server IP on laptop | Click **Change** on the login screen and re-enter the details |
+| Port 3306 blocked | Run the firewall command above |
 
 ---
 

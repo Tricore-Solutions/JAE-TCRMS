@@ -13,7 +13,8 @@
     "install:all": "npm run install:backend && npm run install:client",
     "build": "cd client && npm run build",
     "dist": "cd client && npm run dist",
-    "dist:win": "cd client && npm run dist"
+    "dist:win": "cd client && npm run dist",
+    "dist:mac": "cd client && npm run dist:mac"
   },
   "author": "JAE Philippines, Inc.",
   "license": "ISC"

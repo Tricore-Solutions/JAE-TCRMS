@@ -14,7 +14,7 @@ export default function Navbar() {
     <header className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between flex-shrink-0 z-10">
       <div className="flex items-center gap-4 min-w-0">
         <img
-          src="/jae-logo.png"
+          src={`${import.meta.env.BASE_URL}jae-logo.png`}
           alt="JAE"
           className="h-10 w-auto object-contain flex-shrink-0"
         />
