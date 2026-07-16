@@ -100,7 +100,7 @@ async function employeeTrainings({ id, training_title, expiry_from, expiry_to, c
   }
 
   const [rows] = await pool.query(
-    `SELECT * FROM trainings WHERE ${where.join(' AND ')} ORDER BY training_date DESC`,
+    `SELECT * FROM trainings WHERE ${where.join(' AND ')} ORDER BY training_date DESC, id DESC`,
     vals
   );
 
@@ -120,6 +120,7 @@ async function employeeTrainings({ id, training_title, expiry_from, expiry_to, c
       validity_months: t.validity_months,
       expiration_date: exp,
       worker_line_status: t.worker_line_status,
+      cert_uncert: t.cert_uncert === 'UNCERT' ? 'UNCERT' : 'CERT',
       take: t.take,
       process_classification: t.process_classification,
       remarks: t.remarks,

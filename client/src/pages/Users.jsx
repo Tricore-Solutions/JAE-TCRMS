@@ -8,6 +8,7 @@ import StatusBadge from '../components/StatusBadge';
 import { usersApi } from '../api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/Toast';
+import { formatDate } from '../utils/date';
 
 const emptyForm = { username: '', password: '', full_name: '', role: 'encoder', status: 'active' };
 
@@ -104,7 +105,7 @@ export default function Users() {
     { key: 'full_name', label: 'Full Name', render: v => <span className="font-medium text-gray-900 text-sm">{v || '—'}</span> },
     { key: 'role', label: 'Role', render: v => <StatusBadge status={v} /> },
     { key: 'status', label: 'Status', render: v => <StatusBadge status={v} /> },
-    { key: 'created_at', label: 'Created', render: v => <span className="text-xs text-gray-500">{v?.split('T')[0] || v}</span> },
+    { key: 'created_at', label: 'Created', render: v => <span className="text-xs text-gray-500">{formatDate(v)}</span> },
     { key: 'actions', label: '', sortable: false, render: (_, row) => (
       <div className="flex items-center gap-1">
         <button onClick={() => openEdit(row)} className="p-1.5 text-gray-500 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors">

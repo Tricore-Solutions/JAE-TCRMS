@@ -7,6 +7,7 @@ import PageEnter from '../components/PageEnter';
 import DataTable from '../components/DataTable';
 import { publicApi } from '../api';
 import { useAuth } from '../context/AuthContext';
+import { formatDate } from '../utils/date';
 
 const TAKE_LABELS = { 1: '1st Take', 2: '2nd Take', 3: '3rd Take' };
 const EMPLOYMENT_STATUSES = [
@@ -41,6 +42,12 @@ function getExpirationTextClass(expirationDate) {
   return 'text-green-600 font-medium';
 }
 
+function getCertUncert(expirationDate) {
+  if (!expirationDate) return 'CERT';
+  const today = new Date().toISOString().split('T')[0];
+  return expirationDate < today ? 'UNCERT' : 'CERT';
+}
+
 export default function ViewerDashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -56,17 +63,11 @@ export default function ViewerDashboard() {
   const [filterExpiryFrom, setFilterExpiryFrom] = useState('');
   const [filterExpiryTo, setFilterExpiryTo] = useState('');
   const [teams, setTeams] = useState([]);
-  const [trainingTitles, setTrainingTitles] = useState([]);
 
   // Training history modal
   const [selected, setSelected] = useState(null);
   const [trainings, setTrainings] = useState([]);
   const [trainingLoading, setTrainingLoading] = useState(false);
-
-  // Load training titles once for dropdown
-  useEffect(() => {
-    publicApi.trainingTitles().then(res => setTrainingTitles(res.data)).catch(() => {});
-  }, []);
 
   const load = useCallback(async () => {
     const isRefresh = !isInitialLoad.current;
@@ -122,7 +123,13 @@ export default function ViewerDashboard() {
       if (filterExpiryFrom) params.expiry_from = filterExpiryFrom;
       if (filterExpiryTo) params.expiry_to = filterExpiryTo;
       const res = await publicApi.employeeTrainings(emp.id, params);
-      setTrainings(res.data.trainings || []);
+      const list = [...(res.data.trainings || [])].sort((a, b) => {
+        const da = a.training_date || '';
+        const db = b.training_date || '';
+        if (da !== db) return db.localeCompare(da);
+        return (b.id || 0) - (a.id || 0);
+      });
+      setTrainings(list);
     } catch {
       setTrainings([]);
     } finally {
@@ -147,7 +154,7 @@ export default function ViewerDashboard() {
     {
       key: 'hire_date',
       label: 'Date Hired',
-      render: (v) => <span className="whitespace-nowrap">{v || '—'}</span>,
+      render: (v) => <span className="whitespace-nowrap">{formatDate(v)}</span>,
     },
     { key: 'employment_status', label: 'Employment Status', render: (v) => v || '—' },
     {
@@ -246,14 +253,13 @@ export default function ViewerDashboard() {
               <option value="">All Employment Status</option>
               {EMPLOYMENT_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
-            <select
+            <input
+              type="text"
+              placeholder="Search training title..."
               value={filterTrainingTitle}
               onChange={e => setFilterTrainingTitle(e.target.value)}
-              className="bg-white border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D72B8] min-w-48 flex-1"
-            >
-              <option value="">All Training Titles</option>
-              {trainingTitles.map(t => <option key={t} value={t}>{t}</option>)}
-            </select>
+              className="bg-white border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1D72B8] min-w-48 flex-1"
+            />
 
             <select
               value={filterCertStatus}
@@ -354,13 +360,17 @@ export default function ViewerDashboard() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-gray-50">
-                  {['Training Title', 'Category', 'Date', 'Expiration', 'Worker Line', 'Take', 'Trainer', 'Status'].map(h => (
+                  {['Training Title', 'Category', 'Training Date', 'Expiration', 'CERT/UNCERT', 'Take', 'Trainer', 'Status'].map(h => (
                     <th key={h} className="px-3 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {trainings.map(t => (
+                {trainings.map(t => {
+                  const certLabel = t.cert_uncert === 'UNCERT' || t.cert_uncert === 'CERT'
+                    ? t.cert_uncert
+                    : getCertUncert(t.expiration_date);
+                  return (
                   <tr key={t.id} className={`transition-colors ${getTrainingRowClass(t.expiration_date)}`}>
                     <td className="px-3 py-3 text-gray-900 font-medium max-w-[180px]">
                       <p className="truncate">{t.title}</p>
@@ -369,17 +379,17 @@ export default function ViewerDashboard() {
                       )}
                     </td>
                     <td className="px-3 py-3 text-gray-700 whitespace-nowrap">{t.category || '—'}</td>
-                    <td className="px-3 py-3 text-gray-700 whitespace-nowrap">{t.training_date}</td>
+                    <td className="px-3 py-3 text-gray-700 whitespace-nowrap">{formatDate(t.training_date)}</td>
                     <td className={`px-3 py-3 whitespace-nowrap ${getExpirationTextClass(t.expiration_date)}`}>
-                      {t.expiration_date || 'No expiry'}
+                      {t.expiration_date ? formatDate(t.expiration_date) : 'No expiry'}
                     </td>
                     <td className="px-3 py-3 whitespace-nowrap">
                       <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                        t.worker_line_status === 'Original'
-                          ? 'bg-blue-50 text-[#1D72B8] border border-blue-200'
-                          : 'bg-amber-50 text-amber-700 border border-amber-200'
+                        certLabel === 'CERT'
+                          ? 'bg-green-50 text-green-700 border border-green-200'
+                          : 'bg-red-50 text-red-700 border border-red-200'
                       }`}>
-                        {t.worker_line_status || 'Floating'}
+                        {certLabel}
                       </span>
                     </td>
                     <td className="px-3 py-3 text-gray-700 whitespace-nowrap">
@@ -390,7 +400,8 @@ export default function ViewerDashboard() {
                       <StatusBadge status={getCertStatus(t.expiration_date)} />
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>

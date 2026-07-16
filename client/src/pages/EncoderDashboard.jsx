@@ -8,6 +8,7 @@ import Modal from '../components/Modal';
 import DataTable from '../components/DataTable';
 import { reportsApi, trainingsApi } from '../api';
 import { useAuth } from '../context/AuthContext';
+import { formatDate } from '../utils/date';
 
 function todayISO() {
   return new Date().toISOString().split('T')[0];
@@ -66,7 +67,7 @@ export default function EncoderDashboard() {
     )},
     { key: 'title', label: 'Training Title' },
     { key: 'factory', label: 'Factory', render: v => v || '—' },
-    { key: 'expiration_date', label: 'Expiration Date' },
+    { key: 'expiration_date', label: 'Expiration Date', render: v => formatDate(v) },
     { key: 'cert_status', label: 'Status', render: v => <StatusBadge status={v} /> },
   ];
 
@@ -153,7 +154,7 @@ export default function EncoderDashboard() {
                   </div>
                   <div className="flex flex-col items-end flex-shrink-0 gap-1">
                     {certStatus && <StatusBadge status={certStatus} />}
-                    <span className="text-xs text-gray-500">{item.training_date}</span>
+                    <span className="text-xs text-gray-500">{formatDate(item.training_date)}</span>
                   </div>
                 </div>
                 );
@@ -188,7 +189,7 @@ export default function EncoderDashboard() {
                   </div>
                   <div className="flex flex-col items-end flex-shrink-0">
                     <StatusBadge status={item.cert_status} />
-                    <span className="text-xs text-gray-500 mt-1">{item.expiration_date}</span>
+                    <span className="text-xs text-gray-500 mt-1">{formatDate(item.expiration_date)}</span>
                   </div>
                 </div>
               ))}

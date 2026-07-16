@@ -10,6 +10,7 @@ import StatusBadge from '../components/StatusBadge';
 import { employeesApi, reportsApi } from '../api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/Toast';
+import { formatDate, formatDateTime } from '../utils/date';
 
 const STATUSES = ['active', 'inactive', 'resigned'];
 const EMPLOYMENT_STATUSES = [
@@ -111,7 +112,7 @@ export default function Employees() {
         'Employee ID': emp.employee_id,
         'Full Name': emp.full_name,
         'Employment Status': emp.employment_status || '',
-        'Date Hired': emp.hire_date || '',
+        'Date Hired': formatDate(emp.hire_date, ''),
         'Team': emp.team || '',
         'Line': emp.line || '',
         'Factory': emp.factory || '',
@@ -209,7 +210,7 @@ export default function Employees() {
       <span className="text-sm text-gray-600">{v || '—'}</span>
     )},
     { key: 'hire_date', label: 'Date Hired', render: v => (
-      <span className="text-sm text-gray-500">{v || '—'}</span>
+      <span className="text-sm text-gray-500">{formatDate(v)}</span>
     )},
     { key: 'team', label: 'Team' },
     { key: 'line', label: 'Line' },
@@ -464,7 +465,7 @@ export default function Employees() {
                   { label: 'Team', value: selected.team || '—' },
                   { label: 'Position', value: selected.position || '—' },
                   { label: 'Employment Status', value: selected.employment_status || '—' },
-                  { label: 'Hire Date', value: selected.hire_date || '—' },
+                  { label: 'Hire Date', value: formatDate(selected.hire_date) },
                   { label: 'Status', value: <StatusBadge status={selected.status} /> },
                 ].map(({ label, value }) => (
                   <div key={label} className="flex justify-between gap-4 py-3">
@@ -487,7 +488,7 @@ export default function Employees() {
                         log.action === 'UPDATE' ? 'bg-amber-400' : 'bg-red-400'
                       }`} />
                       <p className="text-sm text-gray-900 font-medium flex-1">{log.full_name}</p>
-                      <span className="text-xs text-gray-500">{log.created_at}</span>
+                      <span className="text-xs text-gray-500">{formatDateTime(log.created_at)}</span>
                     </div>
                     <p className="text-xs text-gray-500 ml-4">{log.summary}</p>
                     {log.changes && Object.keys(log.changes).length > 0 && (

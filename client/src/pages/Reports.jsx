@@ -6,6 +6,7 @@ import Layout from '../components/Layout';
 import StatusBadge from '../components/StatusBadge';
 import { reportsApi } from '../api';
 import { useToast } from '../components/Toast';
+import { formatDate } from '../utils/date';
 
 const TAKE_AXIS = [1, 2, 3];
 const TAKE_LABELS = { 1: '1st Take', 2: '2nd Take', 3: '3rd Take' };
@@ -118,7 +119,7 @@ function buildReportsWorkbook({ byCategory, byFactory, takesPerMonth, expiring }
         training: r.title,
         factory: r.factory,
         team: r.team,
-        expiryDate: r.expiration_date,
+        expiryDate: formatDate(r.expiration_date, ''),
         status: r.cert_status,
       })),
       [
@@ -586,7 +587,7 @@ export default function Reports() {
             item.full_name,
             item.title,
             `${item.factory} / ${item.team}`,
-            item.expiration_date,
+            formatDate(item.expiration_date, ''),
             item.cert_status,
           ], i % 2 === 1);
         });
@@ -801,7 +802,7 @@ export default function Reports() {
                     <td className="py-3 text-gray-900 font-medium">{item.full_name}</td>
                     <td className="py-3 text-gray-700">{item.title}</td>
                     <td className="py-3 text-gray-500 text-xs">{item.factory} / {item.team}</td>
-                    <td className="py-3 text-gray-700">{item.expiration_date}</td>
+                    <td className="py-3 text-gray-700">{formatDate(item.expiration_date)}</td>
                     <td className="py-3"><StatusBadge status={item.cert_status} /></td>
                   </tr>
                 ))}

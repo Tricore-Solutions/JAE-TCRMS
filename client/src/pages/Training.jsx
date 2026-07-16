@@ -22,6 +22,7 @@ import {
   recordToValidityOption,
   validityOptionToPayload,
 } from '../utils/validity';
+import { formatDate, formatDateTime } from '../utils/date';
 
 function getCertStatus(expirationDate) {
   if (!expirationDate) return 'valid';
@@ -41,7 +42,15 @@ function getExpirationUrgency(expirationDate) {
   return 'valid';
 }
 
-const WORKER_LINE_STATUSES = ['Floating', 'Original'];
+function getCertUncert(expirationDate) {
+  if (!expirationDate) return 'CERT';
+  const today = new Date().toISOString().split('T')[0];
+  return expirationDate < today ? 'UNCERT' : 'CERT';
+}
+
+const CERT_UNCERT_OPTIONS = ['CERT', 'UNCERT'];
+const PASS_FAIL_OPTIONS = ['Passed', 'Failed'];
+const REMARKS_OPTIONS = ['ACTIVE', 'INACTIVE'];
 const PROCESS_CLASSIFICATION_OPTIONS = ['Beginner', 'Basic', 'Expert', 'Advanced', 'Non-sensing', 'Sensing'];
 const CLASSIFICATION_CHIP_STYLES = {
   Beginner: 'bg-green-50 text-green-700 border border-green-200',
@@ -63,16 +72,18 @@ const TAKE_OPTIONS = [
 
 const emptyForm = {
   employee_id: '', title: '', category: '', training_date: '',
-  trainer: '', validity_option: DEFAULT_VALIDITY_OPTION, process_classification: '', remarks: '',
-  worker_line_status: 'Floating', take: 1,
+  trainer: '', validity_option: DEFAULT_VALIDITY_OPTION, process_classification: '', remarks: 'ACTIVE',
+  cert_uncert: 'CERT', pass_fail: 'Passed', take: 1,
 };
 
-function buildFilterParams({ search, filterCategory, filterTitle, filterStatus, filterWorkerLine, filterTake, filterDateFrom, filterDateTo }) {
+function buildFilterParams({ search, filterFactory, filterCategory, filterTitle, filterStatus, filterCertUncert, filterPassFail, filterTake, filterDateFrom, filterDateTo }) {
   const params = {};
   if (search) params.search = search;
+  if (filterFactory) params.factory = filterFactory;
   if (filterCategory) params.category = filterCategory;
   if (filterTitle) params.title = filterTitle;
-  if (filterWorkerLine) params.worker_line_status = filterWorkerLine;
+  if (filterCertUncert) params.cert_uncert = filterCertUncert;
+  if (filterPassFail) params.pass_fail = filterPassFail;
   if (filterTake) params.take = filterTake;
   if (filterDateFrom) params.date_from = filterDateFrom;
   if (filterDateTo) params.date_to = filterDateTo;
@@ -109,13 +120,16 @@ export default function Training() {
   const [refreshing, setRefreshing] = useState(false);
   const isInitialLoad = useRef(true);
   const [search, setSearch] = useState('');
+  const [filterFactory, setFilterFactory] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
   const [filterTitle, setFilterTitle] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
-  const [filterWorkerLine, setFilterWorkerLine] = useState('');
+  const [filterCertUncert, setFilterCertUncert] = useState('');
+  const [filterPassFail, setFilterPassFail] = useState('');
   const [filterTake, setFilterTake] = useState('');
   const [filterDateFrom, setFilterDateFrom] = useState('');
   const [filterDateTo, setFilterDateTo] = useState('');
+  const [factories, setFactories] = useState([]);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [viewModal, setViewModal] = useState(false);
@@ -141,15 +155,17 @@ export default function Training() {
     if (isInitialLoad.current) setLoading(true);
     else setRefreshing(true);
     try {
-      const params = buildFilterParams({ search, filterCategory, filterTitle, filterStatus, filterWorkerLine, filterTake, filterDateFrom, filterDateTo });
-      const [trRes, empRes, titlesRes] = await Promise.all([
+      const params = buildFilterParams({ search, filterFactory, filterCategory, filterTitle, filterStatus, filterCertUncert, filterPassFail, filterTake, filterDateFrom, filterDateTo });
+      const [trRes, empRes, titlesRes, filtersRes] = await Promise.all([
         trainingsApi.list(params),
         employeesApi.list({ status: 'active' }),
         trainingsApi.titles(),
+        employeesApi.filters(),
       ]);
       setRecords(trRes.data);
       setEmployees(empRes.data);
       setTrainingTitles(titlesRes.data);
+      setFactories(filtersRes.data?.factories || []);
       setCheckedIds(new Set());
     } catch (err) {
       toast('Failed to load training records.', 'error');
@@ -158,7 +174,7 @@ export default function Training() {
       setRefreshing(false);
       isInitialLoad.current = false;
     }
-  }, [search, filterCategory, filterTitle, filterStatus, filterWorkerLine, filterTake, filterDateFrom, filterDateTo]);
+  }, [search, filterFactory, filterCategory, filterTitle, filterStatus, filterCertUncert, filterPassFail, filterTake, filterDateFrom, filterDateTo]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -189,8 +205,9 @@ export default function Training() {
       trainer: record.trainer,
       validity_option: recordToValidityOption(record),
       process_classification: record.process_classification,
-      remarks: record.remarks,
-      worker_line_status: record.worker_line_status || 'Floating',
+      remarks: record.remarks === 'INACTIVE' ? 'INACTIVE' : 'ACTIVE',
+      cert_uncert: record.cert_uncert === 'UNCERT' ? 'UNCERT' : 'CERT',
+      pass_fail: record.pass_fail === 'Failed' ? 'Failed' : 'Passed',
       take: record.take || 1,
     });
     setWithValidity(
@@ -259,18 +276,44 @@ export default function Training() {
     }
   };
 
+  const handleRemarksChange = async (row, remarks) => {
+    if (!canEdit) return;
+    const next = remarks === 'INACTIVE' ? 'INACTIVE' : 'ACTIVE';
+    if ((row.remarks === 'INACTIVE' ? 'INACTIVE' : 'ACTIVE') === next) return;
+    const prev = row.remarks;
+    setRecords((list) => list.map((r) => (r.id === row.id ? { ...r, remarks: next } : r)));
+    try {
+      await trainingsApi.update(row.id, {
+        remarks: next,
+        validity_months: row.validity_months,
+        validity_days: row.validity_days,
+        training_date: row.training_date,
+        title: row.title,
+      });
+      toast(`Remarks set to ${next}.`, 'success');
+    } catch (err) {
+      setRecords((list) => list.map((r) => (r.id === row.id ? { ...r, remarks: prev } : r)));
+      toast(err.response?.data?.error || 'Failed to update remarks.', 'error');
+    }
+  };
+
   const handleExport = async () => {
     setExporting(true);
     try {
-      const params = buildFilterParams({ search, filterCategory, filterTitle, filterStatus, filterWorkerLine, filterTake, filterDateFrom, filterDateTo });
+      const params = buildFilterParams({ search, filterFactory, filterCategory, filterTitle, filterStatus, filterCertUncert, filterPassFail, filterTake, filterDateFrom, filterDateTo });
       const res = await reportsApi.exportTrainings(params);
       if (!res.data.length) {
         toast('No records to export for the current filters.', 'warning');
         return;
       }
       const today = new Date().toISOString().split('T')[0];
-      exportToXLSX(res.data, `JAE-TCRMS-Training-Report-${today}.xlsx`);
-      toast(`Exported ${res.data.length} records to Excel.`, 'success');
+      const rows = res.data.map((r) => ({
+        ...r,
+        training_date: formatDate(r.training_date, ''),
+        expiration_date: formatDate(r.expiration_date, ''),
+      }));
+      exportToXLSX(rows, `JAE-TCRMS-Training-Report-${today}.xlsx`);
+      toast(`Exported ${rows.length} records to Excel.`, 'success');
     } catch {
       toast('Export failed.', 'error');
     } finally {
@@ -389,6 +432,9 @@ export default function Training() {
         <p className="text-xs text-gray-500">{row.emp_code}</p>
       </div>
     )},
+    { key: 'factory', label: 'Factory', render: v => (
+      <span className="text-sm text-gray-700">{v || '—'}</span>
+    )},
     { key: 'process_classification', label: 'Classification', render: v => v ? (
       <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${getClassificationChipClass(v)}`}>{v}</span>
     ) : (
@@ -408,7 +454,7 @@ export default function Training() {
     { key: 'validity', label: 'Validity', render: (_, row) => (
       <span className="text-sm text-gray-700">{formatValidityLabel(row)}</span>
     )},
-    { key: 'training_date', label: 'Date' },
+    { key: 'training_date', label: 'Date', render: v => formatDate(v) },
     { key: 'trainer', label: 'Trainer', render: v => (
       <span className="text-sm text-gray-600">{v || '—'}</span>
     )},
@@ -421,19 +467,62 @@ export default function Training() {
           : 'text-red-600';
       return (
         <span className={`text-sm font-medium ${colorClass}`}>
-          {v || 'No expiry'}
+          {v ? formatDate(v) : 'No expiry'}
         </span>
       );
     }},
-    { key: 'worker_line_status', label: 'Line Status', className: 'w-24 max-w-24 px-2', render: v => (
-      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-        v === 'Original'
-          ? 'bg-blue-50 text-[#1D72B8] border border-blue-200'
-          : 'bg-amber-50 text-amber-700 border border-amber-200'
-      }`}>
-        {v || 'Floating'}
-      </span>
-    )},
+    { key: 'cert_uncert', label: 'CERT/UNCERT', className: 'w-28 max-w-28 px-2', render: (v, row) => {
+      const label = v === 'UNCERT' || v === 'CERT' ? v : getCertUncert(row.expiration_date);
+      return (
+        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+          label === 'CERT'
+            ? 'bg-green-50 text-green-700 border border-green-200'
+            : 'bg-red-50 text-red-700 border border-red-200'
+        }`}>
+          {label}
+        </span>
+      );
+    }},
+    { key: 'pass_fail', label: 'Passed/Failed', className: 'w-28 max-w-28 px-2', render: (v) => {
+      const label = v === 'Failed' ? 'Failed' : 'Passed';
+      return (
+        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+          label === 'Passed'
+            ? 'bg-green-50 text-green-700 border border-green-200'
+            : 'bg-red-50 text-red-700 border border-red-200'
+        }`}>
+          {label}
+        </span>
+      );
+    }},
+    { key: 'remarks', label: 'Remarks', className: 'w-32 max-w-32 px-2', sortable: false, render: (v, row) => {
+      const value = v === 'INACTIVE' ? 'INACTIVE' : 'ACTIVE';
+      if (!canEdit) {
+        return (
+          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+            value === 'ACTIVE'
+              ? 'bg-green-50 text-green-700 border border-green-200'
+              : 'bg-gray-50 text-gray-600 border border-gray-200'
+          }`}>
+            {value}
+          </span>
+        );
+      }
+      return (
+        <select
+          value={value}
+          onClick={e => e.stopPropagation()}
+          onChange={e => handleRemarksChange(row, e.target.value)}
+          className={`w-full text-xs font-medium rounded-lg border px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#1D72B8] cursor-pointer ${
+            value === 'ACTIVE'
+              ? 'bg-green-50 text-green-700 border-green-200'
+              : 'bg-gray-50 text-gray-600 border-gray-200'
+          }`}
+        >
+          {REMARKS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+        </select>
+      );
+    }},
     { key: 'actions', label: '', sortable: false, render: (_, row) => (
       <div className="flex items-center gap-1">
         <button onClick={e => { e.stopPropagation(); openView(row); }} className="px-2.5 py-1 text-xs font-medium text-gray-500 bg-gray-50 hover:text-[#1D72B8] hover:bg-blue-50 rounded-lg transition-colors">
@@ -511,6 +600,14 @@ export default function Training() {
         </div>
         <div className="flex flex-wrap gap-3">
           <select
+            value={filterFactory}
+            onChange={e => setFilterFactory(e.target.value)}
+            className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
+          >
+            <option value="">All Factories</option>
+            {factories.map(f => <option key={f} value={f}>{f}</option>)}
+          </select>
+          <select
             value={filterCategory}
             onChange={e => setFilterCategory(e.target.value)}
             className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
@@ -518,14 +615,13 @@ export default function Training() {
             <option value="">All Categories</option>
             {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
           </select>
-          <select
+          <input
+            type="text"
+            placeholder="Search training title..."
             value={filterTitle}
             onChange={e => setFilterTitle(e.target.value)}
-            className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D72B8] max-w-56"
-          >
-            <option value="">All Training Titles</option>
-            {trainingTitles.map(t => <option key={t} value={t}>{t}</option>)}
-          </select>
+            className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1D72B8] min-w-48 max-w-64"
+          />
           <select
             value={filterStatus}
             onChange={e => setFilterStatus(e.target.value)}
@@ -536,12 +632,20 @@ export default function Training() {
             <option value="expiring">Expiring Soon</option>
           </select>
           <select
-            value={filterWorkerLine}
-            onChange={e => setFilterWorkerLine(e.target.value)}
+            value={filterCertUncert}
+            onChange={e => setFilterCertUncert(e.target.value)}
             className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
           >
-            <option value="">All Worker Line</option>
-            {WORKER_LINE_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+            <option value="">All CERT/UNCERT</option>
+            {CERT_UNCERT_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
+          <select
+            value={filterPassFail}
+            onChange={e => setFilterPassFail(e.target.value)}
+            className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
+          >
+            <option value="">All Passed/Failed</option>
+            {PASS_FAIL_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
           </select>
           <select
             value={filterTake}
@@ -708,13 +812,23 @@ export default function Training() {
             </>
           )}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Worker Line Status</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">CERT/UNCERT</label>
             <select
-              value={form.worker_line_status}
-              onChange={e => setForm(f => ({ ...f, worker_line_status: e.target.value }))}
+              value={form.cert_uncert}
+              onChange={e => setForm(f => ({ ...f, cert_uncert: e.target.value }))}
               className="w-full app-input px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
             >
-              {WORKER_LINE_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+              {CERT_UNCERT_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Passed/Failed</label>
+            <select
+              value={form.pass_fail}
+              onChange={e => setForm(f => ({ ...f, pass_fail: e.target.value }))}
+              className="w-full app-input px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
+            >
+              {PASS_FAIL_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
           </div>
           <div>
@@ -729,22 +843,22 @@ export default function Training() {
               ))}
             </select>
           </div>
-          <div className="col-span-2">
+          <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Remarks</label>
-            <textarea
-              value={form.remarks}
+            <select
+              value={form.remarks === 'INACTIVE' ? 'INACTIVE' : 'ACTIVE'}
               onChange={e => setForm(f => ({ ...f, remarks: e.target.value }))}
-              rows={3}
-              className="w-full app-input px-3 py-2.5 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1D72B8] resize-none"
-              placeholder="Optional notes..."
-            />
+              className="w-full app-input px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
+            >
+              {REMARKS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
           </div>
         </div>
         {form.training_date && form.validity_option && !(form.category === 'Orientation' && !withValidity) && (
           <div className="mt-4 bg-gray-100/50 rounded-lg p-3">
             <p className="text-xs text-gray-500">
               Calculated expiration: <span className="text-gray-900 font-medium">
-                {calcExpirationPreview(form.training_date, form.validity_option)}
+                {formatDate(calcExpirationPreview(form.training_date, form.validity_option))}
               </span> ({getValidityPreviewLabel(form.validity_option)} from training date)
             </p>
           </div>
@@ -782,17 +896,19 @@ export default function Training() {
               <dl className="space-y-3">
                 {[
                   { label: 'Employee', value: `${selected.employee_name} (${selected.emp_code})` },
+                  { label: 'Factory', value: selected.factory || '—' },
                   { label: 'Training Title', value: selected.title },
                   { label: 'Category', value: selected.category || '—' },
-                  { label: 'Training Date', value: selected.training_date },
+                  { label: 'Training Date', value: formatDate(selected.training_date) },
                   { label: 'Trainer', value: selected.trainer || '—' },
                   { label: 'Validity', value: formatValidityLabel(selected) },
-                  { label: 'Expiration Date', value: selected.expiration_date || '—' },
+                  { label: 'Expiration Date', value: formatDate(selected.expiration_date) },
                   { label: 'Status', value: <StatusBadge status={getCertStatus(selected.expiration_date)} /> },
                   { label: 'Process Classification', value: selected.process_classification || '—' },
-                  { label: 'Worker Line Status', value: selected.worker_line_status || 'Floating' },
+                  { label: 'CERT/UNCERT', value: selected.cert_uncert === 'UNCERT' ? 'UNCERT' : 'CERT' },
+                  { label: 'Passed/Failed', value: selected.pass_fail === 'Failed' ? 'Failed' : 'Passed' },
                   { label: 'Take', value: TAKE_OPTIONS.find(o => o.value === selected.take)?.label || `${selected.take || 1}st Take` },
-                  { label: 'Remarks', value: selected.remarks || '—' },
+                  { label: 'Remarks', value: selected.remarks === 'INACTIVE' ? 'INACTIVE' : (selected.remarks === 'ACTIVE' || !selected.remarks ? 'ACTIVE' : selected.remarks) },
                 ].map(({ label, value }) => (
                   <div key={label} className="flex justify-between gap-4 py-2 border-b border-gray-200">
                     <dt className="text-sm text-gray-500 flex-shrink-0">{label}</dt>
@@ -814,7 +930,7 @@ export default function Training() {
                         log.action === 'UPDATE' ? 'bg-amber-400' : 'bg-red-400'
                       }`} />
                       <p className="text-sm text-gray-900 font-medium flex-1">{log.full_name}</p>
-                      <span className="text-xs text-gray-500">{log.created_at}</span>
+                      <span className="text-xs text-gray-500">{formatDateTime(log.created_at)}</span>
                     </div>
                     <p className="text-xs text-gray-500 ml-4">{log.summary}</p>
                     {log.changes && Object.keys(log.changes).length > 0 && (

@@ -358,6 +358,8 @@ async function importTrainingRecords(bytes, user) {
         process_classification: mapClassification(item.process_classification),
         remarks: cellStr(item.remarks),
         worker_line_status: 'Floating',
+        cert_uncert: 'CERT',
+        pass_fail: 'Passed',
         take,
         created_by: user && user.id != null ? user.id : null,
       });
@@ -366,17 +368,17 @@ async function importTrainingRecords(bytes, user) {
     if (trainingsToCreate.length) {
       const cols = ['employee_id', 'title', 'category', 'training_date', 'trainer', 'validity_months',
         'validity_days', 'expiration_date', 'process_classification', 'remarks',
-        'worker_line_status', 'take', 'is_archived', 'created_by'];
+        'worker_line_status', 'cert_uncert', 'pass_fail', 'take', 'is_archived', 'created_by'];
       const batchSize = 500;
       for (let i = 0; i < trainingsToCreate.length; i += batchSize) {
         const batch = trainingsToCreate.slice(i, i + batchSize);
-        const placeholders = batch.map(() => `(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, NOW(6), NOW(6))`).join(', ');
+        const placeholders = batch.map(() => `(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, NOW(6), NOW(6))`).join(', ');
         const values = [];
         for (const t of batch) {
           values.push(
             t.employee_id, t.title, t.category, t.training_date, t.trainer, t.validity_months,
             t.validity_days, t.expiration_date, t.process_classification, t.remarks,
-            t.worker_line_status, t.take, t.created_by
+            t.worker_line_status, t.cert_uncert, t.pass_fail, t.take, t.created_by
           );
         }
         await conn.query(

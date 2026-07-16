@@ -73,7 +73,8 @@ async function setPool(cfg) {
   await closePool();
   pool = buildPool(cfg);
   try {
-    await ensureSchema();
+    schemaReady = false;
+    await ensureSchemaReady();
     await seedAdmin();
   } catch (e) {
     await closePool();
@@ -107,6 +108,7 @@ async function closePool() {
     try { await pool.end(); } catch (_) {}
     pool = null;
   }
+  schemaReady = false;
 }
 
 const SCHEMA = [
@@ -153,6 +155,8 @@ const SCHEMA = [
     process_classification VARCHAR(255) NOT NULL DEFAULT '',
     remarks LONGTEXT NOT NULL,
     worker_line_status VARCHAR(50) NOT NULL DEFAULT 'Floating',
+    cert_uncert VARCHAR(20) NOT NULL DEFAULT 'CERT',
+    pass_fail VARCHAR(20) NOT NULL DEFAULT 'Passed',
     take INT UNSIGNED NOT NULL DEFAULT 1,
     is_archived TINYINT(1) NOT NULL DEFAULT 0,
     archived_at DATETIME(6) NULL,
@@ -183,6 +187,26 @@ async function ensureSchema() {
   for (const ddl of SCHEMA) {
     await pool.query(ddl);
   }
+  // Additive migrations for existing databases (CREATE TABLE IF NOT EXISTS won't alter columns)
+  const additive = [
+    `ALTER TABLE trainings ADD COLUMN cert_uncert VARCHAR(20) NOT NULL DEFAULT 'CERT'`,
+    `ALTER TABLE trainings ADD COLUMN pass_fail VARCHAR(20) NOT NULL DEFAULT 'Passed'`,
+  ];
+  for (const sql of additive) {
+    try {
+      await pool.query(sql);
+    } catch (e) {
+      if (e && e.code !== 'ER_DUP_FIELDNAME') throw e;
+    }
+  }
+}
+
+let schemaReady = false;
+
+async function ensureSchemaReady() {
+  if (schemaReady || !pool) return;
+  await ensureSchema();
+  schemaReady = true;
 }
 
 async function seedAdmin() {
@@ -203,6 +227,7 @@ module.exports = {
   setPool,
   initFromStore,
   getPool,
+  ensureSchemaReady,
   isConfigured,
   closePool,
   friendlyDbError,

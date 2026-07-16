@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Search, ArchiveRestore, Trash2, CheckSquare } from 'lucide-react';
 import { formatValidityLabel } from '../utils/validity';
+import { formatDate, formatDateTime } from '../utils/date';
 import Layout from '../components/Layout';
 import DataTable from '../components/DataTable';
 import Modal from '../components/Modal';
@@ -26,7 +27,6 @@ export default function Archive() {
   const [search, setSearch] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
   const [filterTake, setFilterTake] = useState('');
-  const [filterLineStatus, setFilterLineStatus] = useState('');
   const [filterDateFrom, setFilterDateFrom] = useState('');
   const [filterDateTo, setFilterDateTo] = useState('');
   const [filterArchivedFrom, setFilterArchivedFrom] = useState('');
@@ -63,14 +63,13 @@ export default function Archive() {
   // Derived category list from loaded records
   const categories = [...new Set(records.map(r => r.category).filter(Boolean))].sort();
 
-  const hasActiveFilters = search || filterCategory || filterTake || filterLineStatus ||
+  const hasActiveFilters = search || filterCategory || filterTake ||
     filterDateFrom || filterDateTo || filterArchivedFrom || filterArchivedTo;
 
   const clearFilters = () => {
     setSearch('');
     setFilterCategory('');
     setFilterTake('');
-    setFilterLineStatus('');
     setFilterDateFrom('');
     setFilterDateTo('');
     setFilterArchivedFrom('');
@@ -90,7 +89,6 @@ export default function Archive() {
     }
     if (filterCategory && r.category !== filterCategory) return false;
     if (filterTake && String(r.take) !== filterTake) return false;
-    if (filterLineStatus && r.worker_line_status !== filterLineStatus) return false;
     if (filterDateFrom && r.training_date < filterDateFrom) return false;
     if (filterDateTo && r.training_date > filterDateTo) return false;
     if (filterArchivedFrom) {
@@ -202,13 +200,6 @@ export default function Archive() {
     }
   };
 
-  const formatDate = (d) => d ? new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
-  const formatDateTime = (dt) => {
-    if (!dt) return '—';
-    const d = new Date(dt);
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) +
-      ' ' + d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-  };
   const takeLabel = (v) => TAKE_OPTIONS.find(o => o.value === v)?.label || `${v || 1}st Take`;
 
   const columns = [
@@ -253,15 +244,6 @@ export default function Archive() {
       key: 'take',
       label: 'Take',
       render: (v) => <span className="text-sm text-gray-700">{takeLabel(v)}</span>,
-    },
-    {
-      key: 'worker_line_status',
-      label: 'Line Status',
-      render: (v) => (
-        <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${v === 'Floating' ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'}`}>
-          {v || '—'}
-        </span>
-      ),
     },
     {
       key: 'archived_at',
@@ -309,7 +291,6 @@ export default function Archive() {
     { label: 'Training Date', value: formatDate(selected.training_date) },
     { label: 'Trainer', value: selected.trainer || '—' },
     { label: 'Take', value: takeLabel(selected.take) },
-    { label: 'Worker Line Status', value: selected.worker_line_status || '—' },
     { label: 'Validity', value: formatValidityLabel(selected) },
     { label: 'Expiration Date', value: formatDate(selected.expiration_date) },
     { label: 'Process Classification', value: selected.process_classification || '—' },
@@ -356,15 +337,6 @@ export default function Archive() {
             >
               <option value="">All Takes</option>
               {TAKE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-            </select>
-            <select
-              value={filterLineStatus}
-              onChange={e => setFilterLineStatus(e.target.value)}
-              className="border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-            >
-              <option value="">All Line Status</option>
-              <option value="Floating">Floating</option>
-              <option value="Original">Original</option>
             </select>
           </div>
 
