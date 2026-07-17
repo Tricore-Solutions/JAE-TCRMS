@@ -44,10 +44,8 @@ function getExpirationTextClass(expirationDate) {
   return 'text-green-600 font-medium';
 }
 
-function getCertUncert(expirationDate) {
-  if (!expirationDate) return 'CERT';
-  const today = new Date().toISOString().split('T')[0];
-  return expirationDate < today ? 'UNCERT' : 'CERT';
+function certRecertLabel(value) {
+  return value === 'RE-CERT' ? 'RE-CERT' : 'CERT';
 }
 
 function certStatusLabel(status) {
@@ -101,7 +99,7 @@ function buildDirectoryWorkbook({ employees, trainings }) {
     { key: 'classification', header: 'Classification' },
     { key: 'trainingDate', header: 'Training Date' },
     { key: 'expiration', header: 'Expiration' },
-    { key: 'certUncert', header: 'CERT/UNCERT' },
+    { key: 'certRecert', header: 'CERT/RE-CERT' },
     { key: 'take', header: 'Take' },
     { key: 'trainer', header: 'Trainer' },
     { key: 'status', header: 'Status' },
@@ -118,9 +116,7 @@ function buildDirectoryWorkbook({ employees, trainings }) {
     classification: t.process_classification || '',
     trainingDate: formatDate(t.training_date, ''),
     expiration: t.expiration_date ? formatDate(t.expiration_date, '') : 'No expiry',
-    certUncert: t.cert_uncert === 'UNCERT' || t.cert_uncert === 'CERT'
-      ? t.cert_uncert
-      : getCertUncert(t.expiration_date),
+    certRecert: certRecertLabel(t.cert_recert),
     take: takeLabel(t.take),
     trainer: t.trainer || '',
     status: certStatusLabel(t.cert_status),
@@ -480,16 +476,14 @@ export default function ViewerDashboard() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-gray-50">
-                  {['Training Title', 'Category', 'Training Date', 'Expiration', 'CERT/UNCERT', 'Take', 'Trainer', 'Status'].map(h => (
+                  {['Training Title', 'Category', 'Training Date', 'Expiration', 'CERT/RE-CERT', 'Take', 'Trainer', 'Status'].map(h => (
                     <th key={h} className="px-3 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {trainings.map(t => {
-                  const certLabel = t.cert_uncert === 'UNCERT' || t.cert_uncert === 'CERT'
-                    ? t.cert_uncert
-                    : getCertUncert(t.expiration_date);
+                  const certLabel = certRecertLabel(t.cert_recert);
                   return (
                   <tr key={t.id} className={`transition-colors ${getTrainingRowClass(t.expiration_date)}`}>
                     <td className="px-3 py-3 text-gray-900 font-medium max-w-[180px]">
@@ -507,7 +501,7 @@ export default function ViewerDashboard() {
                       <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
                         certLabel === 'CERT'
                           ? 'bg-green-50 text-green-700 border border-green-200'
-                          : 'bg-red-50 text-red-700 border border-red-200'
+                          : 'bg-amber-50 text-amber-700 border border-amber-200'
                       }`}>
                         {certLabel}
                       </span>

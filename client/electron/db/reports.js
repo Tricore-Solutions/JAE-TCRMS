@@ -2,7 +2,7 @@
 
 const { getPool } = require('./pool');
 const { requireAuth } = require('./auth');
-const { today, daysFromToday, userDisplayName, formatAuditDate, MONTH_NAMES_SHORT } = require('./helpers');
+const { today, daysFromToday, userDisplayName, formatAuditDate, MONTH_NAMES_SHORT, normalizeCertRecert } = require('./helpers');
 
 async function scalar(pool, sql, vals = []) {
   const [rows] = await pool.query(sql, vals);
@@ -191,7 +191,7 @@ async function exportTrainings(params = {}) {
   if (params.category) { where.push('t.category = ?'); vals.push(params.category); }
   if (params.title) { where.push('t.title LIKE ?'); vals.push(`%${params.title}%`); }
   if (params.worker_line_status) { where.push('t.worker_line_status = ?'); vals.push(params.worker_line_status); }
-  if (params.cert_uncert) { where.push('t.cert_uncert = ?'); vals.push(params.cert_uncert === 'UNCERT' ? 'UNCERT' : 'CERT'); }
+  if (params.cert_recert) { where.push('t.cert_recert = ?'); vals.push(normalizeCertRecert(params.cert_recert)); }
   if (params.pass_fail) { where.push('t.pass_fail = ?'); vals.push(params.pass_fail === 'Failed' ? 'Failed' : 'Passed'); }
   if (params.take) { where.push('t.take = ?'); vals.push(parseInt(params.take, 10)); }
   if (params.training_date) { where.push('t.training_date = ?'); vals.push(params.training_date); }
@@ -216,7 +216,7 @@ async function exportTrainings(params = {}) {
 
   const sql = `SELECT t.id, e.employee_id AS emp_code, e.full_name, e.factory, e.line, e.team,
     t.title, t.category, t.training_date, t.trainer, t.validity_months, t.expiration_date,
-    t.process_classification, t.worker_line_status, t.cert_uncert, t.pass_fail, t.take, t.remarks
+    t.process_classification, t.worker_line_status, t.cert_recert, t.pass_fail, t.take, t.remarks
     FROM trainings t JOIN employees e ON e.id = t.employee_id
     WHERE ${where.join(' AND ')} ORDER BY e.full_name ASC, t.training_date DESC`;
   const [rows] = await pool.query(sql, vals);
@@ -235,7 +235,7 @@ async function exportTrainings(params = {}) {
     expiration_date: t.expiration_date ? String(t.expiration_date).slice(0, 10) : null,
     process_classification: t.process_classification,
     worker_line_status: t.worker_line_status,
-    cert_uncert: t.cert_uncert === 'UNCERT' ? 'UNCERT' : 'CERT',
+    cert_recert: normalizeCertRecert(t.cert_recert),
     pass_fail: t.pass_fail === 'Failed' ? 'Failed' : 'Passed',
     take: t.take,
     remarks: t.remarks,

@@ -155,7 +155,7 @@ const SCHEMA = [
     process_classification VARCHAR(255) NOT NULL DEFAULT '',
     remarks LONGTEXT NOT NULL,
     worker_line_status VARCHAR(50) NOT NULL DEFAULT 'Floating',
-    cert_uncert VARCHAR(20) NOT NULL DEFAULT 'CERT',
+    cert_recert VARCHAR(20) NOT NULL DEFAULT 'CERT',
     pass_fail VARCHAR(20) NOT NULL DEFAULT 'Passed',
     take INT UNSIGNED NOT NULL DEFAULT 1,
     is_archived TINYINT(1) NOT NULL DEFAULT 0,
@@ -189,7 +189,6 @@ async function ensureSchema() {
   }
   // Additive migrations for existing databases (CREATE TABLE IF NOT EXISTS won't alter columns)
   const additive = [
-    `ALTER TABLE trainings ADD COLUMN cert_uncert VARCHAR(20) NOT NULL DEFAULT 'CERT'`,
     `ALTER TABLE trainings ADD COLUMN pass_fail VARCHAR(20) NOT NULL DEFAULT 'Passed'`,
   ];
   for (const sql of additive) {
@@ -199,6 +198,29 @@ async function ensureSchema() {
       if (e && e.code !== 'ER_DUP_FIELDNAME') throw e;
     }
   }
+  await migrateCertRecertColumn();
+}
+
+async function migrateCertRecertColumn() {
+  const [cols] = await pool.query(
+    `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'trainings'`,
+  );
+  const names = new Set(cols.map((c) => c.COLUMN_NAME));
+
+  if (names.has('cert_uncert') && !names.has('cert_recert')) {
+    await pool.query(
+      `ALTER TABLE trainings CHANGE COLUMN cert_uncert cert_recert VARCHAR(20) NOT NULL DEFAULT 'CERT'`,
+    );
+  } else if (!names.has('cert_recert')) {
+    try {
+      await pool.query(`ALTER TABLE trainings ADD COLUMN cert_recert VARCHAR(20) NOT NULL DEFAULT 'CERT'`);
+    } catch (e) {
+      if (e && e.code !== 'ER_DUP_FIELDNAME') throw e;
+    }
+  }
+
+  await pool.query(`UPDATE trainings SET cert_recert = 'RE-CERT' WHERE cert_recert = 'UNCERT'`);
 }
 
 let schemaReady = false;

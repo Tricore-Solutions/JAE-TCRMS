@@ -1,7 +1,7 @@
 'use strict';
 
 const { getPool } = require('./pool');
-const { apiError, today, daysFromToday } = require('./helpers');
+const { apiError, today, daysFromToday, normalizeCertRecert } = require('./helpers');
 
 async function employees(params = {}) {
   const pool = getPool();
@@ -120,7 +120,7 @@ async function employeeTrainings({ id, training_title, expiry_from, expiry_to, c
       validity_months: t.validity_months,
       expiration_date: exp,
       worker_line_status: t.worker_line_status,
-      cert_uncert: t.cert_uncert === 'UNCERT' ? 'UNCERT' : 'CERT',
+      cert_recert: normalizeCertRecert(t.cert_recert),
       take: t.take,
       process_classification: t.process_classification,
       remarks: t.remarks,
@@ -164,7 +164,7 @@ async function exportDirectory() {
   const [trainingRows] = await pool.query(
     `SELECT e.employee_id, e.full_name, e.factory, e.line, e.team,
       t.title, t.category, t.process_classification, t.training_date, t.expiration_date,
-      t.cert_uncert, t.take, t.trainer
+      t.cert_recert, t.take, t.trainer
     FROM trainings t
     JOIN employees e ON e.id = t.employee_id
     WHERE t.is_archived = 0 AND e.status = 'active'
@@ -203,7 +203,7 @@ async function exportDirectory() {
       process_classification: t.process_classification,
       training_date: t.training_date ? String(t.training_date).slice(0, 10) : null,
       expiration_date: exp,
-      cert_uncert: t.cert_uncert === 'UNCERT' ? 'UNCERT' : 'CERT',
+      cert_recert: normalizeCertRecert(t.cert_recert),
       take: t.take,
       trainer: t.trainer,
       cert_status,

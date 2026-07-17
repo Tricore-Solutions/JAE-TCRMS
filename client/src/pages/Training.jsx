@@ -42,13 +42,7 @@ function getExpirationUrgency(expirationDate) {
   return 'valid';
 }
 
-function getCertUncert(expirationDate) {
-  if (!expirationDate) return 'CERT';
-  const today = new Date().toISOString().split('T')[0];
-  return expirationDate < today ? 'UNCERT' : 'CERT';
-}
-
-const CERT_UNCERT_OPTIONS = ['CERT', 'UNCERT'];
+const CERT_RECERT_OPTIONS = ['CERT', 'RE-CERT'];
 const PASS_FAIL_OPTIONS = ['Passed', 'Failed'];
 const REMARKS_OPTIONS = ['ACTIVE', 'INACTIVE'];
 const PROCESS_CLASSIFICATION_OPTIONS = ['Beginner', 'Basic', 'Expert', 'Advanced', 'Non-sensing', 'Sensing'];
@@ -73,16 +67,20 @@ const TAKE_OPTIONS = [
 const emptyForm = {
   employee_id: '', title: '', category: '', training_date: '',
   trainer: '', validity_option: DEFAULT_VALIDITY_OPTION, process_classification: '', remarks: 'ACTIVE',
-  cert_uncert: 'CERT', pass_fail: 'Passed', take: 1,
+  cert_recert: 'CERT', pass_fail: 'Passed', take: 1,
 };
 
-function buildFilterParams({ search, filterFactory, filterCategory, filterTitle, filterStatus, filterCertUncert, filterPassFail, filterTake, filterDateFrom, filterDateTo }) {
+function certRecertLabel(value) {
+  return value === 'RE-CERT' ? 'RE-CERT' : 'CERT';
+}
+
+function buildFilterParams({ search, filterFactory, filterCategory, filterTitle, filterStatus, filterCertRecert, filterPassFail, filterTake, filterDateFrom, filterDateTo }) {
   const params = {};
   if (search) params.search = search;
   if (filterFactory) params.factory = filterFactory;
   if (filterCategory) params.category = filterCategory;
   if (filterTitle) params.title = filterTitle;
-  if (filterCertUncert) params.cert_uncert = filterCertUncert;
+  if (filterCertRecert) params.cert_recert = filterCertRecert;
   if (filterPassFail) params.pass_fail = filterPassFail;
   if (filterTake) params.take = filterTake;
   if (filterDateFrom) params.date_from = filterDateFrom;
@@ -109,7 +107,7 @@ export default function Training() {
   const [filterCategory, setFilterCategory] = useState('');
   const [filterTitle, setFilterTitle] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
-  const [filterCertUncert, setFilterCertUncert] = useState('');
+  const [filterCertRecert, setFilterCertRecert] = useState('');
   const [filterPassFail, setFilterPassFail] = useState('');
   const [filterTake, setFilterTake] = useState('');
   const [filterDateFrom, setFilterDateFrom] = useState('');
@@ -140,7 +138,7 @@ export default function Training() {
     if (isInitialLoad.current) setLoading(true);
     else setRefreshing(true);
     try {
-      const params = buildFilterParams({ search, filterFactory, filterCategory, filterTitle, filterStatus, filterCertUncert, filterPassFail, filterTake, filterDateFrom, filterDateTo });
+      const params = buildFilterParams({ search, filterFactory, filterCategory, filterTitle, filterStatus, filterCertRecert, filterPassFail, filterTake, filterDateFrom, filterDateTo });
       const [trRes, empRes, titlesRes, filtersRes] = await Promise.all([
         trainingsApi.list(params),
         employeesApi.list({ status: 'active' }),
@@ -159,7 +157,7 @@ export default function Training() {
       setRefreshing(false);
       isInitialLoad.current = false;
     }
-  }, [search, filterFactory, filterCategory, filterTitle, filterStatus, filterCertUncert, filterPassFail, filterTake, filterDateFrom, filterDateTo]);
+  }, [search, filterFactory, filterCategory, filterTitle, filterStatus, filterCertRecert, filterPassFail, filterTake, filterDateFrom, filterDateTo]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -191,7 +189,7 @@ export default function Training() {
       validity_option: recordToValidityOption(record),
       process_classification: record.process_classification,
       remarks: record.remarks === 'INACTIVE' ? 'INACTIVE' : 'ACTIVE',
-      cert_uncert: record.cert_uncert === 'UNCERT' ? 'UNCERT' : 'CERT',
+      cert_recert: certRecertLabel(record.cert_recert),
       pass_fail: record.pass_fail === 'Failed' ? 'Failed' : 'Passed',
       take: record.take || 1,
     });
@@ -285,7 +283,7 @@ export default function Training() {
   const handleExport = async () => {
     setExporting(true);
     try {
-      const params = buildFilterParams({ search, filterFactory, filterCategory, filterTitle, filterStatus, filterCertUncert, filterPassFail, filterTake, filterDateFrom, filterDateTo });
+      const params = buildFilterParams({ search, filterFactory, filterCategory, filterTitle, filterStatus, filterCertRecert, filterPassFail, filterTake, filterDateFrom, filterDateTo });
       const res = await reportsApi.exportTrainings(params);
       if (!res.data.length) {
         toast('No records to export for the current filters.', 'warning');
@@ -329,7 +327,7 @@ export default function Training() {
       const res = await trainingsApi.importExcel(formData);
       setImportResult(res.data);
       toast(
-        `Import complete: ${res.data.trainings_created} training(s), ${res.data.employees_created} employee(s) added.`,
+        `Import complete: ${res.data.trainings_created} training(s) added, ${res.data.trainings_updated ?? 0} updated, ${res.data.employees_created} employee(s) added.`,
         'success',
       );
       load();
@@ -456,13 +454,13 @@ export default function Training() {
         </span>
       );
     }},
-    { key: 'cert_uncert', label: 'CERT/UNCERT', className: 'w-28 max-w-28 px-2', render: (v, row) => {
-      const label = v === 'UNCERT' || v === 'CERT' ? v : getCertUncert(row.expiration_date);
+    { key: 'cert_recert', label: 'CERT/RE-CERT', className: 'w-28 max-w-28 px-2', render: (v) => {
+      const label = certRecertLabel(v);
       return (
         <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
           label === 'CERT'
             ? 'bg-green-50 text-green-700 border border-green-200'
-            : 'bg-red-50 text-red-700 border border-red-200'
+            : 'bg-amber-50 text-amber-700 border border-amber-200'
         }`}>
           {label}
         </span>
@@ -617,12 +615,12 @@ export default function Training() {
             <option value="expiring">Expiring Soon</option>
           </select>
           <select
-            value={filterCertUncert}
-            onChange={e => setFilterCertUncert(e.target.value)}
+            value={filterCertRecert}
+            onChange={e => setFilterCertRecert(e.target.value)}
             className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
           >
-            <option value="">All CERT/UNCERT</option>
-            {CERT_UNCERT_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+            <option value="">All CERT/RE-CERT</option>
+            {CERT_RECERT_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
           </select>
           <select
             value={filterPassFail}
@@ -797,13 +795,13 @@ export default function Training() {
             </>
           )}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">CERT/UNCERT</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">CERT/RE-CERT</label>
             <select
-              value={form.cert_uncert}
-              onChange={e => setForm(f => ({ ...f, cert_uncert: e.target.value }))}
+              value={form.cert_recert}
+              onChange={e => setForm(f => ({ ...f, cert_recert: e.target.value }))}
               className="w-full app-input px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
             >
-              {CERT_UNCERT_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+              {CERT_RECERT_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
           </div>
           <div>
@@ -890,7 +888,7 @@ export default function Training() {
                   { label: 'Expiration Date', value: formatDate(selected.expiration_date) },
                   { label: 'Status', value: <StatusBadge status={getCertStatus(selected.expiration_date)} /> },
                   { label: 'Process Classification', value: selected.process_classification || '—' },
-                  { label: 'CERT/UNCERT', value: selected.cert_uncert === 'UNCERT' ? 'UNCERT' : 'CERT' },
+                  { label: 'CERT/RE-CERT', value: certRecertLabel(selected.cert_recert) },
                   { label: 'Passed/Failed', value: selected.pass_fail === 'Failed' ? 'Failed' : 'Passed' },
                   { label: 'Take', value: TAKE_OPTIONS.find(o => o.value === selected.take)?.label || `${selected.take || 1}st Take` },
                   { label: 'Remarks', value: selected.remarks === 'INACTIVE' ? 'INACTIVE' : (selected.remarks === 'ACTIVE' || !selected.remarks ? 'ACTIVE' : selected.remarks) },
@@ -972,7 +970,9 @@ export default function Training() {
                 { label: 'Employees added', value: importResult.employees_created },
                 { label: 'Employees updated', value: importResult.employees_updated },
                 { label: 'Training records added', value: importResult.trainings_created },
-                { label: 'Duplicates skipped', value: importResult.duplicates_skipped },
+                { label: 'Training records updated', value: importResult.trainings_updated ?? 0 },
+                { label: 'Training records unchanged', value: importResult.trainings_unchanged ?? 0 },
+                { label: 'Duplicate rows skipped', value: importResult.duplicates_skipped },
                 { label: 'Row errors', value: importResult.error_count },
               ].map(({ label, value }) => (
                 <div key={label} className="flex justify-between gap-4 border-b border-gray-100 pb-2">

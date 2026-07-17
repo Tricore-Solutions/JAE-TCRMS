@@ -125,6 +125,12 @@ function parseTrainingValidity(data, defaultMonths = 12) {
   return { validity_months: Number(defaultMonths), validity_days: null };
 }
 
+function normalizeCertRecert(value) {
+  const text = String(value == null ? '' : value).trim().toUpperCase().replace(/[\s-]+/g, '');
+  if (text === 'RECERT' || text === 'UNCERT' || text === 'UN') return 'RE-CERT';
+  return 'CERT';
+}
+
 module.exports = {
   apiError,
   userDisplayName,
@@ -139,4 +145,5 @@ module.exports = {
   calcExpiration,
   parseTrainingValidity,
   MONTH_NAMES_SHORT,
+  normalizeCertRecert,
 };
