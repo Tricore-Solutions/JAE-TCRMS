@@ -454,7 +454,7 @@ export default function Training() {
     { key: 'validity', label: 'Validity', render: (_, row) => (
       <span className="text-sm text-gray-700">{formatValidityLabel(row)}</span>
     )},
-    { key: 'training_date', label: 'Date', render: v => formatDate(v) },
+    { key: 'training_date', label: 'Training Date', render: v => formatDate(v) },
     { key: 'trainer', label: 'Trainer', render: v => (
       <span className="text-sm text-gray-600">{v || '—'}</span>
     )},
