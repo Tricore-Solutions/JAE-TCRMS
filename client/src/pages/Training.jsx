@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Plus, Search, Sheet, CheckSquare, Archive, Upload } from 'lucide-react';
-import * as XLSX from 'xlsx';
 import Layout from '../components/Layout';
 import DataTable from '../components/DataTable';
 import Modal from '../components/Modal';
@@ -23,6 +22,7 @@ import {
   validityOptionToPayload,
 } from '../utils/validity';
 import { formatDate, formatDateTime } from '../utils/date';
+import { exportJsonToXLSX } from '../utils/xlsxExport';
 
 function getCertStatus(expirationDate) {
   if (!expirationDate) return 'valid';
@@ -90,21 +90,6 @@ function buildFilterParams({ search, filterFactory, filterCategory, filterTitle,
   if (filterStatus === 'expired') params.expired = 'true';
   if (filterStatus === 'expiring') params.expiring_soon = 'true';
   return params;
-}
-
-function exportToXLSX(data, filename) {
-  if (!data.length) return;
-  const worksheet = XLSX.utils.json_to_sheet(data);
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, 'Training Records');
-
-  // Auto-size columns based on content
-  const colWidths = Object.keys(data[0]).map(key => ({
-    wch: Math.max(key.length, ...data.map(row => String(row[key] ?? '').length), 10),
-  }));
-  worksheet['!cols'] = colWidths;
-
-  XLSX.writeFile(workbook, filename);
 }
 
 export default function Training() {
@@ -312,7 +297,7 @@ export default function Training() {
         training_date: formatDate(r.training_date, ''),
         expiration_date: formatDate(r.expiration_date, ''),
       }));
-      exportToXLSX(rows, `JAE-TCRMS-Training-Report-${today}.xlsx`);
+      exportJsonToXLSX(rows, 'Training Records', `JAE-TCRMS-Training-Report-${today}.xlsx`);
       toast(`Exported ${rows.length} records to Excel.`, 'success');
     } catch {
       toast('Export failed.', 'error');

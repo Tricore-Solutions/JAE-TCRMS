@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Plus, Search, Sheet } from 'lucide-react';
-import * as XLSX from 'xlsx';
 import Layout from '../components/Layout';
 import DataTable from '../components/DataTable';
 import Modal from '../components/Modal';
@@ -11,6 +10,7 @@ import { employeesApi, reportsApi } from '../api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/Toast';
 import { formatDate, formatDateTime } from '../utils/date';
+import { exportJsonToXLSX } from '../utils/xlsxExport';
 
 const STATUSES = ['active', 'inactive', 'resigned'];
 const EMPLOYMENT_STATUSES = [
@@ -24,20 +24,6 @@ const emptyForm = {
   employee_id: '', last_name: '', first_name: '', middle_initial: '',
   factory: '', line: '', team: '', position: '', employment_status: '', status: 'active', hire_date: '',
 };
-
-function exportToXLSX(data, filename) {
-  if (!data.length) return;
-  const worksheet = XLSX.utils.json_to_sheet(data);
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, 'Employees');
-
-  const colWidths = Object.keys(data[0]).map(key => ({
-    wch: Math.max(key.length, ...data.map(row => String(row[key] ?? '').length), 10),
-  }));
-  worksheet['!cols'] = colWidths;
-
-  XLSX.writeFile(workbook, filename);
-}
 
 export default function Employees() {
   const { isAdmin, isEncoder } = useAuth();
@@ -120,7 +106,7 @@ export default function Employees() {
         'Status': emp.status || '',
       }));
       const today = new Date().toISOString().split('T')[0];
-      exportToXLSX(rows, `JAE-TCRMS-Employees-${today}.xlsx`);
+      exportJsonToXLSX(rows, 'Employees', `JAE-TCRMS-Employees-${today}.xlsx`);
       toast(`Exported ${rows.length} employee(s) to Excel.`, 'success');
     } catch {
       toast('Export failed.', 'error');

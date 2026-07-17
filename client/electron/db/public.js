@@ -144,4 +144,73 @@ async function employeeTrainings({ id, training_title, expiry_from, expiry_to, c
   };
 }
 
-module.exports = { employees, trainingTitles, employeeTrainings };
+async function exportDirectory() {
+  const pool = getPool();
+  const current = today();
+  const in10 = daysFromToday(10);
+
+  const [employeeRows] = await pool.query(
+    `SELECT e.id, e.employee_id, e.full_name, e.factory, e.line, e.team,
+      e.employment_status, e.hire_date, e.status,
+      (SELECT COUNT(*) FROM trainings t WHERE t.employee_id = e.id AND t.is_archived = 0) AS total_trainings,
+      (SELECT COUNT(*) FROM trainings t WHERE t.employee_id = e.id AND t.is_archived = 0
+         AND t.expiration_date IS NOT NULL AND t.expiration_date < ?) AS expired_count
+    FROM employees e
+    WHERE e.status = 'active'
+    ORDER BY e.full_name`,
+    [current],
+  );
+
+  const [trainingRows] = await pool.query(
+    `SELECT e.employee_id, e.full_name, e.factory, e.line, e.team,
+      t.title, t.category, t.process_classification, t.training_date, t.expiration_date,
+      t.cert_uncert, t.take, t.trainer
+    FROM trainings t
+    JOIN employees e ON e.id = t.employee_id
+    WHERE t.is_archived = 0 AND e.status = 'active'
+    ORDER BY e.full_name ASC, t.training_date DESC, t.id DESC`,
+  );
+
+  const employees = employeeRows.map((r) => ({
+    id: r.id,
+    employee_id: r.employee_id,
+    full_name: r.full_name,
+    factory: r.factory,
+    line: r.line,
+    team: r.team,
+    employment_status: r.employment_status,
+    hire_date: r.hire_date || null,
+    status: r.status,
+    total_trainings: Number(r.total_trainings),
+    expired_count: Number(r.expired_count),
+  }));
+
+  const trainings = trainingRows.map((t) => {
+    const exp = t.expiration_date ? String(t.expiration_date).slice(0, 10) : null;
+    let cert_status;
+    if (exp === null) cert_status = 'valid';
+    else if (exp < current) cert_status = 'expired';
+    else if (exp <= in10) cert_status = 'expiring';
+    else cert_status = 'valid';
+    return {
+      employee_id: t.employee_id,
+      full_name: t.full_name,
+      factory: t.factory,
+      line: t.line,
+      team: t.team,
+      title: t.title,
+      category: t.category,
+      process_classification: t.process_classification,
+      training_date: t.training_date ? String(t.training_date).slice(0, 10) : null,
+      expiration_date: exp,
+      cert_uncert: t.cert_uncert === 'UNCERT' ? 'UNCERT' : 'CERT',
+      take: t.take,
+      trainer: t.trainer,
+      cert_status,
+    };
+  });
+
+  return { employees, trainings };
+}
+
+module.exports = { employees, trainingTitles, employeeTrainings, exportDirectory };

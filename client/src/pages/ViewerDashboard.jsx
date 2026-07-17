@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Search, Users, ClipboardList, AlertTriangle, LogIn, ArrowLeft, ChevronRight, XCircle } from 'lucide-react';
+import { Search, Users, ClipboardList, AlertTriangle, LogIn, ArrowLeft, ChevronRight, XCircle, Sheet } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import StatusBadge from '../components/StatusBadge';
 import Modal from '../components/Modal';
@@ -7,7 +7,9 @@ import PageEnter from '../components/PageEnter';
 import DataTable from '../components/DataTable';
 import { publicApi } from '../api';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../components/Toast';
 import { formatDate } from '../utils/date';
+import { sheetFromRows, writeWorkbook, XLSX } from '../utils/xlsxExport';
 
 const TAKE_LABELS = { 1: '1st Take', 2: '2nd Take', 3: '3rd Take' };
 const EMPLOYMENT_STATUSES = [
@@ -48,12 +50,96 @@ function getCertUncert(expirationDate) {
   return expirationDate < today ? 'UNCERT' : 'CERT';
 }
 
+function certStatusLabel(status) {
+  if (status === 'expired') return 'Expired';
+  if (status === 'expiring') return 'Expiring';
+  return 'Valid';
+}
+
+function takeLabel(take) {
+  return TAKE_LABELS[take] || `Take ${take || 1}`;
+}
+
+function buildDirectoryWorkbook({ employees, trainings }) {
+  const wb = XLSX.utils.book_new();
+
+  const employeeColumns = [
+    { key: 'employeeId', header: 'Employee ID' },
+    { key: 'fullName', header: 'Full Name' },
+    { key: 'factory', header: 'Factory' },
+    { key: 'line', header: 'Line' },
+    { key: 'team', header: 'Team' },
+    { key: 'hireDate', header: 'Date Hired' },
+    { key: 'employmentStatus', header: 'Employment Status' },
+    { key: 'totalTrainings', header: 'Total Trainings' },
+    { key: 'expiredCount', header: 'Expired Certifications' },
+  ];
+
+  const employeeRows = employees.map(emp => ({
+    employeeId: emp.employee_id,
+    fullName: emp.full_name,
+    factory: emp.factory || '',
+    line: emp.line || '',
+    team: emp.team || '',
+    hireDate: formatDate(emp.hire_date, ''),
+    employmentStatus: emp.employment_status || '',
+    totalTrainings: emp.total_trainings || 0,
+    expiredCount: emp.expired_count || 0,
+  }));
+
+  const employeeSheet = sheetFromRows(employeeRows, employeeColumns);
+  XLSX.utils.book_append_sheet(wb, employeeSheet, 'Employee Directory');
+
+  const trainingColumns = [
+    { key: 'employeeId', header: 'Employee ID' },
+    { key: 'fullName', header: 'Full Name' },
+    { key: 'factory', header: 'Factory' },
+    { key: 'line', header: 'Line' },
+    { key: 'team', header: 'Team' },
+    { key: 'title', header: 'Training Title' },
+    { key: 'category', header: 'Category' },
+    { key: 'classification', header: 'Classification' },
+    { key: 'trainingDate', header: 'Training Date' },
+    { key: 'expiration', header: 'Expiration' },
+    { key: 'certUncert', header: 'CERT/UNCERT' },
+    { key: 'take', header: 'Take' },
+    { key: 'trainer', header: 'Trainer' },
+    { key: 'status', header: 'Status' },
+  ];
+
+  const trainingRows = trainings.map(t => ({
+    employeeId: t.employee_id,
+    fullName: t.full_name,
+    factory: t.factory || '',
+    line: t.line || '',
+    team: t.team || '',
+    title: t.title || '',
+    category: t.category || '',
+    classification: t.process_classification || '',
+    trainingDate: formatDate(t.training_date, ''),
+    expiration: t.expiration_date ? formatDate(t.expiration_date, '') : 'No expiry',
+    certUncert: t.cert_uncert === 'UNCERT' || t.cert_uncert === 'CERT'
+      ? t.cert_uncert
+      : getCertUncert(t.expiration_date),
+    take: takeLabel(t.take),
+    trainer: t.trainer || '',
+    status: certStatusLabel(t.cert_status),
+  }));
+
+  const trainingSheet = sheetFromRows(trainingRows, trainingColumns);
+  XLSX.utils.book_append_sheet(wb, trainingSheet, 'Training History');
+
+  return wb;
+}
+
 export default function ViewerDashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { show: toast } = useToast();
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const isInitialLoad = useRef(true);
   const [search, setSearch] = useState('');
   const [filterTeam, setFilterTeam] = useState('');
@@ -111,6 +197,29 @@ export default function ViewerDashboard() {
   const hasActiveFilters = search || filterTeam || filterEmploymentStatus || filterTrainingTitle || filterCertStatus || filterExpiryFrom || filterExpiryTo;
 
   useEffect(() => { load(); }, [load]);
+
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const res = await publicApi.exportDirectory();
+      const { employees: allEmployees, trainings } = res.data;
+      if (!allEmployees.length) {
+        toast('No employees to export.', 'warning');
+        return;
+      }
+      const wb = buildDirectoryWorkbook({ employees: allEmployees, trainings });
+      const today = new Date().toISOString().split('T')[0];
+      writeWorkbook(wb, `JAE-TCRMS-Public-Directory-${today}.xlsx`);
+      toast(
+        `Exported ${allEmployees.length} employee(s) and ${trainings.length} training record(s) to Excel.`,
+        'success',
+      );
+    } catch {
+      toast('Export failed.', 'error');
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const openEmployee = async (emp) => {
     setSelected(emp);
@@ -216,9 +325,20 @@ export default function ViewerDashboard() {
       {/* Content */}
       <PageEnter>
       <main className="max-w-6xl mx-auto px-8 py-10">
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">Employee Training Directory</h1>
-          <p className="text-gray-500 mt-1 text-sm">Click on an employee to view their full training history.</p>
+        <div className="mb-8 flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Employee Training Directory</h1>
+            <p className="text-gray-500 mt-1 text-sm">Click on an employee to view their full training history.</p>
+          </div>
+          <button
+            onClick={handleExport}
+            disabled={exporting}
+            className="flex items-center gap-2 text-gray-500 hover:text-green-700 text-sm px-3 py-2 rounded-lg hover:bg-green-50 border border-gray-200 hover:border-green-200 transition-colors disabled:opacity-40 whitespace-nowrap flex-shrink-0"
+            title="Export all employees and training history to Excel"
+          >
+            <Sheet size={14} />
+            {exporting ? 'Exporting…' : 'Export Excel'}
+          </button>
         </div>
 
         {/* Search and filter */}

@@ -116,6 +116,7 @@ const handlers = {
   'public.employees': (p) => publicApi().employees(p),
   'public.trainingTitles': () => publicApi().trainingTitles(),
   'public.employeeTrainings': (p) => publicApi().employeeTrainings(p),
+  'public.exportDirectory': () => publicApi().exportDirectory(),
 };
 
 async function call(op, payload) {

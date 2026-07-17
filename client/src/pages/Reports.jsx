@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { BarChart3, Factory, Tag, AlertTriangle, RefreshCw, FileDown, Sheet } from 'lucide-react';
 import jsPDF from 'jspdf';
-import * as XLSX from 'xlsx';
 import Layout from '../components/Layout';
 import StatusBadge from '../components/StatusBadge';
 import { reportsApi } from '../api';
 import { useToast } from '../components/Toast';
 import { formatDate } from '../utils/date';
+import { sheetFromRows, writeWorkbook, XLSX } from '../utils/xlsxExport';
 
 const TAKE_AXIS = [1, 2, 3];
 const TAKE_LABELS = { 1: '1st Take', 2: '2nd Take', 3: '3rd Take' };
@@ -52,15 +52,6 @@ async function fetchReportData() {
     takesPerMonth: tpmRes.data,
     expiring: mergeExpiringRecords(expiredRes.data, exp10Res.data),
   };
-}
-
-function sheetFromRows(rows, columns) {
-  const headers = columns.map(col => col.header);
-  const aoa = [
-    headers,
-    ...rows.map(row => columns.map(col => row[col.key] ?? '')),
-  ];
-  return XLSX.utils.aoa_to_sheet(aoa);
 }
 
 function buildReportsWorkbook({ byCategory, byFactory, takesPerMonth, expiring }) {
@@ -626,7 +617,7 @@ export default function Reports() {
       setTakesPerMonth(reportData.takesPerMonth);
 
       const wb = buildReportsWorkbook(reportData);
-      XLSX.writeFile(wb, `JAE-TCRMS-Reports-${new Date().toISOString().split('T')[0]}.xlsx`);
+      writeWorkbook(wb, `JAE-TCRMS-Reports-${new Date().toISOString().split('T')[0]}.xlsx`);
       toast('Excel exported successfully.', 'success');
     } catch (err) {
       console.error('Excel export error:', err);

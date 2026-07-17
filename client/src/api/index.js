@@ -134,6 +134,7 @@ export const publicApi = {
   employees: (params) => request('public.employees', params || {}),
   employeeTrainings: (id, params) => request('public.employeeTrainings', { id, ...(params || {}) }),
   trainingTitles: () => request('public.trainingTitles'),
+  exportDirectory: () => request('public.exportDirectory'),
 };
 
 // ---- DB connection configuration (used by Setup / boot) ---------------------
