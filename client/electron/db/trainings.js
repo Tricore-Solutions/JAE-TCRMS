@@ -93,7 +93,7 @@ async function list(params = {}) {
     vals.push(current, in10);
   }
 
-  const sql = `${LIST_SELECT} WHERE ${where.join(' AND ')} ORDER BY e.full_name ASC, t.training_date DESC`;
+  const sql = `${LIST_SELECT} WHERE ${where.join(' AND ')} ORDER BY t.training_date DESC, t.id DESC`;
   const [rows] = await pool.query(sql, vals);
   return rows.map(serializeList);
 }

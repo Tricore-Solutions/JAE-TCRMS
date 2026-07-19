@@ -218,7 +218,7 @@ async function exportTrainings(params = {}) {
     t.title, t.category, t.training_date, t.trainer, t.validity_months, t.expiration_date,
     t.process_classification, t.worker_line_status, t.cert_recert, t.pass_fail, t.take, t.remarks
     FROM trainings t JOIN employees e ON e.id = t.employee_id
-    WHERE ${where.join(' AND ')} ORDER BY e.full_name ASC, t.training_date DESC`;
+    WHERE ${where.join(' AND ')} ORDER BY t.training_date DESC, t.id DESC`;
   const [rows] = await pool.query(sql, vals);
   return rows.map((t) => ({
     id: t.id,

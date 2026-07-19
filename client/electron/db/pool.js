@@ -133,7 +133,6 @@ const SCHEMA = [
     factory VARCHAR(100) NOT NULL DEFAULT '',
     line VARCHAR(100) NOT NULL DEFAULT '',
     team VARCHAR(100) NOT NULL DEFAULT '',
-    position VARCHAR(100) NOT NULL DEFAULT '',
     employment_status VARCHAR(50) NOT NULL DEFAULT '',
     status VARCHAR(20) NOT NULL DEFAULT 'active',
     hire_date DATE NULL,
@@ -199,6 +198,17 @@ async function ensureSchema() {
     }
   }
   await migrateCertRecertColumn();
+  await migrateDropEmployeePosition();
+}
+
+async function migrateDropEmployeePosition() {
+  const [cols] = await pool.query(
+    `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'employees' AND COLUMN_NAME = 'position'`,
+  );
+  if (cols.length) {
+    await pool.query('ALTER TABLE employees DROP COLUMN position');
+  }
 }
 
 async function migrateCertRecertColumn() {

@@ -22,7 +22,7 @@ const EMPLOYMENT_STATUSES = [
 ];
 const emptyForm = {
   employee_id: '', last_name: '', first_name: '', middle_initial: '',
-  factory: '', line: '', team: '', position: '', employment_status: '', status: 'active', hire_date: '',
+  factory: '', line: '', team: '', employment_status: '', status: 'active', hire_date: '',
 };
 
 export default function Employees() {
@@ -102,7 +102,6 @@ export default function Employees() {
         'Team': emp.team || '',
         'Line': emp.line || '',
         'Factory': emp.factory || '',
-        'Position': emp.position || '',
         'Status': emp.status || '',
       }));
       const today = new Date().toISOString().split('T')[0];
@@ -131,7 +130,6 @@ export default function Employees() {
       factory: emp.factory,
       line: emp.line,
       team: emp.team,
-      position: emp.position,
       employment_status: emp.employment_status || '',
       status: emp.status,
       hire_date: emp.hire_date || '',
@@ -368,16 +366,6 @@ export default function Employees() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Position</label>
-            <input
-              type="text"
-              value={form.position}
-              onChange={e => setForm(f => ({ ...f, position: e.target.value }))}
-              className="w-full app-input px-3 py-2.5 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
-              placeholder="e.g. Machine Operator"
-            />
-          </div>
-          <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Employment Status</label>
             <select
               value={form.employment_status}
@@ -449,7 +437,6 @@ export default function Employees() {
                   { label: 'Factory', value: selected.factory || '—' },
                   { label: 'Line', value: selected.line || '—' },
                   { label: 'Team', value: selected.team || '—' },
-                  { label: 'Position', value: selected.position || '—' },
                   { label: 'Employment Status', value: selected.employment_status || '—' },
                   { label: 'Hire Date', value: formatDate(selected.hire_date) },
                   { label: 'Status', value: <StatusBadge status={selected.status} /> },

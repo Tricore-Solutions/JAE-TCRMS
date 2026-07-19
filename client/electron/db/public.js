@@ -136,7 +136,6 @@ async function employeeTrainings({ id, training_title, expiry_from, expiry_to, c
       factory: employee.factory,
       line: employee.line,
       team: employee.team,
-      position: employee.position,
       employment_status: employee.employment_status,
       hire_date: employee.hire_date || null,
     },

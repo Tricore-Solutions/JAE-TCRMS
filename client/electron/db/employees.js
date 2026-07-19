@@ -16,7 +16,6 @@ function serialize(row) {
     factory: row.factory,
     line: row.line,
     team: row.team,
-    position: row.position,
     employment_status: row.employment_status,
     status: row.status,
     hire_date: row.hire_date || null,
@@ -106,12 +105,12 @@ async function create(data = {}) {
   const [res] = await pool.query(
     `INSERT INTO employees
       (employee_id, last_name, first_name, middle_initial, full_name, factory, line, team,
-       position, employment_status, status, hire_date, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(6), NOW(6))`,
+       employment_status, status, hire_date, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(6), NOW(6))`,
     [
       employeeId, lastName, firstName, middleInitial, fullName,
       data.factory || '', data.line || '', data.team || '',
-      data.position || '', data.employment_status || '',
+      data.employment_status || '',
       data.status || 'active', data.hire_date || null,
     ]
   );
@@ -133,7 +132,6 @@ async function update({ id, data } = {}) {
     factory: e.factory,
     line: e.line,
     team: e.team,
-    position: e.position,
     employment_status: e.employment_status,
     hire_date: e.hire_date || null,
     status: e.status,
@@ -162,13 +160,12 @@ async function update({ id, data } = {}) {
     factory: employee.factory,
     line: employee.line,
     team: employee.team,
-    position: employee.position,
     employment_status: employee.employment_status,
     hire_date: employee.hire_date || null,
     status: employee.status,
   };
 
-  for (const field of ['factory', 'line', 'team', 'position', 'employment_status', 'hire_date']) {
+  for (const field of ['factory', 'line', 'team', 'employment_status', 'hire_date']) {
     if (field in data) {
       let value = data[field];
       if (field === 'hire_date' && (value === '' || value === undefined)) value = null;
@@ -180,12 +177,12 @@ async function update({ id, data } = {}) {
   await pool.query(
     `UPDATE employees SET
        employee_id = ?, last_name = ?, first_name = ?, middle_initial = ?, full_name = ?,
-       factory = ?, line = ?, team = ?, position = ?, employment_status = ?, status = ?,
+       factory = ?, line = ?, team = ?, employment_status = ?, status = ?,
        hire_date = ?, updated_at = NOW(6)
      WHERE id = ?`,
     [
       next.employee_id, next.last_name, next.first_name, next.middle_initial, next.full_name,
-      next.factory, next.line, next.team, next.position, next.employment_status, next.status,
+      next.factory, next.line, next.team, next.employment_status, next.status,
       next.hire_date, id,
     ]
   );

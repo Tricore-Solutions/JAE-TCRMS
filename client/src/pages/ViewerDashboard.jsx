@@ -128,6 +128,64 @@ function buildDirectoryWorkbook({ employees, trainings }) {
   return wb;
 }
 
+function buildEmployeeTrainingWorkbook(employee, trainings) {
+  const wb = XLSX.utils.book_new();
+
+  const infoColumns = [
+    { key: 'employeeId', header: 'Employee ID' },
+    { key: 'fullName', header: 'Full Name' },
+    { key: 'factory', header: 'Factory' },
+    { key: 'line', header: 'Line' },
+    { key: 'team', header: 'Team' },
+    { key: 'hireDate', header: 'Date Hired' },
+    { key: 'employmentStatus', header: 'Employment Status' },
+    { key: 'totalTrainings', header: 'Total Trainings' },
+    { key: 'expiredCount', header: 'Expired Certifications' },
+  ];
+
+  const infoRows = [{
+    employeeId: employee.employee_id,
+    fullName: employee.full_name,
+    factory: employee.factory || '',
+    line: employee.line || '',
+    team: employee.team || '',
+    hireDate: formatDate(employee.hire_date, ''),
+    employmentStatus: employee.employment_status || '',
+    totalTrainings: trainings.length,
+    expiredCount: trainings.filter(t => getCertStatus(t.expiration_date) === 'expired').length,
+  }];
+
+  XLSX.utils.book_append_sheet(wb, sheetFromRows(infoRows, infoColumns), 'Employee Info');
+
+  const trainingColumns = [
+    { key: 'title', header: 'Training Title' },
+    { key: 'category', header: 'Category' },
+    { key: 'classification', header: 'Classification' },
+    { key: 'trainingDate', header: 'Training Date' },
+    { key: 'expiration', header: 'Expiration' },
+    { key: 'certRecert', header: 'CERT/RE-CERT' },
+    { key: 'take', header: 'Take' },
+    { key: 'trainer', header: 'Trainer' },
+    { key: 'status', header: 'Status' },
+  ];
+
+  const trainingRows = trainings.map(t => ({
+    title: t.title || '',
+    category: t.category || '',
+    classification: t.process_classification || '',
+    trainingDate: formatDate(t.training_date, ''),
+    expiration: t.expiration_date ? formatDate(t.expiration_date, '') : 'No expiry',
+    certRecert: certRecertLabel(t.cert_recert),
+    take: takeLabel(t.take),
+    trainer: t.trainer || '',
+    status: certStatusLabel(getCertStatus(t.expiration_date)),
+  }));
+
+  XLSX.utils.book_append_sheet(wb, sheetFromRows(trainingRows, trainingColumns), 'Training History');
+
+  return wb;
+}
+
 export default function ViewerDashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -136,6 +194,7 @@ export default function ViewerDashboard() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [exportingEmployee, setExportingEmployee] = useState(false);
   const isInitialLoad = useRef(true);
   const [search, setSearch] = useState('');
   const [filterTeam, setFilterTeam] = useState('');
@@ -214,6 +273,26 @@ export default function ViewerDashboard() {
       toast('Export failed.', 'error');
     } finally {
       setExporting(false);
+    }
+  };
+
+  const handleExportEmployee = () => {
+    if (!selected) return;
+    if (!trainings.length) {
+      toast('No training records to export.', 'warning');
+      return;
+    }
+    setExportingEmployee(true);
+    try {
+      const wb = buildEmployeeTrainingWorkbook(selected, trainings);
+      const safeId = String(selected.employee_id).replace(/[^a-zA-Z0-9_-]/g, '_');
+      const today = new Date().toISOString().split('T')[0];
+      writeWorkbook(wb, `JAE-TCRMS-${safeId}-Trainings-${today}.xlsx`);
+      toast(`Exported ${trainings.length} training record(s) to Excel.`, 'success');
+    } catch {
+      toast('Export failed.', 'error');
+    } finally {
+      setExportingEmployee(false);
     }
   };
 
@@ -460,10 +539,22 @@ export default function ViewerDashboard() {
         description={selected ? `${selected.employee_id} · ${selected.factory || '—'} Factory · ${selected.line || '—'} · Team ${selected.team || '—'}` : ''}
         size="xl"
       >
-        <h3 className="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
-          <ClipboardList size={14} className="text-[#1D72B8]" />
-          Training & Certification History
-        </h3>
+        <div className="flex items-center justify-between gap-3 mb-4">
+          <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+            <ClipboardList size={14} className="text-[#1D72B8]" />
+            Training & Certification History
+          </h3>
+          <button
+            type="button"
+            onClick={handleExportEmployee}
+            disabled={exportingEmployee || trainingLoading || trainings.length === 0}
+            className="flex items-center gap-2 text-gray-500 hover:text-green-700 text-sm px-3 py-1.5 rounded-lg hover:bg-green-50 border border-gray-200 hover:border-green-200 transition-colors disabled:opacity-40 whitespace-nowrap flex-shrink-0"
+            title="Export this employee's training history to Excel"
+          >
+            <Sheet size={14} />
+            {exportingEmployee ? 'Exporting…' : 'Export Excel'}
+          </button>
+        </div>
 
         {trainingLoading ? (
           <div className="flex items-center justify-center py-16">
