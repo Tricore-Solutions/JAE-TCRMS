@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import useScrollLock from '../hooks/useScrollLock';
 
-export default function Modal({ open, onClose, title, description, children, size = 'md' }) {
+export default function Modal({ open, onClose, title, description, children, size = 'md', bodyClassName = '' }) {
   useScrollLock(open);
 
   useEffect(() => {
@@ -19,6 +19,7 @@ export default function Modal({ open, onClose, title, description, children, siz
     md: 'max-w-lg',
     lg: 'max-w-2xl',
     xl: 'max-w-4xl',
+    '2xl': 'max-w-6xl',
   };
 
   return createPortal(
@@ -27,7 +28,7 @@ export default function Modal({ open, onClose, title, description, children, siz
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div
-        className={`w-full ${sizes[size]} bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col max-h-[min(90vh,calc(100vh-2rem))]`}
+        className={`w-full ${sizes[size] || sizes.md} bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col max-h-[min(90vh,calc(100vh-2rem))]`}
         role="dialog"
         aria-modal="true"
         aria-labelledby="modal-title"
@@ -46,7 +47,7 @@ export default function Modal({ open, onClose, title, description, children, siz
             <X size={18} />
           </button>
         </div>
-        <div className="overflow-y-auto flex-1 px-6 py-5 overscroll-contain">
+        <div className={`flex-1 min-h-0 overscroll-contain ${bodyClassName || 'overflow-y-auto px-6 py-5'}`}>
           {children}
         </div>
       </div>

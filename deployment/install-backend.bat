@@ -2,7 +2,7 @@
 REM First-time backend setup for Windows (server machine or dev PC)
 cd /d "%~dp0..\backend"
 
-echo Installing JAE TCRMS backend (Python + Django)...
+echo Installing JAE TRMS backend (Python + Django)...
 
 where python >nul 2>&1
 if %errorlevel% neq 0 (

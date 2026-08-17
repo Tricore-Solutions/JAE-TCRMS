@@ -3,7 +3,6 @@
 const pool = require('./pool');
 const store = require('./store');
 const auth = require('./auth');
-const employees = require('./employees');
 const users = require('./users');
 const purge = require('./purge');
 const { apiError } = require('./helpers');
@@ -25,6 +24,7 @@ function trainings() { return loadModule('./trainings'); }
 function reports() { return loadModule('./reports'); }
 function publicApi() { return loadModule('./public'); }
 function importer() { return loadModule('./import'); }
+function employeesMod() { return loadModule('./employees'); }
 
 // ---- Connection / setup ops --------------------------------------------------
 
@@ -71,12 +71,14 @@ const handlers = {
   'auth.logout': () => auth.logout(),
 
   // employees
-  'employees.list': (p) => employees.list(p),
-  'employees.filters': () => employees.filters(),
-  'employees.get': (p) => employees.get(p),
-  'employees.create': (p) => employees.create(p),
-  'employees.update': (p) => employees.update(p),
-  'employees.remove': (p) => employees.remove(p),
+  'employees.list': (p) => employeesMod().list(p),
+  'employees.filters': () => employeesMod().filters(),
+  'employees.get': (p) => employeesMod().get(p),
+  'employees.create': (p) => employeesMod().create(p),
+  'employees.update': (p) => employeesMod().update(p),
+  'employees.remove': (p) => employeesMod().remove(p),
+  'employees.archived': () => employeesMod().archived(),
+  'employees.restore': (p) => employeesMod().restore(p),
 
   // trainings
   'trainings.list': (p) => trainings().list(p),

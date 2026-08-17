@@ -1,7 +1,7 @@
 {
   "name": "jae-tcrms-client",
   "version": "1.0.0",
-  "description": "JAE TCRMS Desktop Client — Training and Certification Record Management System",
+  "description": "JAE TRMS Desktop Client — Training Records Management System",
   "main": "electron/main.js",
   "scripts": {
     "dev": "concurrently -n VITE,ELECTRON -c cyan,yellow \"vite\" \"wait-on http://localhost:5173 && cross-env NODE_ENV=development electron .\"",
@@ -12,7 +12,7 @@
   },
   "build": {
     "appId": "com.jaephil.tcrms",
-    "productName": "JAE TCRMS",
+    "productName": "JAE TRMS",
     "copyright": "Copyright © 2024 JAE Philippines, Inc.",
     "directories": {
       "output": "dist-electron"
@@ -42,7 +42,7 @@
       "installerHeader": "public/installer-header.bmp",
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "JAE TCRMS",
+      "shortcutName": "JAE TRMS",
       "include": "installer.nsh"
     },
     "mac": {

@@ -61,7 +61,7 @@ export default function Login() {
           />
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Welcome Back</h1>
           <p className="text-gray-500 text-sm mb-8">
-            Sign in to the Training &amp; Certifications Record Management System
+            Sign in to the Training Records Management System
           </p>
 
           {error && (

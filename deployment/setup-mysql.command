@@ -1,5 +1,5 @@
 #!/bin/bash
-# MySQL setup for JAE TCRMS — developer use on macOS
+# MySQL setup for JAE TRMS — developer use on macOS
 
 set -e
 
@@ -8,7 +8,7 @@ APP_USER="tcrms_user"
 APP_PASSWORD="tcrms_password"
 DATABASE="tcrms"
 
-echo "Setting up MySQL for JAE TCRMS (macOS dev)..."
+echo "Setting up MySQL for JAE TRMS (macOS dev)..."
 
 if ! command -v mysql >/dev/null 2>&1; then
   echo "ERROR: mysql client not found."

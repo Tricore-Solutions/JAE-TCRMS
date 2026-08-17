@@ -1,8 +1,8 @@
 @echo off
-REM MySQL Setup Script for JAE TCRMS
+REM MySQL Setup Script for JAE TRMS
 REM Creates database and application user with fixed credentials
 
-echo Setting up MySQL for JAE TCRMS...
+echo Setting up MySQL for JAE TRMS...
 
 set "mysqlUser=root"
 set "mysqlPassword=rootroot"

@@ -131,6 +131,19 @@ function normalizeCertRecert(value) {
   return 'CERT';
 }
 
+function normalizeRemarks(value) {
+  return value === 'INACTIVE' ? 'INACTIVE' : 'ACTIVE';
+}
+
+function calcCertStatus({ remarks, expiration_date: expirationDate } = {}, current = today()) {
+  if (normalizeRemarks(remarks) === 'INACTIVE') return 'invalid';
+  if (!expirationDate) return 'valid';
+  const exp = String(expirationDate).slice(0, 10);
+  if (exp < current) return 'expired';
+  if (exp <= daysFromToday(10)) return 'expiring';
+  return 'valid';
+}
+
 module.exports = {
   apiError,
   userDisplayName,
@@ -146,4 +159,6 @@ module.exports = {
   parseTrainingValidity,
   MONTH_NAMES_SHORT,
   normalizeCertRecert,
+  normalizeRemarks,
+  calcCertStatus,
 };

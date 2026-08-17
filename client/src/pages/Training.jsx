@@ -10,8 +10,8 @@ import SearchableSelect from '../components/SearchableSelect';
 import { trainingsApi, employeesApi, reportsApi } from '../api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/Toast';
+import { CATEGORIES, FACTORIES } from '../constants';
 
-const CATEGORIES = ['Safety', 'Technical', 'Quality', 'Management', 'Regulatory', 'Orientation', 'Other'];
 import {
   DEFAULT_VALIDITY_OPTION,
   calcExpirationPreview,
@@ -21,10 +21,11 @@ import {
   recordToValidityOption,
   validityOptionToPayload,
 } from '../utils/validity';
-import { formatDate, formatDateTime } from '../utils/date';
+import { formatDate } from '../utils/date';
 import { exportJsonToXLSX } from '../utils/xlsxExport';
 
-function getCertStatus(expirationDate) {
+function getCertStatus(expirationDate, remarks) {
+  if (remarks === 'INACTIVE') return 'invalid';
   if (!expirationDate) return 'valid';
   const today = new Date().toISOString().split('T')[0];
   const in60 = new Date(Date.now() + 10 * 86400000).toISOString().split('T')[0];
@@ -74,10 +75,11 @@ function certRecertLabel(value) {
   return value === 'RE-CERT' ? 'RE-CERT' : 'CERT';
 }
 
-function buildFilterParams({ search, filterFactory, filterCategory, filterTitle, filterStatus, filterCertRecert, filterPassFail, filterTake, filterDateFrom, filterDateTo }) {
+function buildFilterParams({ search, filterFactory, filterLine, filterCategory, filterTitle, filterStatus, filterCertRecert, filterPassFail, filterTake, filterDateFrom, filterDateTo, filterExpiryFrom, filterExpiryTo }) {
   const params = {};
   if (search) params.search = search;
   if (filterFactory) params.factory = filterFactory;
+  if (filterLine) params.line = filterLine;
   if (filterCategory) params.category = filterCategory;
   if (filterTitle) params.title = filterTitle;
   if (filterCertRecert) params.cert_recert = filterCertRecert;
@@ -85,6 +87,8 @@ function buildFilterParams({ search, filterFactory, filterCategory, filterTitle,
   if (filterTake) params.take = filterTake;
   if (filterDateFrom) params.date_from = filterDateFrom;
   if (filterDateTo) params.date_to = filterDateTo;
+  if (filterExpiryFrom) params.expiry_from = filterExpiryFrom;
+  if (filterExpiryTo) params.expiry_to = filterExpiryTo;
   if (filterStatus === 'expired') params.expired = 'true';
   if (filterStatus === 'expiring') params.expiring_soon = 'true';
   return params;
@@ -104,6 +108,7 @@ export default function Training() {
   const isInitialLoad = useRef(true);
   const [search, setSearch] = useState('');
   const [filterFactory, setFilterFactory] = useState('');
+  const [filterLine, setFilterLine] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
   const [filterTitle, setFilterTitle] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
@@ -112,7 +117,9 @@ export default function Training() {
   const [filterTake, setFilterTake] = useState('');
   const [filterDateFrom, setFilterDateFrom] = useState('');
   const [filterDateTo, setFilterDateTo] = useState('');
-  const [factories, setFactories] = useState([]);
+  const [filterExpiryFrom, setFilterExpiryFrom] = useState('');
+  const [filterExpiryTo, setFilterExpiryTo] = useState('');
+  const [lines, setLines] = useState([]);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [viewModal, setViewModal] = useState(false);
@@ -121,9 +128,6 @@ export default function Training() {
   const [withValidity, setWithValidity] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
-  const [viewTab, setViewTab] = useState('details');
-  const [recordLogs, setRecordLogs] = useState([]);
-  const [logsLoading, setLogsLoading] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState(null);
@@ -138,7 +142,7 @@ export default function Training() {
     if (isInitialLoad.current) setLoading(true);
     else setRefreshing(true);
     try {
-      const params = buildFilterParams({ search, filterFactory, filterCategory, filterTitle, filterStatus, filterCertRecert, filterPassFail, filterTake, filterDateFrom, filterDateTo });
+      const params = buildFilterParams({ search, filterFactory, filterLine, filterCategory, filterTitle, filterStatus, filterCertRecert, filterPassFail, filterTake, filterDateFrom, filterDateTo, filterExpiryFrom, filterExpiryTo });
       const [trRes, empRes, titlesRes, filtersRes] = await Promise.all([
         trainingsApi.list(params),
         employeesApi.list({ status: 'active' }),
@@ -148,7 +152,7 @@ export default function Training() {
       setRecords(trRes.data);
       setEmployees(empRes.data);
       setTrainingTitles(titlesRes.data);
-      setFactories(filtersRes.data?.factories || []);
+      setLines(filtersRes.data?.lines || []);
       setCheckedIds(new Set());
     } catch (err) {
       toast('Failed to load training records.', 'error');
@@ -157,7 +161,7 @@ export default function Training() {
       setRefreshing(false);
       isInitialLoad.current = false;
     }
-  }, [search, filterFactory, filterCategory, filterTitle, filterStatus, filterCertRecert, filterPassFail, filterTake, filterDateFrom, filterDateTo]);
+  }, [search, filterFactory, filterLine, filterCategory, filterTitle, filterStatus, filterCertRecert, filterPassFail, filterTake, filterDateFrom, filterDateTo, filterExpiryFrom, filterExpiryTo]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -201,18 +205,9 @@ export default function Training() {
     setModalOpen(true);
   };
 
-  const openView = async (record) => {
+  const openView = (record) => {
     setSelected(record);
-    setViewTab('details');
-    setRecordLogs([]);
     setViewModal(true);
-    setLogsLoading(true);
-    try {
-      const res = await reportsApi.recordLogs('trainings', record.id);
-      setRecordLogs(res.data);
-    } catch { /* ignore */ } finally {
-      setLogsLoading(false);
-    }
   };
 
   const handleSave = async () => {
@@ -234,8 +229,14 @@ export default function Training() {
         await trainingsApi.update(selected.id, payload);
         toast('Training record updated.', 'success');
       } else {
-        await trainingsApi.create(payload);
-        toast('Training record added.', 'success');
+        const res = await trainingsApi.create(payload);
+        const invalidated = res.data?.prior_invalidated ?? 0;
+        toast(
+          invalidated > 0
+            ? `Training record added. ${invalidated} prior record(s) set to INACTIVE.`
+            : 'Training record added.',
+          'success',
+        );
       }
       setModalOpen(false);
       load();
@@ -283,7 +284,7 @@ export default function Training() {
   const handleExport = async () => {
     setExporting(true);
     try {
-      const params = buildFilterParams({ search, filterFactory, filterCategory, filterTitle, filterStatus, filterCertRecert, filterPassFail, filterTake, filterDateFrom, filterDateTo });
+      const params = buildFilterParams({ search, filterFactory, filterLine, filterCategory, filterTitle, filterStatus, filterCertRecert, filterPassFail, filterTake, filterDateFrom, filterDateTo, filterExpiryFrom, filterExpiryTo });
       const res = await reportsApi.exportTrainings(params);
       if (!res.data.length) {
         toast('No records to export for the current filters.', 'warning');
@@ -295,7 +296,7 @@ export default function Training() {
         training_date: formatDate(r.training_date, ''),
         expiration_date: formatDate(r.expiration_date, ''),
       }));
-      exportJsonToXLSX(rows, 'Training Records', `JAE-TCRMS-Training-Report-${today}.xlsx`);
+      exportJsonToXLSX(rows, 'Training Records', `JAE-TRMS-Training-Report-${today}.xlsx`);
       toast(`Exported ${rows.length} records to Excel.`, 'success');
     } catch {
       toast('Export failed.', 'error');
@@ -426,6 +427,9 @@ export default function Training() {
     { key: 'title', label: 'Training Title', render: v => (
       <span className="text-sm text-gray-600">{v}</span>
     )},
+    { key: 'line', label: 'Line', render: v => (
+      <span className="text-sm text-gray-700">{v || '—'}</span>
+    )},
     { key: 'category', label: 'Category', render: v => (
       <span className="text-sm text-gray-700">{v || '—'}</span>
     )},
@@ -529,7 +533,8 @@ export default function Training() {
 
   return (
     <Layout
-      title="Training & Certification Records"
+      fill
+      title="Training Records"
       actions={(
         <div className="flex items-center gap-2">
           {canEdit && (
@@ -569,8 +574,8 @@ export default function Training() {
         </div>
       )}
     >
-      {/* Filters */}
-      <div className="space-y-3 mb-6">
+      {/* Filters — frozen while table scrolls */}
+      <div className="flex-shrink-0 space-y-3 pb-3 mb-3 border-b border-gray-100 bg-white">
         <div className="relative w-full">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
           <input
@@ -588,7 +593,15 @@ export default function Training() {
             className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
           >
             <option value="">All Factories</option>
-            {factories.map(f => <option key={f} value={f}>{f}</option>)}
+            {FACTORIES.map(f => <option key={f} value={f}>{f}</option>)}
+          </select>
+          <select
+            value={filterLine}
+            onChange={e => setFilterLine(e.target.value)}
+            className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D72B8] max-w-64"
+          >
+            <option value="">All Lines</option>
+            {lines.map(l => <option key={l} value={l}>{l}</option>)}
           </select>
           <select
             value={filterCategory}
@@ -639,20 +652,38 @@ export default function Training() {
             {TAKE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
           </select>
           <div className="flex items-center gap-2">
-            <label className="text-xs text-gray-500 whitespace-nowrap">From</label>
+            <span className="text-xs text-gray-500 whitespace-nowrap">Training date:</span>
             <input
               type="date"
               value={filterDateFrom}
               onChange={e => setFilterDateFrom(e.target.value)}
+              title="Training date from"
               className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
             />
-          </div>
-          <div className="flex items-center gap-2">
-            <label className="text-xs text-gray-500 whitespace-nowrap">To</label>
+            <span className="text-xs text-gray-400">to</span>
             <input
               type="date"
               value={filterDateTo}
               onChange={e => setFilterDateTo(e.target.value)}
+              title="Training date to"
+              className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-500 whitespace-nowrap">Expiration:</span>
+            <input
+              type="date"
+              value={filterExpiryFrom}
+              onChange={e => setFilterExpiryFrom(e.target.value)}
+              title="Expiration date from"
+              className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
+            />
+            <span className="text-xs text-gray-400">to</span>
+            <input
+              type="date"
+              value={filterExpiryTo}
+              onChange={e => setFilterExpiryTo(e.target.value)}
+              title="Expiration date to"
               className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
             />
           </div>
@@ -661,7 +692,7 @@ export default function Training() {
 
       {/* Bulk Action Bar */}
       {isAdmin && checkedCount > 0 && (
-        <div className="flex items-center gap-3 px-4 py-2.5 mb-2 bg-blue-50 border border-blue-200 rounded-lg">
+        <div className="flex-shrink-0 flex items-center gap-3 px-4 py-2.5 mb-2 bg-blue-50 border border-blue-200 rounded-lg">
           <CheckSquare size={16} className="text-blue-600 shrink-0" />
           <span className="text-sm text-blue-800 font-medium">{checkedCount} record{checkedCount !== 1 ? 's' : ''} selected</span>
           <div className="ml-auto flex gap-2">
@@ -683,21 +714,25 @@ export default function Training() {
         </div>
       )}
 
-      <DataTable
-        columns={columns}
-        data={records}
-        loading={loading}
-        refreshing={refreshing}
-        tableClassName="table-fixed"
-        emptyMessage="No training records found."
-        defaultSort={{ key: 'training_date', dir: 'desc' }}
-        rowClassName={(row) =>
-          getExpirationUrgency(row.expiration_date) === 'expired'
-            ? 'bg-red-50 hover:bg-red-100'
-            : ''
-        }
-      />
-
+      <div className="flex-1 min-h-0 flex flex-col">
+        <DataTable
+          columns={columns}
+          data={records}
+          loading={loading && !refreshing}
+          refreshing={refreshing}
+          tableClassName="table-fixed"
+          emptyMessage="No training records found."
+          defaultSort={{ key: 'training_date', dir: 'desc' }}
+          stickyHeader
+          pageSize={7}
+          pageSizeOptions={[7, 10, 15, 25, 50]}
+          rowClassName={(row) =>
+            getExpirationUrgency(row.expiration_date) === 'expired'
+              ? 'bg-red-50 hover:bg-red-100'
+              : ''
+          }
+        />
+      </div>
       {/* Add/Edit Modal */}
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={selected ? 'Edit Training Record' : 'Add Training Record'} size="lg">
         <div className="grid grid-cols-2 gap-4">
@@ -859,80 +894,31 @@ export default function Training() {
       {/* View Modal */}
       <Modal open={viewModal} onClose={() => setViewModal(false)} title="Training Record Details" size="md">
         {selected && (
-          <>
-            {/* Tabs */}
-            <div className="flex gap-1 mb-4 bg-gray-100/40 rounded-lg p-1">
-              {['details', 'history'].map(tab => (
-                <button
-                  key={tab}
-                  onClick={() => setViewTab(tab)}
-                  className={`flex-1 py-1.5 text-sm font-medium rounded-md capitalize transition-colors ${
-                    viewTab === tab ? 'bg-[#1D72B8] text-white' : 'text-gray-500 hover:text-gray-900'
-                  }`}
-                >
-                  {tab === 'history' ? `History (${recordLogs.length})` : 'Details'}
-                </button>
-              ))}
-            </div>
-
-            {viewTab === 'details' ? (
-              <dl className="space-y-3">
-                {[
-                  { label: 'Employee', value: `${selected.employee_name} (${selected.emp_code})` },
-                  { label: 'Factory', value: selected.factory || '—' },
-                  { label: 'Training Title', value: selected.title },
-                  { label: 'Category', value: selected.category || '—' },
-                  { label: 'Training Date', value: formatDate(selected.training_date) },
-                  { label: 'Trainer', value: selected.trainer || '—' },
-                  { label: 'Validity', value: formatValidityLabel(selected) },
-                  { label: 'Expiration Date', value: formatDate(selected.expiration_date) },
-                  { label: 'Status', value: <StatusBadge status={getCertStatus(selected.expiration_date)} /> },
-                  { label: 'Process Classification', value: selected.process_classification || '—' },
-                  { label: 'CERT/RE-CERT', value: certRecertLabel(selected.cert_recert) },
-                  { label: 'Passed/Failed', value: selected.pass_fail === 'Failed' ? 'Failed' : 'Passed' },
-                  { label: 'Take', value: TAKE_OPTIONS.find(o => o.value === selected.take)?.label || `${selected.take || 1}st Take` },
-                  { label: 'Remarks', value: selected.remarks === 'INACTIVE' ? 'INACTIVE' : (selected.remarks === 'ACTIVE' || !selected.remarks ? 'ACTIVE' : selected.remarks) },
-                ].map(({ label, value }) => (
-                  <div key={label} className="flex justify-between gap-4 py-2 border-b border-gray-200">
-                    <dt className="text-sm text-gray-500 flex-shrink-0">{label}</dt>
-                    <dd className="text-sm text-gray-900 text-right">{value}</dd>
-                  </div>
-                ))}
-              </dl>
-            ) : (
-              <div className="space-y-2 max-h-72 overflow-y-auto">
-                {logsLoading ? (
-                  <p className="text-gray-500 text-sm text-center py-6">Loading history...</p>
-                ) : recordLogs.length === 0 ? (
-                  <p className="text-gray-500 text-sm text-center py-6">No history available.</p>
-                ) : recordLogs.map((log, i) => (
-                  <div key={i} className="p-3 bg-gray-100/40 rounded-lg space-y-2">
-                    <div className="flex items-center gap-2">
-                      <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
-                        log.action === 'CREATE' ? 'bg-green-400' :
-                        log.action === 'UPDATE' ? 'bg-amber-400' : 'bg-red-400'
-                      }`} />
-                      <p className="text-sm text-gray-900 font-medium flex-1">{log.full_name}</p>
-                      <span className="text-xs text-gray-500">{formatDateTime(log.created_at)}</span>
-                    </div>
-                    <p className="text-xs text-gray-500 ml-4">{log.summary}</p>
-                    {log.changes && Object.keys(log.changes).length > 0 && (
-                      <div className="ml-4 space-y-1 border-l-2 border-gray-300 pl-3">
-                        {Object.entries(log.changes).map(([field, { before, after }]) => (
-                          <div key={field} className="text-xs">
-                            <span className="text-gray-500 capitalize">{field.replace(/_/g, ' ')}:</span>
-                            <span className="text-red-600 line-through ml-1">{before ?? '—'}</span>
-                            <span className="text-gray-500 mx-1">→</span>
-                            <span className="text-green-600">{after ?? '—'}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ))}
+          <dl className="space-y-3">
+            {[
+              { label: 'Employee', value: `${selected.employee_name} (${selected.emp_code})` },
+              { label: 'Factory', value: selected.factory || '—' },
+              { label: 'Line', value: selected.line || '—' },
+              { label: 'Team', value: selected.team || '—' },
+              { label: 'Training Title', value: selected.title },
+              { label: 'Category', value: selected.category || '—' },
+              { label: 'Training Date', value: formatDate(selected.training_date) },
+              { label: 'Trainer', value: selected.trainer || '—' },
+              { label: 'Validity', value: formatValidityLabel(selected) },
+              { label: 'Expiration Date', value: formatDate(selected.expiration_date) },
+              { label: 'Status', value: <StatusBadge status={getCertStatus(selected.expiration_date, selected.remarks)} /> },
+              { label: 'Process Classification', value: selected.process_classification || '—' },
+              { label: 'CERT/RE-CERT', value: certRecertLabel(selected.cert_recert) },
+              { label: 'Passed/Failed', value: selected.pass_fail === 'Failed' ? 'Failed' : 'Passed' },
+              { label: 'Take', value: TAKE_OPTIONS.find(o => o.value === selected.take)?.label || `${selected.take || 1}st Take` },
+              { label: 'Remarks', value: selected.remarks === 'INACTIVE' ? 'INACTIVE' : (selected.remarks === 'ACTIVE' || !selected.remarks ? 'ACTIVE' : selected.remarks) },
+            ].map(({ label, value }) => (
+              <div key={label} className="flex justify-between gap-4 py-2 border-b border-gray-200">
+                <dt className="text-sm text-gray-500 flex-shrink-0">{label}</dt>
+                <dd className="text-sm text-gray-900 text-right">{value}</dd>
               </div>
-            )}
-          </>
+            ))}
+          </dl>
         )}
       </Modal>
 

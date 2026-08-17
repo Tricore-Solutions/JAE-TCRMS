@@ -14,7 +14,7 @@ function createWindow() {
     height: 800,
     minWidth: 1024,
     minHeight: 650,
-    title: 'JAE TCRMS — Training & Certification Record Management',
+    title: 'JAE TRMS — Training Records Management System',
     // In dev the asset lives in public/; in a packaged build Vite copies it into dist/.
     icon: path.join(__dirname, '..', isDev ? 'public' : 'dist', 'icon.png'),
     webPreferences: {

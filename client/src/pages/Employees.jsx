@@ -11,8 +11,9 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/Toast';
 import { formatDate, formatDateTime } from '../utils/date';
 import { exportJsonToXLSX } from '../utils/xlsxExport';
+import { FACTORIES } from '../constants';
 
-const STATUSES = ['active', 'inactive', 'resigned'];
+const STATUSES = ['active', 'inactive'];
 const EMPLOYMENT_STATUSES = [
   'FAMSI - Proby',
   'FAMSI - Reg',
@@ -47,7 +48,7 @@ export default function Employees() {
   const [selected, setSelected] = useState(null);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
-  const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [archiveConfirm, setArchiveConfirm] = useState(null);
   const [viewTab, setViewTab] = useState('details');
   const [recordLogs, setRecordLogs] = useState([]);
   const [logsLoading, setLogsLoading] = useState(false);
@@ -105,7 +106,7 @@ export default function Employees() {
         'Status': emp.status || '',
       }));
       const today = new Date().toISOString().split('T')[0];
-      exportJsonToXLSX(rows, 'Employees', `JAE-TCRMS-Employees-${today}.xlsx`);
+      exportJsonToXLSX(rows, 'Employees', `JAE-TRMS-Employees-${today}.xlsx`);
       toast(`Exported ${rows.length} employee(s) to Excel.`, 'success');
     } catch {
       toast('Export failed.', 'error');
@@ -174,14 +175,20 @@ export default function Employees() {
     }
   };
 
-  const handleDelete = async (emp) => {
+  const handleArchive = async (emp) => {
     try {
-      await employeesApi.remove(emp.id);
-      toast('Employee deactivated.', 'success');
-      setDeleteConfirm(null);
+      const res = await employeesApi.remove(emp.id);
+      const count = res.data?.trainings_archived ?? 0;
+      toast(
+        count > 0
+          ? `Employee archived. ${count} training record(s) moved to Archive.`
+          : 'Employee archived.',
+        'success',
+      );
+      setArchiveConfirm(null);
       load();
     } catch (err) {
-      toast(err.response?.data?.error || 'Failed to deactivate employee.', 'error');
+      toast(err.response?.data?.error || 'Failed to archive employee.', 'error');
     }
   };
 
@@ -211,8 +218,8 @@ export default function Employees() {
               Edit
             </button>
             {isAdmin && (
-              <button onClick={e => { e.stopPropagation(); setDeleteConfirm(row); }} className="px-2.5 py-1 text-xs font-medium text-gray-500 bg-gray-50 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-                Delete
+              <button onClick={e => { e.stopPropagation(); setArchiveConfirm(row); }} className="px-2.5 py-1 text-xs font-medium text-gray-500 bg-gray-50 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors">
+                Archive
               </button>
             )}
           </>
@@ -269,7 +276,7 @@ export default function Employees() {
             className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
           >
             <option value="">All Factories</option>
-            {filters.factories.map(f => <option key={f} value={f}>{f}</option>)}
+            {FACTORIES.map(f => <option key={f} value={f}>{f}</option>)}
           </select>
           <select
             value={filterEmploymentStatus}
@@ -337,13 +344,14 @@ export default function Employees() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Factory</label>
-            <input
-              type="text"
+            <select
               value={form.factory}
               onChange={e => setForm(f => ({ ...f, factory: e.target.value }))}
-              className="w-full app-input px-3 py-2.5 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
-              placeholder="e.g. Factory A"
-            />
+              className="w-full app-input px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
+            >
+              <option value="">Select factory...</option>
+              {FACTORIES.map(f => <option key={f} value={f}>{f}</option>)}
+            </select>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Line</label>
@@ -484,14 +492,15 @@ export default function Employees() {
         )}
       </Modal>
 
-      {/* Delete Confirm */}
-      <Modal open={!!deleteConfirm} onClose={() => setDeleteConfirm(null)} title="Deactivate Employee" size="sm">
+      {/* Archive Confirm */}
+      <Modal open={!!archiveConfirm} onClose={() => setArchiveConfirm(null)} title="Archive Employee" size="sm">
         <p className="text-gray-700 text-sm">
-          Deactivate <span className="text-gray-900 font-medium">{deleteConfirm?.full_name}</span>? Their training records will be preserved.
+          Archive <span className="text-gray-900 font-medium">{archiveConfirm?.full_name}</span>?
+          The employee will move to Archive, and all of their training records will be archived automatically.
         </p>
         <div className="flex justify-end gap-3 mt-6">
-          <button onClick={() => setDeleteConfirm(null)} className="px-4 py-2 text-sm text-gray-500 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">Cancel</button>
-          <button onClick={() => handleDelete(deleteConfirm)} className="px-4 py-2 text-sm text-gray-900 bg-red-600 hover:bg-red-500 rounded-lg transition-colors">Deactivate</button>
+          <button onClick={() => setArchiveConfirm(null)} className="px-4 py-2 text-sm text-gray-500 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">Cancel</button>
+          <button onClick={() => handleArchive(archiveConfirm)} className="px-4 py-2 text-sm text-white bg-amber-600 hover:bg-amber-500 rounded-lg transition-colors">Archive</button>
         </div>
       </Modal>
     </Layout>

@@ -68,6 +68,7 @@ async function list(params = {}) {
 
   if (params.employee_id) { where.push('t.employee_id = ?'); vals.push(params.employee_id); }
   if (params.factory) { where.push('e.factory = ?'); vals.push(params.factory); }
+  if (params.line) { where.push('e.line LIKE ?'); vals.push(`%${params.line}%`); }
   if (params.category) { where.push('t.category = ?'); vals.push(params.category); }
   if (params.title) { where.push('t.title LIKE ?'); vals.push(`%${params.title}%`); }
   if (params.worker_line_status) { where.push('t.worker_line_status = ?'); vals.push(params.worker_line_status); }
@@ -77,10 +78,12 @@ async function list(params = {}) {
   if (params.training_date) { where.push('t.training_date = ?'); vals.push(params.training_date); }
   if (params.date_from) { where.push('t.training_date >= ?'); vals.push(params.date_from); }
   if (params.date_to) { where.push('t.training_date <= ?'); vals.push(params.date_to); }
+  if (params.expiry_from) { where.push('t.expiration_date IS NOT NULL AND t.expiration_date >= ?'); vals.push(params.expiry_from); }
+  if (params.expiry_to) { where.push('t.expiration_date IS NOT NULL AND t.expiration_date <= ?'); vals.push(params.expiry_to); }
   if (params.search) {
-    where.push('(e.full_name LIKE ? OR e.employee_id LIKE ? OR t.title LIKE ?)');
+    where.push('(e.full_name LIKE ? OR e.employee_id LIKE ? OR t.title LIKE ? OR e.line LIKE ?)');
     const like = `%${params.search}%`;
-    vals.push(like, like, like);
+    vals.push(like, like, like, like);
   }
 
   const current = today();
@@ -142,6 +145,54 @@ async function titles() {
   return rows.map((r) => r.title);
 }
 
+async function invalidatePriorCertifications(conn, { employeeId, title, excludeId, passFail = 'Passed' } = {}) {
+  if (passFail !== 'Passed') return 0;
+  const normalizedTitle = (title || '').trim();
+  if (!employeeId || !normalizedTitle) return 0;
+
+  let sql = `
+    UPDATE trainings
+    SET remarks = 'INACTIVE', updated_at = NOW(6)
+    WHERE employee_id = ?
+      AND LOWER(TRIM(title)) = LOWER(?)
+      AND is_archived = 0
+      AND pass_fail = 'Passed'
+      AND (remarks IS NULL OR remarks <> 'INACTIVE')`;
+  const vals = [employeeId, normalizedTitle];
+  if (excludeId) {
+    sql += ' AND id <> ?';
+    vals.push(excludeId);
+  }
+  const [res] = await conn.query(sql, vals);
+  return res.affectedRows || 0;
+}
+
+async function invalidatePriorCertificationsKeepNewest(conn, employeeId, title) {
+  const normalizedTitle = (title || '').trim();
+  if (!employeeId || !normalizedTitle) return 0;
+
+  const [res] = await conn.query(
+    `UPDATE trainings
+     SET remarks = 'INACTIVE', updated_at = NOW(6)
+     WHERE employee_id = ?
+       AND LOWER(TRIM(title)) = LOWER(?)
+       AND is_archived = 0
+       AND pass_fail = 'Passed'
+       AND (remarks IS NULL OR remarks <> 'INACTIVE')
+       AND id <> (
+         SELECT id FROM (
+           SELECT id FROM trainings
+           WHERE employee_id = ? AND LOWER(TRIM(title)) = LOWER(?)
+             AND is_archived = 0 AND pass_fail = 'Passed'
+           ORDER BY training_date DESC, id DESC
+           LIMIT 1
+         ) newest
+       )`,
+    [employeeId, normalizedTitle, employeeId, normalizedTitle],
+  );
+  return res.affectedRows || 0;
+}
+
 async function create(data = {}) {
   const user = requireRole('admin', 'encoder');
   await ensureSchemaReady();
@@ -162,26 +213,45 @@ async function create(data = {}) {
   const certRecert = normalizeCertRecert(data.cert_recert);
   const passFail = normalizePassFail(data.pass_fail);
 
-  const [res] = await pool.query(
-    `INSERT INTO trainings
-      (employee_id, title, category, training_date, trainer, validity_months, validity_days,
-       expiration_date, process_classification, remarks, worker_line_status, cert_recert, pass_fail, take,
-       is_archived, created_by, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, NOW(6), NOW(6))`,
-    [
-      employeeId, title, data.category || '', trainingDate, data.trainer || '',
-      validity_months, validity_days, expiration,
-      data.process_classification || '', data.remarks === 'INACTIVE' ? 'INACTIVE' : 'ACTIVE',
-      data.worker_line_status || 'Floating',
-      certRecert,
-      passFail,
-      data.take || 1, user.id,
-    ]
-  );
-  const id = res.insertId;
-  await logAudit(user, 'CREATE', 'trainings', id, `Created training: ${title}`);
+  const conn = await pool.getConnection();
+  let id;
+  let invalidated = 0;
+  try {
+    await conn.beginTransaction();
+    const [res] = await conn.query(
+      `INSERT INTO trainings
+        (employee_id, title, category, training_date, trainer, validity_months, validity_days,
+         expiration_date, process_classification, remarks, worker_line_status, cert_recert, pass_fail, take,
+         is_archived, created_by, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, NOW(6), NOW(6))`,
+      [
+        employeeId, title, data.category || '', trainingDate, data.trainer || '',
+        validity_months, validity_days, expiration,
+        data.process_classification || '', data.remarks === 'INACTIVE' ? 'INACTIVE' : 'ACTIVE',
+        data.worker_line_status || 'Floating',
+        certRecert,
+        passFail,
+        data.take || 1, user.id,
+      ],
+    );
+    id = res.insertId;
+    invalidated = await invalidatePriorCertifications(conn, {
+      employeeId, title, excludeId: id, passFail,
+    });
+    await conn.commit();
+  } catch (err) {
+    await conn.rollback();
+    throw err;
+  } finally {
+    conn.release();
+  }
+
+  const auditDetails = invalidated > 0
+    ? `Created training: ${title} (${invalidated} prior record(s) set to INACTIVE)`
+    : `Created training: ${title}`;
+  await logAudit(user, 'CREATE', 'trainings', id, auditDetails);
   const row = await findById(id);
-  return serializeDetail(row);
+  return { ...serializeDetail(row), prior_invalidated: invalidated };
 }
 
 async function get({ id } = {}) {
@@ -261,12 +331,30 @@ async function update({ id, data } = {}) {
     ]
   );
 
+  const invalidated = await invalidatePriorCertifications(pool, {
+    employeeId: training.employee_id,
+    title: next.title,
+    excludeId: id,
+    passFail: next.pass_fail,
+  });
+
   const after = snapshot({ ...next });
   const changes = {};
   for (const key of Object.keys(before)) {
     if (before[key] !== after[key]) changes[key] = { before: before[key], after: after[key] };
   }
-  await logAudit(user, 'UPDATE', 'trainings', id, JSON.stringify({ summary: `Updated training: ${next.title}`, changes }));
+  await logAudit(
+    user,
+    'UPDATE',
+    'trainings',
+    id,
+    JSON.stringify({
+      summary: invalidated > 0
+        ? `Updated training: ${next.title} (${invalidated} prior record(s) set to INACTIVE)`
+        : `Updated training: ${next.title}`,
+      changes,
+    }),
+  );
 
   const row = await findById(id);
   return serializeDetail(row);
@@ -357,4 +445,5 @@ module.exports = {
   create, get, update, remove, archived, restore, deletePermanent,
   bulkArchive, bulkRestore, bulkDelete,
   serializeDetail, serializeList,
+  invalidatePriorCertifications, invalidatePriorCertificationsKeepNewest,
 };

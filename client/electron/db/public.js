@@ -1,7 +1,7 @@
 'use strict';
 
 const { getPool } = require('./pool');
-const { apiError, today, daysFromToday, normalizeCertRecert } = require('./helpers');
+const { apiError, today, daysFromToday, normalizeCertRecert, calcCertStatus } = require('./helpers');
 
 async function employees(params = {}) {
   const pool = getPool();
@@ -32,6 +32,13 @@ async function employees(params = {}) {
     where.push(`EXISTS (${sub})`);
   }
 
+  if (params.training_from || params.training_to) {
+    let sub = 'SELECT 1 FROM trainings t WHERE t.employee_id = e.id AND t.is_archived = 0 AND t.training_date IS NOT NULL';
+    if (params.training_from) { sub += ' AND t.training_date >= ?'; whereVals.push(params.training_from); }
+    if (params.training_to) { sub += ' AND t.training_date <= ?'; whereVals.push(params.training_to); }
+    where.push(`EXISTS (${sub})`);
+  }
+
   if (params.cert_status === 'expired') {
     where.push('EXISTS (SELECT 1 FROM trainings t WHERE t.employee_id = e.id AND t.is_archived = 0 AND t.expiration_date IS NOT NULL AND t.expiration_date < ?)');
     whereVals.push(current);
@@ -47,7 +54,11 @@ async function employees(params = {}) {
       e.employment_status, e.hire_date, e.status,
       (SELECT COUNT(*) FROM trainings t WHERE t.employee_id = e.id AND t.is_archived = 0) AS total_trainings,
       (SELECT COUNT(*) FROM trainings t WHERE t.employee_id = e.id AND t.is_archived = 0
-         AND t.expiration_date IS NOT NULL AND t.expiration_date < ?) AS expired_count
+         AND (t.remarks IS NULL OR t.remarks <> 'INACTIVE')
+         AND t.expiration_date IS NOT NULL AND t.expiration_date < ?) AS expired_count,
+      (SELECT GROUP_CONCAT(DISTINCT t.title ORDER BY t.title SEPARATOR ', ')
+         FROM trainings t WHERE t.employee_id = e.id AND t.is_archived = 0
+           AND (t.remarks IS NULL OR t.remarks <> 'INACTIVE') AND t.title <> '') AS training_titles
     FROM employees e
     WHERE ${where.join(' AND ')}
     ORDER BY e.full_name`;
@@ -65,6 +76,7 @@ async function employees(params = {}) {
     status: r.status,
     total_trainings: Number(r.total_trainings),
     expired_count: Number(r.expired_count),
+    training_titles: r.training_titles || '',
   }));
 }
 
@@ -74,10 +86,9 @@ async function trainingTitles() {
   return rows.map((r) => r.title);
 }
 
-async function employeeTrainings({ id, training_title, expiry_from, expiry_to, cert_status } = {}) {
+async function employeeTrainings({ id, training_title, expiry_from, expiry_to, training_from, training_to, cert_status } = {}) {
   const pool = getPool();
   const current = today();
-  const in10 = daysFromToday(10);
 
   const [empRows] = await pool.query('SELECT * FROM employees WHERE id = ? LIMIT 1', [id]);
   const employee = empRows[0];
@@ -88,6 +99,8 @@ async function employeeTrainings({ id, training_title, expiry_from, expiry_to, c
   if (training_title) { where.push('title LIKE ?'); vals.push(`%${training_title}%`); }
   if (expiry_from) { where.push('expiration_date IS NOT NULL AND expiration_date >= ?'); vals.push(expiry_from); }
   if (expiry_to) { where.push('expiration_date IS NOT NULL AND expiration_date <= ?'); vals.push(expiry_to); }
+  if (training_from) { where.push('training_date IS NOT NULL AND training_date >= ?'); vals.push(training_from); }
+  if (training_to) { where.push('training_date IS NOT NULL AND training_date <= ?'); vals.push(training_to); }
   if (cert_status === 'expired') {
     where.push('expiration_date IS NOT NULL AND expiration_date < ?');
     vals.push(current);
@@ -106,11 +119,6 @@ async function employeeTrainings({ id, training_title, expiry_from, expiry_to, c
 
   const trainings = rows.map((t) => {
     const exp = t.expiration_date ? String(t.expiration_date).slice(0, 10) : null;
-    let status;
-    if (exp === null) status = 'valid';
-    else if (exp < current) status = 'expired';
-    else if (exp <= in10) status = 'expiring';
-    else status = 'valid';
     return {
       id: t.id,
       title: t.title,
@@ -124,7 +132,7 @@ async function employeeTrainings({ id, training_title, expiry_from, expiry_to, c
       take: t.take,
       process_classification: t.process_classification,
       remarks: t.remarks,
-      cert_status: status,
+      cert_status: calcCertStatus({ remarks: t.remarks, expiration_date: exp }),
     };
   });
 
@@ -146,13 +154,13 @@ async function employeeTrainings({ id, training_title, expiry_from, expiry_to, c
 async function exportDirectory() {
   const pool = getPool();
   const current = today();
-  const in10 = daysFromToday(10);
 
   const [employeeRows] = await pool.query(
     `SELECT e.id, e.employee_id, e.full_name, e.factory, e.line, e.team,
       e.employment_status, e.hire_date, e.status,
       (SELECT COUNT(*) FROM trainings t WHERE t.employee_id = e.id AND t.is_archived = 0) AS total_trainings,
       (SELECT COUNT(*) FROM trainings t WHERE t.employee_id = e.id AND t.is_archived = 0
+         AND (t.remarks IS NULL OR t.remarks <> 'INACTIVE')
          AND t.expiration_date IS NOT NULL AND t.expiration_date < ?) AS expired_count
     FROM employees e
     WHERE e.status = 'active'
@@ -163,7 +171,7 @@ async function exportDirectory() {
   const [trainingRows] = await pool.query(
     `SELECT e.employee_id, e.full_name, e.factory, e.line, e.team,
       t.title, t.category, t.process_classification, t.training_date, t.expiration_date,
-      t.cert_recert, t.take, t.trainer
+      t.cert_recert, t.take, t.trainer, t.remarks
     FROM trainings t
     JOIN employees e ON e.id = t.employee_id
     WHERE t.is_archived = 0 AND e.status = 'active'
@@ -186,11 +194,6 @@ async function exportDirectory() {
 
   const trainings = trainingRows.map((t) => {
     const exp = t.expiration_date ? String(t.expiration_date).slice(0, 10) : null;
-    let cert_status;
-    if (exp === null) cert_status = 'valid';
-    else if (exp < current) cert_status = 'expired';
-    else if (exp <= in10) cert_status = 'expiring';
-    else cert_status = 'valid';
     return {
       employee_id: t.employee_id,
       full_name: t.full_name,
@@ -205,7 +208,7 @@ async function exportDirectory() {
       cert_recert: normalizeCertRecert(t.cert_recert),
       take: t.take,
       trainer: t.trainer,
-      cert_status,
+      cert_status: calcCertStatus({ remarks: t.remarks, expiration_date: exp }),
     };
   });
 

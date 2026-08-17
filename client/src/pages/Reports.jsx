@@ -510,11 +510,11 @@ export default function Reports() {
       pdf.setFontSize(18);
       pdf.setFont('helvetica', 'bold');
       pdf.setTextColor(29, 114, 184);
-      pdf.text('JAE TCRMS', M, layout.y + 6);
+      pdf.text('JAE TRMS', M, layout.y + 6);
       pdf.setFontSize(12);
       pdf.setFont('helvetica', 'normal');
       pdf.setTextColor(80);
-      pdf.text('Training & Certification Report', M, layout.y + 13);
+      pdf.text('Training Records Report', M, layout.y + 13);
       pdf.setFontSize(8.5);
       pdf.setTextColor(150);
       pdf.text(`Generated: ${new Date().toLocaleString()}`, M, layout.y + 19);
@@ -592,10 +592,10 @@ export default function Reports() {
         pdf.setFont('helvetica', 'normal');
         pdf.setTextColor(160);
         pdf.text(`Page ${p} of ${pageCount}`, PW - M, PH - 6, { align: 'right' });
-        pdf.text('JAE TCRMS - Confidential', M, PH - 6);
+        pdf.text('JAE TRMS - Confidential', M, PH - 6);
       }
 
-      pdf.save(`JAE-TCRMS-Reports-${new Date().toISOString().split('T')[0]}.pdf`);
+      pdf.save(`JAE-TRMS-Reports-${new Date().toISOString().split('T')[0]}.pdf`);
       toast('PDF exported successfully.', 'success');
     } catch (err) {
       console.error('PDF export error:', err);
@@ -617,7 +617,7 @@ export default function Reports() {
       setTakesPerMonth(reportData.takesPerMonth);
 
       const wb = buildReportsWorkbook(reportData);
-      writeWorkbook(wb, `JAE-TCRMS-Reports-${new Date().toISOString().split('T')[0]}.xlsx`);
+      writeWorkbook(wb, `JAE-TRMS-Reports-${new Date().toISOString().split('T')[0]}.xlsx`);
       toast('Excel exported successfully.', 'success');
     } catch (err) {
       console.error('Excel export error:', err);

@@ -8,7 +8,7 @@ This guide is for **developers working on Mac**. End users and production server
 |------|----|---------------|
 | **Developer** | macOS | This guide — local Django + Electron dev |
 | **Server PC** | Windows | `deployment/*.bat` scripts |
-| **Warehouse staff** | Windows laptops | `JAE TCRMS Setup.exe` desktop app |
+| **Warehouse staff** | Windows laptops | `JAE TRMS Setup.exe` desktop app |
 
 You develop on Mac. You ship a **Windows `.exe` installer** and a **Windows server setup** for the warehouse.
 
@@ -147,7 +147,7 @@ npm run install:client
 npm run dist:win
 ```
 
-Output: `client/dist-electron/JAE TCRMS Setup.exe`
+Output: `client/dist-electron/JAE TRMS Setup.exe`
 
 Mac cannot reliably produce the NSIS Windows installer — use a Windows machine for releases.
 

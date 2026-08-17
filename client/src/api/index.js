@@ -80,6 +80,8 @@ export const employeesApi = {
   create: (data) => request('employees.create', data),
   update: (id, data) => request('employees.update', { id, data }),
   remove: (id) => request('employees.remove', { id }),
+  archived: () => request('employees.archived'),
+  restore: (id) => request('employees.restore', { id }),
   filters: () => request('employees.filters'),
 };
 

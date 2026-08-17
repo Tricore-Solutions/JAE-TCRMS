@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Search, Users, ClipboardList, AlertTriangle, LogIn, ArrowLeft, ChevronRight, XCircle, Sheet } from 'lucide-react';
+import { Search, ClipboardList, LogIn, ArrowLeft, ChevronRight, Sheet } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import StatusBadge from '../components/StatusBadge';
 import Modal from '../components/Modal';
@@ -20,7 +20,8 @@ const EMPLOYMENT_STATUSES = [
   'Regular - JAE',
 ];
 
-function getCertStatus(expirationDate) {
+function getCertStatus(expirationDate, remarks) {
+  if (remarks === 'INACTIVE') return 'invalid';
   if (!expirationDate) return 'valid';
   const today = new Date().toISOString().split('T')[0];
   const in60 = new Date(Date.now() + 60 * 86400000).toISOString().split('T')[0];
@@ -29,15 +30,15 @@ function getCertStatus(expirationDate) {
   return 'valid';
 }
 
-function getTrainingRowClass(expirationDate) {
-  const status = getCertStatus(expirationDate);
+function getTrainingRowClass(expirationDate, remarks) {
+  const status = getCertStatus(expirationDate, remarks);
   if (status === 'expired') return 'bg-red-50 hover:bg-red-100';
   if (status === 'expiring') return 'bg-amber-50 hover:bg-amber-100';
   return 'hover:bg-gray-50';
 }
 
-function getExpirationTextClass(expirationDate) {
-  const status = getCertStatus(expirationDate);
+function getExpirationTextClass(expirationDate, remarks) {
+  const status = getCertStatus(expirationDate, remarks);
   if (status === 'expired') return 'text-red-600 font-medium';
   if (status === 'expiring') return 'text-amber-700 font-medium';
   if (!expirationDate) return 'text-gray-500';
@@ -152,7 +153,7 @@ function buildEmployeeTrainingWorkbook(employee, trainings) {
     hireDate: formatDate(employee.hire_date, ''),
     employmentStatus: employee.employment_status || '',
     totalTrainings: trainings.length,
-    expiredCount: trainings.filter(t => getCertStatus(t.expiration_date) === 'expired').length,
+    expiredCount: trainings.filter(t => getCertStatus(t.expiration_date, t.remarks) === 'expired').length,
   }];
 
   XLSX.utils.book_append_sheet(wb, sheetFromRows(infoRows, infoColumns), 'Employee Info');
@@ -178,7 +179,7 @@ function buildEmployeeTrainingWorkbook(employee, trainings) {
     certRecert: certRecertLabel(t.cert_recert),
     take: takeLabel(t.take),
     trainer: t.trainer || '',
-    status: certStatusLabel(getCertStatus(t.expiration_date)),
+    status: certStatusLabel(getCertStatus(t.expiration_date, t.remarks)),
   }));
 
   XLSX.utils.book_append_sheet(wb, sheetFromRows(trainingRows, trainingColumns), 'Training History');
@@ -203,6 +204,8 @@ export default function ViewerDashboard() {
   const [filterCertStatus, setFilterCertStatus] = useState('');
   const [filterExpiryFrom, setFilterExpiryFrom] = useState('');
   const [filterExpiryTo, setFilterExpiryTo] = useState('');
+  const [filterTrainingFrom, setFilterTrainingFrom] = useState('');
+  const [filterTrainingTo, setFilterTrainingTo] = useState('');
   const [teams, setTeams] = useState([]);
 
   // Training history modal
@@ -224,6 +227,8 @@ export default function ViewerDashboard() {
       if (filterCertStatus) params.cert_status = filterCertStatus;
       if (filterExpiryFrom) params.expiry_from = filterExpiryFrom;
       if (filterExpiryTo) params.expiry_to = filterExpiryTo;
+      if (filterTrainingFrom) params.training_from = filterTrainingFrom;
+      if (filterTrainingTo) params.training_to = filterTrainingTo;
       const res = await publicApi.employees(params);
       setEmployees(res.data);
       if (!filterTeam && !search && !filterEmploymentStatus && !filterTrainingTitle && !filterCertStatus) {
@@ -237,7 +242,7 @@ export default function ViewerDashboard() {
       setRefreshing(false);
       isInitialLoad.current = false;
     }
-  }, [search, filterTeam, filterEmploymentStatus, filterTrainingTitle, filterCertStatus, filterExpiryFrom, filterExpiryTo]);
+  }, [search, filterTeam, filterEmploymentStatus, filterTrainingTitle, filterCertStatus, filterExpiryFrom, filterExpiryTo, filterTrainingFrom, filterTrainingTo]);
 
   const clearFilters = () => {
     setSearch('');
@@ -247,9 +252,11 @@ export default function ViewerDashboard() {
     setFilterCertStatus('');
     setFilterExpiryFrom('');
     setFilterExpiryTo('');
+    setFilterTrainingFrom('');
+    setFilterTrainingTo('');
   };
 
-  const hasActiveFilters = search || filterTeam || filterEmploymentStatus || filterTrainingTitle || filterCertStatus || filterExpiryFrom || filterExpiryTo;
+  const hasActiveFilters = search || filterTeam || filterEmploymentStatus || filterTrainingTitle || filterCertStatus || filterExpiryFrom || filterExpiryTo || filterTrainingFrom || filterTrainingTo;
 
   useEffect(() => { load(); }, [load]);
 
@@ -264,7 +271,7 @@ export default function ViewerDashboard() {
       }
       const wb = buildDirectoryWorkbook({ employees: allEmployees, trainings });
       const today = new Date().toISOString().split('T')[0];
-      writeWorkbook(wb, `JAE-TCRMS-Public-Directory-${today}.xlsx`);
+      writeWorkbook(wb, `JAE-TRMS-Public-Directory-${today}.xlsx`);
       toast(
         `Exported ${allEmployees.length} employee(s) and ${trainings.length} training record(s) to Excel.`,
         'success',
@@ -287,7 +294,7 @@ export default function ViewerDashboard() {
       const wb = buildEmployeeTrainingWorkbook(selected, trainings);
       const safeId = String(selected.employee_id).replace(/[^a-zA-Z0-9_-]/g, '_');
       const today = new Date().toISOString().split('T')[0];
-      writeWorkbook(wb, `JAE-TCRMS-${safeId}-Trainings-${today}.xlsx`);
+      writeWorkbook(wb, `JAE-TRMS-${safeId}-Trainings-${today}.xlsx`);
       toast(`Exported ${trainings.length} training record(s) to Excel.`, 'success');
     } catch {
       toast('Export failed.', 'error');
@@ -306,6 +313,8 @@ export default function ViewerDashboard() {
       if (filterCertStatus) params.cert_status = filterCertStatus;
       if (filterExpiryFrom) params.expiry_from = filterExpiryFrom;
       if (filterExpiryTo) params.expiry_to = filterExpiryTo;
+      if (filterTrainingFrom) params.training_from = filterTrainingFrom;
+      if (filterTrainingTo) params.training_to = filterTrainingTo;
       const res = await publicApi.employeeTrainings(emp.id, params);
       const list = [...(res.data.trainings || [])].sort((a, b) => {
         const da = a.training_date || '';
@@ -342,21 +351,21 @@ export default function ViewerDashboard() {
     },
     { key: 'employment_status', label: 'Employment Status', render: (v) => v || '—' },
     {
-      key: 'total_trainings',
-      label: 'Trainings',
-      render: (v) => <span className="text-sm text-gray-900 font-medium">{v || 0}</span>,
+      key: 'training_titles',
+      label: 'Training Titles',
+      render: (v) => (
+        v ? (
+          <span className="text-sm text-gray-700 line-clamp-2 max-w-md" title={v}>{v}</span>
+        ) : (
+          <span className="text-sm text-gray-400">—</span>
+        )
+      ),
     },
     {
       key: 'expired_count',
       label: 'Cert Status',
       render: (v) => (
-        v > 0 ? (
-          <span className="inline-flex items-center gap-1 text-xs text-red-600">
-            <XCircle size={12} /> {v} expired
-          </span>
-        ) : (
-          <StatusBadge status="valid" />
-        )
+        <StatusBadge status={v > 0 ? 'invalid' : 'valid'} />
       ),
     },
     {
@@ -368,14 +377,14 @@ export default function ViewerDashboard() {
   ];
 
   return (
-    <div className="min-h-screen bg-white app-scroll-lock">
+    <div className="h-screen bg-white flex flex-col overflow-hidden app-scroll-lock">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 px-6 py-3">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
+      <header className="flex-shrink-0 bg-white border-b border-gray-200 px-6 py-3 z-30">
+        <div className="w-full mx-auto flex items-center justify-between">
           <div className="flex items-center gap-4 min-w-0">
             <img src={`${import.meta.env.BASE_URL}jae-logo.png`} alt="JAE" className="h-10 w-auto object-contain flex-shrink-0" />
             <div className="min-w-0">
-              <p className="text-base font-bold text-gray-900 leading-tight truncate">Training &amp; Certifications Management</p>
+              <p className="text-base font-bold text-gray-900 leading-tight truncate">Training Records Management System</p>
               <p className="text-xs text-gray-500">Public Employee Directory</p>
             </div>
           </div>
@@ -398,125 +407,127 @@ export default function ViewerDashboard() {
       </header>
 
       {/* Content */}
-      <PageEnter>
-      <main className="max-w-6xl mx-auto px-8 py-10">
-        <div className="mb-8 flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Employee Training Directory</h1>
-            <p className="text-gray-500 mt-1 text-sm">Click on an employee to view their full training history.</p>
-          </div>
-          <button
-            onClick={handleExport}
-            disabled={exporting}
-            className="flex items-center gap-2 text-gray-500 hover:text-green-700 text-sm px-3 py-2 rounded-lg hover:bg-green-50 border border-gray-200 hover:border-green-200 transition-colors disabled:opacity-40 whitespace-nowrap flex-shrink-0"
-            title="Export all employees and training history to Excel"
-          >
-            <Sheet size={14} />
-            {exporting ? 'Exporting…' : 'Export Excel'}
-          </button>
-        </div>
-
-        {/* Search and filter */}
-        <div className="space-y-3 mb-6">
-          <div className="relative w-full">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search employee name or ID..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              className="w-full bg-white border border-gray-200 rounded-lg pl-9 pr-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
-            />
+      <PageEnter className="flex-1 min-h-0 overflow-y-auto">
+      <main className="w-full mx-auto px-6 pt-4 pb-3">
+        <div className="sticky top-0 z-20 space-y-3 bg-white pb-3 mb-3 border-b border-gray-100">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Employee Training Directory</h1>
+              <p className="text-gray-500 mt-0.5 text-sm">Click on an employee to view their full training history.</p>
+            </div>
+            <button
+              onClick={handleExport}
+              disabled={exporting}
+              className="flex items-center gap-2 text-gray-500 hover:text-green-700 text-sm px-3 py-2 rounded-lg hover:bg-green-50 border border-gray-200 hover:border-green-200 transition-colors disabled:opacity-40 whitespace-nowrap flex-shrink-0"
+              title="Export all employees and training history to Excel"
+            >
+              <Sheet size={14} />
+              {exporting ? 'Exporting…' : 'Export Excel'}
+            </button>
           </div>
 
-          <div className="flex flex-wrap gap-3 items-center">
-            {teams.length > 0 && (
-              <select
-                value={filterTeam}
-                onChange={e => setFilterTeam(e.target.value)}
-                className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
-              >
-                <option value="">All Teams</option>
-                {teams.map(t => <option key={t} value={t}>{t}</option>)}
-              </select>
-            )}
-            <select
-              value={filterEmploymentStatus}
-              onChange={e => setFilterEmploymentStatus(e.target.value)}
-              className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
-            >
-              <option value="">All Employment Status</option>
-              {EMPLOYMENT_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
-            </select>
-            <input
-              type="text"
-              placeholder="Search training title..."
-              value={filterTrainingTitle}
-              onChange={e => setFilterTrainingTitle(e.target.value)}
-              className="bg-white border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1D72B8] min-w-48 flex-1"
-            />
-
-            <select
-              value={filterCertStatus}
-              onChange={e => setFilterCertStatus(e.target.value)}
-              className="bg-white border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
-            >
-              <option value="">All Cert Status</option>
-              <option value="expired">Expired</option>
-              <option value="expiring30">Expiring in 30 days</option>
-              <option value="expiring60">Expiring in 60 days</option>
-            </select>
-
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-500 whitespace-nowrap">Expiry date:</span>
+          <div className="space-y-2.5">
+            <div className="relative w-full">
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
-                type="date"
-                value={filterExpiryFrom}
-                onChange={e => setFilterExpiryFrom(e.target.value)}
-                title="Expiry date from"
-                className="bg-white border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
-              />
-              <span className="text-xs text-gray-400">to</span>
-              <input
-                type="date"
-                value={filterExpiryTo}
-                onChange={e => setFilterExpiryTo(e.target.value)}
-                title="Expiry date to"
-                className="bg-white border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
+                type="text"
+                placeholder="Search employee name or ID..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                className="w-full bg-white border border-gray-200 rounded-lg pl-9 pr-4 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
               />
             </div>
 
-            {hasActiveFilters && (
-              <button
-                onClick={clearFilters}
-                className="text-xs text-gray-500 hover:text-red-600 hover:bg-red-50 px-3 py-2.5 rounded-lg border border-gray-200 hover:border-red-200 transition-colors whitespace-nowrap"
+            <div className="flex flex-wrap gap-2.5 items-center">
+              {teams.length > 0 && (
+                <select
+                  value={filterTeam}
+                  onChange={e => setFilterTeam(e.target.value)}
+                  className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
+                >
+                  <option value="">All Teams</option>
+                  {teams.map(t => <option key={t} value={t}>{t}</option>)}
+                </select>
+              )}
+              <select
+                value={filterEmploymentStatus}
+                onChange={e => setFilterEmploymentStatus(e.target.value)}
+                className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
               >
-                Clear filters
-              </button>
-            )}
+                <option value="">All Employment Status</option>
+                {EMPLOYMENT_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+              <input
+                type="text"
+                placeholder="Search training title..."
+                value={filterTrainingTitle}
+                onChange={e => setFilterTrainingTitle(e.target.value)}
+                className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1D72B8] min-w-48 flex-1"
+              />
+
+              <select
+                value={filterCertStatus}
+                onChange={e => setFilterCertStatus(e.target.value)}
+                className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
+              >
+                <option value="">All Cert Status</option>
+                <option value="expired">Expired</option>
+                <option value="expiring30">Expiring in 30 days</option>
+                <option value="expiring60">Expiring in 60 days</option>
+              </select>
+
+              {hasActiveFilters && (
+                <button
+                  onClick={clearFilters}
+                  className="text-xs text-gray-500 hover:text-red-600 hover:bg-red-50 px-3 py-2 rounded-lg border border-gray-200 hover:border-red-200 transition-colors whitespace-nowrap"
+                >
+                  Clear filters
+                </button>
+              )}
+            </div>
+
+            <div className="flex flex-wrap gap-3 items-center">
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-500 whitespace-nowrap">Training date:</span>
+                <input
+                  type="date"
+                  value={filterTrainingFrom}
+                  onChange={e => setFilterTrainingFrom(e.target.value)}
+                  title="Training date from"
+                  className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
+                />
+                <span className="text-xs text-gray-400">to</span>
+                <input
+                  type="date"
+                  value={filterTrainingTo}
+                  onChange={e => setFilterTrainingTo(e.target.value)}
+                  title="Training date to"
+                  className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
+                />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-500 whitespace-nowrap">Expiry date:</span>
+                <input
+                  type="date"
+                  value={filterExpiryFrom}
+                  onChange={e => setFilterExpiryFrom(e.target.value)}
+                  title="Expiry date from"
+                  className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
+                />
+                <span className="text-xs text-gray-400">to</span>
+                <input
+                  type="date"
+                  value={filterExpiryTo}
+                  onChange={e => setFilterExpiryTo(e.target.value)}
+                  title="Expiry date to"
+                  className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
+                />
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Summary bar */}
-        <div className="flex items-center gap-6 mb-6 app-panel px-5 py-3">
-          <div className="flex items-center gap-2 text-sm">
-            <Users size={14} className="text-[#1D72B8]" />
-            <span className="text-gray-500">Employees:</span>
-            <span className="text-gray-900 font-semibold">{employees.length}</span>
-          </div>
-          <div className="flex items-center gap-2 text-sm">
-            <ClipboardList size={14} className="text-green-600" />
-            <span className="text-gray-500">Total Trainings:</span>
-            <span className="text-gray-900 font-semibold">{employees.reduce((s, e) => s + (e.total_trainings || 0), 0)}</span>
-          </div>
-          <div className="flex items-center gap-2 text-sm">
-            <AlertTriangle size={14} className="text-red-600" />
-            <span className="text-gray-500">With Expired Certs:</span>
-            <span className="text-gray-900 font-semibold">{employees.filter(e => e.expired_count > 0).length}</span>
-          </div>
-        </div>
-
-        {/* Employee Table */}
         <DataTable
           columns={columns}
           data={employees}
@@ -524,9 +535,11 @@ export default function ViewerDashboard() {
           refreshing={refreshing}
           emptyMessage="No employees found."
           onRowClick={openEmployee}
+          pageSize={9}
+          pageSizeOptions={[9, 12, 15, 25, 50]}
         />
 
-        <p className="text-xs text-gray-400 mt-6 text-center">
+        <p className="text-xs text-gray-400 mt-3 text-center">
           JAE Philippines, Inc. — Read-only public view.
         </p>
       </main>
@@ -537,12 +550,13 @@ export default function ViewerDashboard() {
         onClose={() => setSelected(null)}
         title={selected?.full_name || ''}
         description={selected ? `${selected.employee_id} · ${selected.factory || '—'} Factory · ${selected.line || '—'} · Team ${selected.team || '—'}` : ''}
-        size="xl"
+        size="2xl"
+        bodyClassName="overflow-hidden flex flex-col p-0"
       >
-        <div className="flex items-center justify-between gap-3 mb-4">
+        <div className="flex items-center justify-between gap-3 px-6 pt-5 pb-3 flex-shrink-0 border-b border-gray-100 bg-white z-20">
           <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
             <ClipboardList size={14} className="text-[#1D72B8]" />
-            Training & Certification History
+            Training History
           </h3>
           <button
             type="button"
@@ -557,18 +571,23 @@ export default function ViewerDashboard() {
         </div>
 
         {trainingLoading ? (
-          <div className="flex items-center justify-center py-16">
+          <div className="flex items-center justify-center py-16 px-6">
             <div className="w-6 h-6 border-2 border-[#1D72B8] border-t-transparent rounded-full animate-spin" />
           </div>
         ) : trainings.length === 0 ? (
-          <div className="text-center py-16 text-gray-500 text-sm">No training records found.</div>
+          <div className="text-center py-16 px-6 text-gray-500 text-sm">No training records found.</div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
+          <div className="flex-1 min-h-0 overflow-auto px-6 pb-5">
+            <table className="min-w-full w-max text-sm">
+              <thead className="sticky top-0 z-10">
                 <tr className="bg-gray-50">
                   {['Training Title', 'Category', 'Training Date', 'Expiration', 'CERT/RE-CERT', 'Take', 'Trainer', 'Status'].map(h => (
-                    <th key={h} className="px-3 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">{h}</th>
+                    <th
+                      key={h}
+                      className="px-3 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap bg-gray-50 shadow-[inset_0_-1px_0_0_#e5e7eb]"
+                    >
+                      {h}
+                    </th>
                   ))}
                 </tr>
               </thead>
@@ -576,7 +595,7 @@ export default function ViewerDashboard() {
                 {trainings.map(t => {
                   const certLabel = certRecertLabel(t.cert_recert);
                   return (
-                  <tr key={t.id} className={`transition-colors ${getTrainingRowClass(t.expiration_date)}`}>
+                  <tr key={t.id} className={`transition-colors ${getTrainingRowClass(t.expiration_date, t.remarks)}`}>
                     <td className="px-3 py-3 text-gray-900 font-medium max-w-[180px]">
                       <p className="truncate">{t.title}</p>
                       {t.process_classification && (
@@ -585,7 +604,7 @@ export default function ViewerDashboard() {
                     </td>
                     <td className="px-3 py-3 text-gray-700 whitespace-nowrap">{t.category || '—'}</td>
                     <td className="px-3 py-3 text-gray-700 whitespace-nowrap">{formatDate(t.training_date)}</td>
-                    <td className={`px-3 py-3 whitespace-nowrap ${getExpirationTextClass(t.expiration_date)}`}>
+                    <td className={`px-3 py-3 whitespace-nowrap ${getExpirationTextClass(t.expiration_date, t.remarks)}`}>
                       {t.expiration_date ? formatDate(t.expiration_date) : 'No expiry'}
                     </td>
                     <td className="px-3 py-3 whitespace-nowrap">
@@ -602,7 +621,7 @@ export default function ViewerDashboard() {
                     </td>
                     <td className="px-3 py-3 text-gray-500 whitespace-nowrap">{t.trainer || '—'}</td>
                     <td className="px-3 py-3">
-                      <StatusBadge status={getCertStatus(t.expiration_date)} />
+                      <StatusBadge status={getCertStatus(t.expiration_date, t.remarks)} />
                     </td>
                   </tr>
                   );

@@ -5,6 +5,7 @@ const { getPool } = require('./pool');
 const { logAudit } = require('./audit');
 const { requireRole } = require('./auth');
 const { apiError, calcExpiration, normalizeCertRecert } = require('./helpers');
+const { invalidatePriorCertificationsKeepNewest } = require('./trainings');
 
 const HEADER_ALIASES = {
   'id no.': 'employee_id',
@@ -498,6 +499,15 @@ async function importTrainingRecords(bytes, user) {
           values
         );
         createdCount += batch.length;
+      }
+
+      const seenCertPairs = new Set();
+      for (const t of trainingsToCreate) {
+        if (t.pass_fail !== 'Passed') continue;
+        const pairKey = `${t.employee_id}\0${(t.title || '').trim().toLowerCase()}`;
+        if (seenCertPairs.has(pairKey)) continue;
+        seenCertPairs.add(pairKey);
+        await invalidatePriorCertificationsKeepNewest(conn, t.employee_id, t.title);
       }
     }
 

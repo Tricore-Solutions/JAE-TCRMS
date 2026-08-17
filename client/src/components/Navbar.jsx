@@ -19,7 +19,7 @@ export default function Navbar() {
           className="h-10 w-auto object-contain flex-shrink-0"
         />
         <h1 className="text-base sm:text-lg font-bold text-gray-900 truncate">
-          Training &amp; Certifications Management
+          Training Records Management System
         </h1>
       </div>
       <div className="flex items-center gap-3 bg-gray-50 rounded-lg px-3 py-2 border border-gray-200 flex-shrink-0 ml-4">

@@ -10,7 +10,7 @@ from api.views.health import health_check
 @permission_classes([AllowAny])
 def index(request):
     return Response({
-        'name': 'JAE TCRMS API',
+        'name': 'JAE TRMS API',
         'version': '1.0.0',
         'message': 'Backend is running. Use the Electron desktop app for the UI.',
         'endpoints': {

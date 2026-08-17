@@ -44,12 +44,22 @@ async function list(params = {}) {
   const pool = getPool();
   const where = [];
   const vals = [];
-  for (const field of ['status', 'factory', 'line', 'team', 'employment_status']) {
-    if (params[field]) {
-      where.push(`${field} = ?`);
-      vals.push(params[field]);
+
+  if (params.archived === true || params.archived === 'true') {
+    where.push("status = 'archived'");
+  } else {
+    for (const field of ['status', 'factory', 'line', 'team', 'employment_status']) {
+      if (params[field]) {
+        where.push(`${field} = ?`);
+        vals.push(params[field]);
+      }
+    }
+    // Keep archived employees out of normal lists unless explicitly filtered
+    if (!params.status) {
+      where.push("status <> 'archived'");
     }
   }
+
   if (params.search) {
     where.push('(full_name LIKE ? OR employee_id LIKE ?)');
     vals.push(`%${params.search}%`, `%${params.search}%`);
@@ -206,9 +216,96 @@ async function remove({ id } = {}) {
   const pool = getPool();
   const employee = await getById(id);
   if (!employee) throw apiError('Employee not found', 404);
-  await pool.query("UPDATE employees SET status = 'resigned', updated_at = NOW(6) WHERE id = ?", [id]);
-  await logAudit(user, 'DELETE', 'employees', id, `Deactivated employee: ${employee.full_name}`);
-  return { message: 'Employee deactivated' };
+
+  const conn = await pool.getConnection();
+  let trainingsArchived = 0;
+  try {
+    await conn.beginTransaction();
+    await conn.query(
+      "UPDATE employees SET status = 'archived', updated_at = NOW(6) WHERE id = ?",
+      [id],
+    );
+    const [res] = await conn.query(
+      `UPDATE trainings
+       SET is_archived = 1, archived_at = NOW(6), updated_at = NOW(6)
+       WHERE employee_id = ? AND is_archived = 0`,
+      [id],
+    );
+    trainingsArchived = res.affectedRows || 0;
+    await conn.commit();
+  } catch (err) {
+    await conn.rollback();
+    throw err;
+  } finally {
+    conn.release();
+  }
+
+  await logAudit(
+    user,
+    'DELETE',
+    'employees',
+    id,
+    `Archived employee: ${employee.full_name} (${trainingsArchived} training record(s) archived)`,
+  );
+  return {
+    message: 'Employee archived',
+    trainings_archived: trainingsArchived,
+  };
 }
 
-module.exports = { list, filters, get, create, update, remove, serialize, getById };
+async function archived() {
+  requireAuth();
+  const pool = getPool();
+
+  // Undo the earlier catch-up that marked inactive people as archived just
+  // because their trainings were archived. Keep only employees archived via
+  // the Archive Employee action (audit log: "Archived employee...").
+  await pool.query(
+    `UPDATE employees e
+     SET e.status = 'inactive', e.updated_at = NOW(6)
+     WHERE e.status = 'archived'
+       AND NOT EXISTS (
+         SELECT 1 FROM audit_logs a
+         WHERE a.table_name = 'employees'
+           AND a.record_id = e.id
+           AND a.details LIKE 'Archived employee%'
+       )`,
+  );
+  await pool.query(
+    `UPDATE employees e
+     SET e.status = 'archived', e.updated_at = NOW(6)
+     WHERE e.status = 'inactive'
+       AND EXISTS (
+         SELECT 1 FROM audit_logs a
+         WHERE a.table_name = 'employees'
+           AND a.record_id = e.id
+           AND a.details LIKE 'Archived employee%'
+       )`,
+  );
+
+  const [rows] = await pool.query(
+    "SELECT * FROM employees WHERE status = 'archived' ORDER BY full_name",
+  );
+  return rows.map(serialize);
+}
+
+async function restore({ id } = {}) {
+  const user = requireRole('admin');
+  const pool = getPool();
+  const employee = await getById(id);
+  if (!employee) throw apiError('Employee not found', 404);
+  if (employee.status !== 'archived' && employee.status !== 'inactive') {
+    throw apiError('Employee is not archived', 400);
+  }
+
+  await pool.query(
+    "UPDATE employees SET status = 'active', updated_at = NOW(6) WHERE id = ?",
+    [id],
+  );
+  await logAudit(user, 'UPDATE', 'employees', id, `Restored employee: ${employee.full_name}`);
+  return { message: 'Employee restored' };
+}
+
+module.exports = {
+  list, filters, get, create, update, remove, archived, restore, serialize, getById,
+};

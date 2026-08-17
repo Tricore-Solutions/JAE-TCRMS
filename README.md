@@ -1,4 +1,4 @@
-# JAE TCRMS — Training and Certification Record Management System
+# JAE TRMS — Training Records Management System
 
 **JAE Philippines, Inc. — Internal Warehouse Application**
 
@@ -14,7 +14,7 @@ laptops see the same records — no separate API server is required.
 |------|----|-------|
 | **Developer** | **macOS** | [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) |
 | **Server PC** | **Windows** | [deployment/README.md](deployment/README.md) |
-| **Warehouse staff** | **Windows laptops** | Install `JAE TCRMS Setup.exe` only |
+| **Warehouse staff** | **Windows laptops** | Install `JAE TRMS Setup.exe` only |
 
 Develop on Mac. Deploy MySQL and the desktop app on Windows.
 
@@ -73,7 +73,7 @@ firewall. See [deployment/README.md](deployment/README.md). No application serve
 
 **Each warehouse laptop:**
 
-1. Install `JAE TCRMS Setup.exe`
+1. Install `JAE TRMS Setup.exe`
 2. On first launch: enter the server IP, port `3306`, database `tcrms`, and credentials
 3. Log in
 
@@ -90,7 +90,7 @@ npm run install:client
 npm run dist:win
 ```
 
-Output: `client/dist-electron/JAE TCRMS Setup.exe`
+Output: `client/dist-electron/JAE TRMS Setup.exe`
 
 ---
 

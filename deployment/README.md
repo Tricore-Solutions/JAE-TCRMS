@@ -1,4 +1,4 @@
-# JAE TCRMS — Windows Deployment
+# JAE TRMS — Windows Deployment
 
 Production deployment for **Windows only**. Developers work on Mac — see [docs/DEVELOPMENT.md](../docs/DEVELOPMENT.md).
 
@@ -10,7 +10,7 @@ There is **no Django/Python API to run anymore** — the server PC only needs My
 | Machine | OS | Software |
 |---------|-----|----------|
 | **Server PC** (1 per site) | Windows | MySQL 8.0 only |
-| **Warehouse laptops** (all staff) | Windows | JAE TCRMS desktop app (`.exe`) |
+| **Warehouse laptops** (all staff) | Windows | JAE TRMS desktop app (`.exe`) |
 | **Developer** | macOS | Not used in production |
 
 ---
@@ -22,7 +22,7 @@ Company LAN
 ├── Windows Server PC
 │   └── MySQL 8.0  →  database "tcrms"  (TCP 3306)
 └── Windows Laptops
-    └── JAE TCRMS Setup.exe  ──(mysql2, TCP 3306)──►  MySQL
+    └── JAE TRMS Setup.exe  ──(mysql2, TCP 3306)──►  MySQL
 ```
 
 Each laptop's Electron app talks straight to MySQL. Staff use the **desktop app only** —
@@ -83,7 +83,7 @@ Default credentials (change the password in production):
 Run in **Administrator** Command Prompt:
 
 ```
-netsh advfirewall firewall add rule name="JAE TCRMS MySQL" dir=in action=allow protocol=TCP localport=3306
+netsh advfirewall firewall add rule name="JAE TRMS MySQL" dir=in action=allow protocol=TCP localport=3306
 ```
 
 Note the server PC's LAN IP (e.g. `192.168.1.10`) — all laptops need this.
@@ -94,7 +94,7 @@ Note the server PC's LAN IP (e.g. `192.168.1.10`) — all laptops need this.
 
 Staff laptops need **only the desktop app**.
 
-1. Copy `JAE TCRMS Setup.exe` to each laptop (build on Windows — see below)
+1. Copy `JAE TRMS Setup.exe` to each laptop (build on Windows — see below)
 2. Run the installer
 3. **First launch:** the **Database Setup** screen appears. Enter:
    - **Server IP / Host** — the server PC's LAN IP (e.g. `192.168.1.10`)
@@ -140,7 +140,7 @@ npm run install:client
 npm run dist:win
 ```
 
-Output: `client/dist-electron/JAE TCRMS Setup.exe`
+Output: `client/dist-electron/JAE TRMS Setup.exe`
 
 Distribute this file to all warehouse laptops. Staff do not need Node, Python, or MySQL.
 

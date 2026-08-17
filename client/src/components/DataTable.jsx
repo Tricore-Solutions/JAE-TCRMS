@@ -16,6 +16,8 @@ export default function DataTable({
   pageSizeOptions = DEFAULT_PAGE_SIZE_OPTIONS,
   defaultSort = null,
   tableClassName = '',
+  stickyHeader = false,
+  className = '',
 }) {
   const [sort, setSort] = useState(defaultSort || { key: null, dir: 'asc' });
   const [page, setPage] = useState(1);
@@ -55,22 +57,22 @@ export default function DataTable({
   };
 
   return (
-    <div className="flex flex-col">
-      <div className="relative">
+    <div className={`flex flex-col ${stickyHeader ? 'min-h-0 flex-1' : ''} ${className}`.trim()}>
+      <div className={`relative ${stickyHeader ? 'min-h-0 flex-1' : ''}`}>
         {refreshing && !loading && (
-          <div className="absolute top-2 right-2 z-10 flex items-center gap-2 bg-white/95 border border-gray-200 rounded-lg px-2.5 py-1 shadow-sm">
+          <div className="absolute top-2 right-2 z-20 flex items-center gap-2 bg-white/95 border border-gray-200 rounded-lg px-2.5 py-1 shadow-sm">
             <div className="w-3.5 h-3.5 border-2 border-[#1D72B8] border-t-transparent rounded-full animate-spin" />
             <span className="text-xs text-gray-500">Updating…</span>
           </div>
         )}
-        <div className={`overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm transition-opacity ${refreshing && !loading ? 'opacity-60' : ''}`}>
+        <div className={`${stickyHeader ? 'h-full max-h-full overflow-auto' : 'overflow-x-auto'} rounded-xl border border-gray-200 bg-white shadow-sm transition-opacity ${refreshing && !loading ? 'opacity-60' : ''}`}>
           <table className={`min-w-full w-max text-sm ${tableClassName}`}>
-          <thead>
+          <thead className={stickyHeader ? 'sticky top-0 z-10' : ''}>
             <tr className="bg-gray-50">
               {columns.map((col) => (
                 <th
                   key={col.key}
-                  className={`px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap ${col.sortable !== false ? 'cursor-pointer hover:text-gray-900 select-none' : ''} ${col.className || ''}`}
+                  className={`px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap bg-gray-50 ${stickyHeader ? 'shadow-[inset_0_-1px_0_0_#e5e7eb]' : ''} ${col.sortable !== false ? 'cursor-pointer hover:text-gray-900 select-none' : ''} ${col.className || ''}`}
                   onClick={() => col.sortable !== false && toggleSort(col.key)}
                 >
                   <div className="flex items-center gap-1.5">
@@ -121,7 +123,7 @@ export default function DataTable({
       </div>
 
       {!loading && sorted.length > 0 && (
-        <div className="flex flex-wrap items-center justify-between gap-3 mt-3 px-1">
+        <div className="flex flex-wrap items-center justify-between gap-3 mt-3 px-1 flex-shrink-0">
           <div className="flex items-center gap-3">
             <p className="text-xs text-gray-500">
               Showing {Math.min((page - 1) * pageSize + 1, sorted.length)}–{Math.min(page * pageSize, sorted.length)} of {sorted.length}

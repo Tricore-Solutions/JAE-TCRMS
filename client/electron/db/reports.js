@@ -19,11 +19,20 @@ async function overview() {
   const employeeTotal = await scalar(pool, 'SELECT COUNT(*) c FROM employees');
   const totalTrainings = await scalar(pool, 'SELECT COUNT(*) c FROM trainings WHERE is_archived = 0');
   const activeCertifications = await scalar(pool,
-    'SELECT COUNT(*) c FROM trainings WHERE is_archived = 0 AND (expiration_date IS NULL OR expiration_date >= ?)', [current]);
+    `SELECT COUNT(*) c FROM trainings
+     WHERE is_archived = 0
+       AND (remarks IS NULL OR remarks <> 'INACTIVE')
+       AND (expiration_date IS NULL OR expiration_date >= ?)`, [current]);
   const expiredCerts = await scalar(pool,
-    'SELECT COUNT(*) c FROM trainings WHERE is_archived = 0 AND expiration_date IS NOT NULL AND expiration_date < ?', [current]);
+    `SELECT COUNT(*) c FROM trainings
+     WHERE is_archived = 0
+       AND (remarks IS NULL OR remarks <> 'INACTIVE')
+       AND expiration_date IS NOT NULL AND expiration_date < ?`, [current]);
   const expiringCount = await scalar(pool,
-    'SELECT COUNT(*) c FROM trainings WHERE is_archived = 0 AND expiration_date IS NOT NULL AND expiration_date >= ? AND expiration_date <= ?', [current, in10]);
+    `SELECT COUNT(*) c FROM trainings
+     WHERE is_archived = 0
+       AND (remarks IS NULL OR remarks <> 'INACTIVE')
+       AND expiration_date IS NOT NULL AND expiration_date >= ? AND expiration_date <= ?`, [current, in10]);
   const employeesWithTraining = await scalar(pool,
     "SELECT COUNT(DISTINCT e.id) c FROM employees e JOIN trainings t ON t.employee_id = e.id AND t.is_archived = 0 WHERE e.status = 'active'");
   const totalUsers = await scalar(pool, "SELECT COUNT(*) c FROM users WHERE status = 'active'");
@@ -188,6 +197,7 @@ async function exportTrainings(params = {}) {
   const vals = [];
 
   if (params.factory) { where.push('e.factory = ?'); vals.push(params.factory); }
+  if (params.line) { where.push('e.line LIKE ?'); vals.push(`%${params.line}%`); }
   if (params.category) { where.push('t.category = ?'); vals.push(params.category); }
   if (params.title) { where.push('t.title LIKE ?'); vals.push(`%${params.title}%`); }
   if (params.worker_line_status) { where.push('t.worker_line_status = ?'); vals.push(params.worker_line_status); }
@@ -197,6 +207,8 @@ async function exportTrainings(params = {}) {
   if (params.training_date) { where.push('t.training_date = ?'); vals.push(params.training_date); }
   if (params.date_from) { where.push('t.training_date >= ?'); vals.push(params.date_from); }
   if (params.date_to) { where.push('t.training_date <= ?'); vals.push(params.date_to); }
+  if (params.expiry_from) { where.push('t.expiration_date IS NOT NULL AND t.expiration_date >= ?'); vals.push(params.expiry_from); }
+  if (params.expiry_to) { where.push('t.expiration_date IS NOT NULL AND t.expiration_date <= ?'); vals.push(params.expiry_to); }
   if (params.status) { where.push('e.status = ?'); vals.push(params.status); }
   if (params.search) {
     where.push('(e.full_name LIKE ? OR e.employee_id LIKE ? OR t.title LIKE ?)');
