@@ -46,14 +46,15 @@
       "include": "installer.nsh"
     },
     "mac": {
-      "target": "dmg",
+      "target": ["dmg", "zip"],
       "icon": "public/icon.icns",
       "category": "public.app-category.business"
     },
     "publish": {
       "provider": "github",
       "owner": "Tricore-Solutions",
-      "repo": "JAE-TCRMS"
+      "repo": "JAE-TCRMS",
+      "releaseType": "release"
     }
   },
   "keywords": [],
