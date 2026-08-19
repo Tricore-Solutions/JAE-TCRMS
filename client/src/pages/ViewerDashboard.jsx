@@ -485,8 +485,7 @@ export default function ViewerDashboard() {
               <select
                 value={searchMode}
                 onChange={e => { setSearchMode(e.target.value); setSearch(''); }}
-                className="appearance-none bg-gray-50 border border-gray-200 border-r-0 rounded-l-lg pl-3 pr-8 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#1D72B8] flex-shrink-0 bg-[length:16px_16px] bg-[position:right_0.5rem_center] bg-no-repeat cursor-pointer"
-                style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")` }}
+                className="bg-gray-50 border border-gray-200 border-r-0 rounded-l-lg pl-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#1D72B8] flex-shrink-0"
               >
                 <option value="employee">Employee</option>
                 <option value="training">Training Title</option>
@@ -508,8 +507,7 @@ export default function ViewerDashboard() {
                 <select
                   value={filterTeam}
                   onChange={e => setFilterTeam(e.target.value)}
-                  className="appearance-none bg-white border border-gray-200 rounded-lg pl-2.5 pr-7 py-1.5 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D72B8] bg-[length:14px_14px] bg-[position:right_0.4rem_center] bg-no-repeat cursor-pointer whitespace-nowrap flex-shrink-0"
-                  style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")` }}
+                  className="bg-white border border-gray-200 rounded-lg pl-2.5 py-1.5 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D72B8] whitespace-nowrap flex-shrink-0"
                 >
                   <option value="">All Teams</option>
                   {teams.map(t => <option key={t} value={t}>{t}</option>)}
@@ -518,8 +516,7 @@ export default function ViewerDashboard() {
               <select
                 value={filterEmploymentStatus}
                 onChange={e => setFilterEmploymentStatus(e.target.value)}
-                className="appearance-none bg-white border border-gray-200 rounded-lg pl-2.5 pr-7 py-1.5 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D72B8] bg-[length:14px_14px] bg-[position:right_0.4rem_center] bg-no-repeat cursor-pointer whitespace-nowrap flex-shrink-0"
-                style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")` }}
+                className="bg-white border border-gray-200 rounded-lg pl-2.5 py-1.5 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D72B8] whitespace-nowrap flex-shrink-0"
               >
                 <option value="">All Employment Status</option>
                 {EMPLOYMENT_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
@@ -527,8 +524,7 @@ export default function ViewerDashboard() {
               <select
                 value={filterCertStatus}
                 onChange={e => setFilterCertStatus(e.target.value)}
-                className="appearance-none bg-white border border-gray-200 rounded-lg pl-2.5 pr-7 py-1.5 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D72B8] bg-[length:14px_14px] bg-[position:right_0.4rem_center] bg-no-repeat cursor-pointer whitespace-nowrap flex-shrink-0"
-                style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")` }}
+                className="bg-white border border-gray-200 rounded-lg pl-2.5 py-1.5 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1D72B8] whitespace-nowrap flex-shrink-0"
               >
                 <option value="">All Cert Status</option>
                 <option value="expired">Expired</option>
