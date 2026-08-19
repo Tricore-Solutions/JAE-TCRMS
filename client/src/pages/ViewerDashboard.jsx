@@ -591,9 +591,8 @@ export default function ViewerDashboard() {
           refreshing={refreshing}
           emptyMessage="No employees found."
           onRowClick={openEmployee}
-          pageSize={5}
-          pageSizeOptions={[5, 15, 25, 50]}
-          fitContent
+          pageSize={7}
+          pageSizeOptions={[7, 10, 15, 25, 50]}
           stickyHeader
         />
 
