@@ -75,13 +75,15 @@ function certRecertLabel(value) {
   return value === 'RE-CERT' ? 'RE-CERT' : 'CERT';
 }
 
-function buildFilterParams({ search, filterFactory, filterLine, filterCategory, filterTitle, filterStatus, filterCertRecert, filterPassFail, filterTake, filterDateFrom, filterDateTo, filterExpiryFrom, filterExpiryTo }) {
+function buildFilterParams({ search, searchMode, filterFactory, filterLine, filterCategory, filterStatus, filterCertRecert, filterPassFail, filterTake, filterDateFrom, filterDateTo, filterExpiryFrom, filterExpiryTo }) {
   const params = {};
-  if (search) params.search = search;
+  if (search) {
+    if (searchMode === 'training') params.title = search;
+    else params.search = search;
+  }
   if (filterFactory) params.factory = filterFactory;
   if (filterLine) params.line = filterLine;
   if (filterCategory) params.category = filterCategory;
-  if (filterTitle) params.title = filterTitle;
   if (filterCertRecert) params.cert_recert = filterCertRecert;
   if (filterPassFail) params.pass_fail = filterPassFail;
   if (filterTake) params.take = filterTake;
@@ -107,10 +109,10 @@ export default function Training() {
   const [refreshing, setRefreshing] = useState(false);
   const isInitialLoad = useRef(true);
   const [search, setSearch] = useState('');
+  const [searchMode, setSearchMode] = useState('employee');
   const [filterFactory, setFilterFactory] = useState('');
   const [filterLine, setFilterLine] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
-  const [filterTitle, setFilterTitle] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [filterCertRecert, setFilterCertRecert] = useState('');
   const [filterPassFail, setFilterPassFail] = useState('');
@@ -142,7 +144,7 @@ export default function Training() {
     if (isInitialLoad.current) setLoading(true);
     else setRefreshing(true);
     try {
-      const params = buildFilterParams({ search, filterFactory, filterLine, filterCategory, filterTitle, filterStatus, filterCertRecert, filterPassFail, filterTake, filterDateFrom, filterDateTo, filterExpiryFrom, filterExpiryTo });
+      const params = buildFilterParams({ search, searchMode, filterFactory, filterLine, filterCategory, filterStatus, filterCertRecert, filterPassFail, filterTake, filterDateFrom, filterDateTo, filterExpiryFrom, filterExpiryTo });
       const [trRes, empRes, titlesRes, filtersRes] = await Promise.all([
         trainingsApi.list(params),
         employeesApi.list({ status: 'active' }),
@@ -161,7 +163,7 @@ export default function Training() {
       setRefreshing(false);
       isInitialLoad.current = false;
     }
-  }, [search, filterFactory, filterLine, filterCategory, filterTitle, filterStatus, filterCertRecert, filterPassFail, filterTake, filterDateFrom, filterDateTo, filterExpiryFrom, filterExpiryTo]);
+  }, [search, searchMode, filterFactory, filterLine, filterCategory, filterStatus, filterCertRecert, filterPassFail, filterTake, filterDateFrom, filterDateTo, filterExpiryFrom, filterExpiryTo]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -284,7 +286,7 @@ export default function Training() {
   const handleExport = async () => {
     setExporting(true);
     try {
-      const params = buildFilterParams({ search, filterFactory, filterLine, filterCategory, filterTitle, filterStatus, filterCertRecert, filterPassFail, filterTake, filterDateFrom, filterDateTo, filterExpiryFrom, filterExpiryTo });
+      const params = buildFilterParams({ search, searchMode, filterFactory, filterLine, filterCategory, filterStatus, filterCertRecert, filterPassFail, filterTake, filterDateFrom, filterDateTo, filterExpiryFrom, filterExpiryTo });
       const res = await reportsApi.exportTrainings(params);
       if (!res.data.length) {
         toast('No records to export for the current filters.', 'warning');
@@ -576,15 +578,25 @@ export default function Training() {
     >
       {/* Filters — frozen while table scrolls */}
       <div className="flex-shrink-0 space-y-3 pb-3 mb-3 border-b border-gray-100 bg-white">
-        <div className="relative w-full">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
-          <input
-            type="text"
-            placeholder="Search employee or training..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="w-full bg-white border border-gray-200 rounded-lg pl-9 pr-4 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
-          />
+        <div className="relative w-full flex">
+          <select
+            value={searchMode}
+            onChange={e => { setSearchMode(e.target.value); setSearch(''); }}
+            className="bg-gray-50 border border-gray-200 border-r-0 rounded-l-lg pl-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#1D72B8] flex-shrink-0"
+          >
+            <option value="employee">Employee</option>
+            <option value="training">Training Title</option>
+          </select>
+          <div className="relative flex-1">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder={searchMode === 'employee' ? 'Search employee name or ID...' : 'Search training title...'}
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="w-full bg-white border border-gray-200 rounded-r-lg pl-9 pr-4 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1D72B8]"
+            />
+          </div>
         </div>
         <div className="flex flex-wrap gap-3">
           <select
@@ -611,13 +623,6 @@ export default function Training() {
             <option value="">All Categories</option>
             {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
           </select>
-          <input
-            type="text"
-            placeholder="Search training title..."
-            value={filterTitle}
-            onChange={e => setFilterTitle(e.target.value)}
-            className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1D72B8] min-w-48 max-w-64"
-          />
           <select
             value={filterStatus}
             onChange={e => setFilterStatus(e.target.value)}
