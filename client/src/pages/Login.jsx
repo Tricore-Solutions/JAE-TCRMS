@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { dbConfigApi } from '../api';
 import PageEnter from '../components/PageEnter';
 import FieldLabel from '../components/FieldLabel';
+import UpdateButton from '../components/UpdateButton';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -51,7 +52,7 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#B8D4F0] via-[#E8F2FC] to-white flex items-center justify-center p-6">
+    <div className="min-h-screen bg-gradient-to-br from-[#B8D4F0] via-[#E8F2FC] to-white flex items-center justify-center p-6 relative">
       <PageEnter className="w-full max-w-[480px]">
         <div className="bg-white rounded-3xl shadow-[0_8px_30px_rgba(0,0,0,0.08)] px-10 py-10 text-center">
           <img
@@ -135,6 +136,10 @@ export default function Login() {
           </button>
         </div>
       </PageEnter>
+
+      <div className="absolute bottom-5 left-1/2 -translate-x-1/2 w-56">
+        <UpdateButton />
+      </div>
     </div>
   );
 }

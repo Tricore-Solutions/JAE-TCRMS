@@ -49,6 +49,11 @@
       "target": "dmg",
       "icon": "public/icon.icns",
       "category": "public.app-category.business"
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "Tricore-Solutions",
+      "repo": "JAE-TCRMS"
     }
   },
   "keywords": [],
@@ -68,6 +73,7 @@
   "dependencies": {
     "axios": "^1.18.0",
     "bcryptjs": "^3.0.3",
+    "electron-updater": "^6.8.9",
     "html2canvas": "^1.4.1",
     "jspdf": "^4.2.1",
     "lucide-react": "^1.21.0",

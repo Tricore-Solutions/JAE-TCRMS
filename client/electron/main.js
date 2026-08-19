@@ -1,10 +1,14 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
+const { autoUpdater } = require('electron-updater');
 
 const store = require('./db/store');
 const dbRouter = require('./db');
 
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
+
+autoUpdater.autoDownload = false;
+autoUpdater.autoInstallOnAppQuit = true;
 
 let bootstrapPromise = null;
 
@@ -79,4 +83,48 @@ ipcMain.handle('config:get', () => store.load());
 ipcMain.handle('config:set', (_event, data) => {
   const current = store.load();
   return store.save({ ...current, ...data });
+});
+
+// --- Auto-updater IPC ---
+
+function sendUpdateStatus(event, data) {
+  const wins = BrowserWindow.getAllWindows();
+  if (wins.length > 0) {
+    wins[0].webContents.send('update-status', { event, ...data });
+  }
+}
+
+autoUpdater.on('update-available', (info) => {
+  sendUpdateStatus('update-available', { version: info.version });
+});
+
+autoUpdater.on('update-not-available', () => {
+  sendUpdateStatus('update-not-available', {});
+});
+
+autoUpdater.on('download-progress', (progress) => {
+  sendUpdateStatus('download-progress', { percent: progress.percent });
+});
+
+autoUpdater.on('update-downloaded', () => {
+  sendUpdateStatus('update-downloaded', {});
+});
+
+autoUpdater.on('error', (err) => {
+  sendUpdateStatus('error', { message: err?.message || 'Update error' });
+});
+
+ipcMain.handle('updater:check', () => {
+  if (isDev) return { event: 'error', message: 'Cannot check for updates in dev mode' };
+  autoUpdater.checkForUpdates();
+  return { event: 'checking' };
+});
+
+ipcMain.handle('updater:download', () => {
+  autoUpdater.downloadUpdate();
+  return { event: 'downloading' };
+});
+
+ipcMain.handle('updater:install', () => {
+  autoUpdater.quitAndInstall();
 });
