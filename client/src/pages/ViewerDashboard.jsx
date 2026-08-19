@@ -59,6 +59,62 @@ function takeLabel(take) {
   return TAKE_LABELS[take] || `Take ${take || 1}`;
 }
 
+function parseTrainingTitles(value) {
+  if (!value) return [];
+  return value.split(',').map(s => s.trim()).filter(Boolean);
+}
+
+const TRAINING_TITLES_VISIBLE = 3;
+
+function TrainingTitlesCell({ value }) {
+  const [expanded, setExpanded] = useState(false);
+  const titles = parseTrainingTitles(value);
+
+  if (titles.length === 0) {
+    return <span className="text-sm text-gray-400">—</span>;
+  }
+
+  const hasHidden = titles.length > TRAINING_TITLES_VISIBLE;
+  const displayed = expanded || !hasHidden ? titles : titles.slice(0, TRAINING_TITLES_VISIBLE);
+  const hiddenCount = titles.length - TRAINING_TITLES_VISIBLE;
+
+  const toggleExpanded = (e) => {
+    e.stopPropagation();
+    setExpanded(prev => !prev);
+  };
+
+  return (
+    <div className="flex flex-wrap gap-1 max-w-xs">
+      {displayed.map(title => (
+        <span
+          key={title}
+          className="inline-block text-[11px] leading-snug text-gray-700 bg-gray-50 border border-gray-200 rounded px-1.5 py-0.5"
+        >
+          {title}
+        </span>
+      ))}
+      {hasHidden && !expanded && (
+        <button
+          type="button"
+          onClick={toggleExpanded}
+          className="inline-block text-[11px] leading-snug text-[#1D72B8] bg-blue-50 border border-blue-200 rounded px-1.5 py-0.5 hover:bg-blue-100 transition-colors"
+        >
+          +{hiddenCount} more
+        </button>
+      )}
+      {hasHidden && expanded && (
+        <button
+          type="button"
+          onClick={toggleExpanded}
+          className="inline-block text-[11px] leading-snug text-[#1D72B8] bg-blue-50 border border-blue-200 rounded px-1.5 py-0.5 hover:bg-blue-100 transition-colors"
+        >
+          Show less
+        </button>
+      )}
+    </div>
+  );
+}
+
 function buildDirectoryWorkbook({ employees, trainings }) {
   const wb = XLSX.utils.book_new();
 
@@ -334,6 +390,7 @@ export default function ViewerDashboard() {
     {
       key: 'employee_id',
       label: 'Employee ID',
+      className: 'w-24 max-w-24',
       render: (v) => <span className="font-mono text-xs text-[#1D72B8]">{v}</span>,
     },
     {
@@ -353,13 +410,8 @@ export default function ViewerDashboard() {
     {
       key: 'training_titles',
       label: 'Training Titles',
-      render: (v) => (
-        v ? (
-          <span className="text-sm text-gray-700 line-clamp-2 max-w-md" title={v}>{v}</span>
-        ) : (
-          <span className="text-sm text-gray-400">—</span>
-        )
-      ),
+      className: 'min-w-[11rem] max-w-xs align-top whitespace-normal',
+      render: (v) => <TrainingTitlesCell value={v} />,
     },
     {
       key: 'expired_count',
@@ -528,19 +580,18 @@ export default function ViewerDashboard() {
           </div>
         </div>
 
-        <div className="flex-1 min-h-0 flex flex-col">
-          <DataTable
-            columns={columns}
-            data={employees}
-            loading={loading && !refreshing}
-            refreshing={refreshing}
-            emptyMessage="No employees found."
-            onRowClick={openEmployee}
-            pageSize={7}
-            pageSizeOptions={[7, 15, 25, 50]}
-            stickyHeader
-          />
-        </div>
+        <DataTable
+          columns={columns}
+          data={employees}
+          loading={loading && !refreshing}
+          refreshing={refreshing}
+          emptyMessage="No employees found."
+          onRowClick={openEmployee}
+          pageSize={5}
+          pageSizeOptions={[5, 15, 25, 50]}
+          fitContent
+          stickyHeader
+        />
 
         <p className="flex-shrink-0 text-xs text-gray-400 mt-3 text-center">
           JAE Philippines, Inc. — Read-only public view.

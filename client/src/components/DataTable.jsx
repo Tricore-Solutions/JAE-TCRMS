@@ -17,6 +17,8 @@ export default function DataTable({
   defaultSort = null,
   tableClassName = '',
   stickyHeader = false,
+  fitContent = false,
+  maxHeight,
   className = '',
 }) {
   const [sort, setSort] = useState(defaultSort || { key: null, dir: 'asc' });
@@ -56,16 +58,21 @@ export default function DataTable({
     return sort.dir === 'asc' ? <ChevronUp size={12} className="text-[#1D72B8]" /> : <ChevronDown size={12} className="text-[#1D72B8]" />;
   };
 
+  const useFlexStretch = stickyHeader || fitContent;
+
   return (
-    <div className={`flex flex-col ${stickyHeader ? 'min-h-0 flex-1' : ''} ${className}`.trim()}>
-      <div className={`relative ${stickyHeader ? 'min-h-0 flex-1' : ''}`}>
+    <div className={`flex flex-col ${fitContent ? 'min-h-0' : useFlexStretch ? 'min-h-0 flex-1' : ''} ${className}`.trim()}>
+      <div className={`relative ${fitContent ? 'min-h-0' : useFlexStretch ? 'min-h-0 flex-1' : ''}`}>
         {refreshing && !loading && (
           <div className="absolute top-2 right-2 z-20 flex items-center gap-2 bg-white/95 border border-gray-200 rounded-lg px-2.5 py-1 shadow-sm">
             <div className="w-3.5 h-3.5 border-2 border-[#1D72B8] border-t-transparent rounded-full animate-spin" />
             <span className="text-xs text-gray-500">Updating…</span>
           </div>
         )}
-        <div className={`${stickyHeader ? 'h-full max-h-full overflow-auto' : 'overflow-x-auto'} rounded-xl border border-gray-200 bg-white shadow-sm transition-opacity ${refreshing && !loading ? 'opacity-60' : ''}`}>
+        <div
+          className={`${fitContent ? 'max-h-full overflow-auto' : useFlexStretch ? 'h-full max-h-full overflow-auto' : 'overflow-x-auto'} rounded-xl border border-gray-200 bg-white shadow-sm transition-opacity ${refreshing && !loading ? 'opacity-60' : ''}`}
+          style={maxHeight ? { maxHeight } : undefined}
+        >
           <table className={`min-w-full w-max text-sm ${tableClassName}`}>
           <thead className={stickyHeader ? 'sticky top-0 z-10' : ''}>
             <tr className="bg-gray-50">
