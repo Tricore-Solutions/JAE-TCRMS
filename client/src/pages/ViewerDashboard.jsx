@@ -407,9 +407,9 @@ export default function ViewerDashboard() {
       </header>
 
       {/* Content */}
-      <PageEnter className="flex-1 min-h-0 overflow-y-auto">
-      <main className="w-full mx-auto px-6 pt-4 pb-3">
-        <div className="sticky top-0 z-20 space-y-3 bg-white pb-3 mb-3 border-b border-gray-100">
+      <PageEnter className="flex-1 min-h-0 flex flex-col overflow-hidden">
+      <main className="flex-1 min-h-0 flex flex-col w-full mx-auto px-6 pt-4 pb-3">
+        <div className="flex-shrink-0 space-y-3 bg-white pb-3 mb-3 border-b border-gray-100">
           <div className="flex items-start justify-between gap-4">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Employee Training Directory</h1>
@@ -528,18 +528,21 @@ export default function ViewerDashboard() {
           </div>
         </div>
 
-        <DataTable
-          columns={columns}
-          data={employees}
-          loading={loading && !refreshing}
-          refreshing={refreshing}
-          emptyMessage="No employees found."
-          onRowClick={openEmployee}
-          pageSize={9}
-          pageSizeOptions={[9, 12, 15, 25, 50]}
-        />
+        <div className="flex-1 min-h-0 flex flex-col">
+          <DataTable
+            columns={columns}
+            data={employees}
+            loading={loading && !refreshing}
+            refreshing={refreshing}
+            emptyMessage="No employees found."
+            onRowClick={openEmployee}
+            pageSize={9}
+            pageSizeOptions={[9, 12, 15, 25, 50]}
+            stickyHeader
+          />
+        </div>
 
-        <p className="text-xs text-gray-400 mt-3 text-center">
+        <p className="flex-shrink-0 text-xs text-gray-400 mt-3 text-center">
           JAE Philippines, Inc. — Read-only public view.
         </p>
       </main>
