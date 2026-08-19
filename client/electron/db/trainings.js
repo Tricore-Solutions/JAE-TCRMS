@@ -145,19 +145,18 @@ async function titles() {
   return rows.map((r) => r.title);
 }
 
-async function invalidatePriorCertifications(conn, { employeeId, title, excludeId, passFail = 'Passed' } = {}) {
+async function archivePriorCertifications(conn, { employeeId, title, excludeId, passFail = 'Passed' } = {}) {
   if (passFail !== 'Passed') return 0;
   const normalizedTitle = (title || '').trim();
   if (!employeeId || !normalizedTitle) return 0;
 
   let sql = `
     UPDATE trainings
-    SET remarks = 'INACTIVE', updated_at = NOW(6)
+    SET is_archived = 1, archived_at = NOW(6), updated_at = NOW(6)
     WHERE employee_id = ?
       AND LOWER(TRIM(title)) = LOWER(?)
       AND is_archived = 0
-      AND pass_fail = 'Passed'
-      AND (remarks IS NULL OR remarks <> 'INACTIVE')`;
+      AND pass_fail = 'Passed'`;
   const vals = [employeeId, normalizedTitle];
   if (excludeId) {
     sql += ' AND id <> ?';
@@ -167,18 +166,17 @@ async function invalidatePriorCertifications(conn, { employeeId, title, excludeI
   return res.affectedRows || 0;
 }
 
-async function invalidatePriorCertificationsKeepNewest(conn, employeeId, title) {
+async function archivePriorCertificationsKeepNewest(conn, employeeId, title) {
   const normalizedTitle = (title || '').trim();
   if (!employeeId || !normalizedTitle) return 0;
 
   const [res] = await conn.query(
     `UPDATE trainings
-     SET remarks = 'INACTIVE', updated_at = NOW(6)
+     SET is_archived = 1, archived_at = NOW(6), updated_at = NOW(6)
      WHERE employee_id = ?
        AND LOWER(TRIM(title)) = LOWER(?)
        AND is_archived = 0
        AND pass_fail = 'Passed'
-       AND (remarks IS NULL OR remarks <> 'INACTIVE')
        AND id <> (
          SELECT id FROM (
            SELECT id FROM trainings
@@ -215,7 +213,7 @@ async function create(data = {}) {
 
   const conn = await pool.getConnection();
   let id;
-  let invalidated = 0;
+  let archived = 0;
   try {
     await conn.beginTransaction();
     const [res] = await conn.query(
@@ -235,7 +233,7 @@ async function create(data = {}) {
       ],
     );
     id = res.insertId;
-    invalidated = await invalidatePriorCertifications(conn, {
+    archived = await archivePriorCertifications(conn, {
       employeeId, title, excludeId: id, passFail,
     });
     await conn.commit();
@@ -246,12 +244,12 @@ async function create(data = {}) {
     conn.release();
   }
 
-  const auditDetails = invalidated > 0
-    ? `Created training: ${title} (${invalidated} prior record(s) set to INACTIVE)`
+  const auditDetails = archived > 0
+    ? `Created training: ${title} (${archived} prior record(s) archived)`
     : `Created training: ${title}`;
   await logAudit(user, 'CREATE', 'trainings', id, auditDetails);
   const row = await findById(id);
-  return { ...serializeDetail(row), prior_invalidated: invalidated };
+  return { ...serializeDetail(row), prior_archived: archived };
 }
 
 async function get({ id } = {}) {
@@ -331,7 +329,7 @@ async function update({ id, data } = {}) {
     ]
   );
 
-  const invalidated = await invalidatePriorCertifications(pool, {
+  const archived = await archivePriorCertifications(pool, {
     employeeId: training.employee_id,
     title: next.title,
     excludeId: id,
@@ -349,8 +347,8 @@ async function update({ id, data } = {}) {
     'trainings',
     id,
     JSON.stringify({
-      summary: invalidated > 0
-        ? `Updated training: ${next.title} (${invalidated} prior record(s) set to INACTIVE)`
+      summary: archived > 0
+        ? `Updated training: ${next.title} (${archived} prior record(s) archived)`
         : `Updated training: ${next.title}`,
       changes,
     }),
@@ -445,5 +443,6 @@ module.exports = {
   create, get, update, remove, archived, restore, deletePermanent,
   bulkArchive, bulkRestore, bulkDelete,
   serializeDetail, serializeList,
-  invalidatePriorCertifications, invalidatePriorCertificationsKeepNewest,
+  archivePriorCertifications,
+  archivePriorCertificationsKeepNewest,
 };

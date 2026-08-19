@@ -230,10 +230,10 @@ export default function Training() {
         toast('Training record updated.', 'success');
       } else {
         const res = await trainingsApi.create(payload);
-        const invalidated = res.data?.prior_invalidated ?? 0;
+        const archived = res.data?.prior_archived ?? 0;
         toast(
-          invalidated > 0
-            ? `Training record added. ${invalidated} prior record(s) set to INACTIVE.`
+          archived > 0
+            ? `Training record added. ${archived} prior record(s) archived.`
             : 'Training record added.',
           'success',
         );
