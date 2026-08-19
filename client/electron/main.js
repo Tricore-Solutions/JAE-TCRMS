@@ -95,7 +95,11 @@ function sendUpdateStatus(event, data) {
 }
 
 autoUpdater.on('update-available', (info) => {
-  sendUpdateStatus('update-available', { version: info.version });
+  sendUpdateStatus('update-available', {
+    version: info.version,
+    releaseNotes: info.releaseNotes || '',
+    releaseDate: info.releaseDate || '',
+  });
 });
 
 autoUpdater.on('update-not-available', () => {
