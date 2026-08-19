@@ -70,10 +70,21 @@ export default function DataTable({
           </div>
         )}
         <div
-          className={`${fitContent ? 'max-h-full overflow-auto' : useFlexStretch ? 'h-full max-h-full overflow-auto' : 'overflow-x-auto'} rounded-xl border border-gray-200 bg-white shadow-sm transition-opacity ${refreshing && !loading ? 'opacity-60' : ''}`}
+          className={`relative ${fitContent ? 'max-h-full overflow-auto' : useFlexStretch ? 'h-full max-h-full overflow-auto' : 'overflow-x-auto'} rounded-xl border border-gray-200 bg-white shadow-sm transition-opacity ${refreshing && !loading ? 'opacity-60' : ''}`}
           style={maxHeight ? { maxHeight } : undefined}
         >
-          <table className={`min-w-full w-max text-sm ${tableClassName}`}>
+          {loading && (
+            <div className="sticky left-0 w-[var(--container-w,100%)] flex flex-col items-center justify-center gap-2 py-12 text-gray-500 pointer-events-none" style={{ width: '100%', position: 'sticky', left: 0 }}>
+              <div className="w-6 h-6 border-2 border-[#1D72B8] border-t-transparent rounded-full animate-spin" />
+              <span className="text-sm">Loading...</span>
+            </div>
+          )}
+          {!loading && paginated.length === 0 && (
+            <div className="py-12 text-gray-500 text-sm text-center" style={{ position: 'sticky', left: 0, width: '100%' }}>
+              {emptyMessage}
+            </div>
+          )}
+          <table className={`min-w-full w-max text-sm ${tableClassName} ${(loading || paginated.length === 0) ? 'hidden' : ''}`}>
           <thead className={stickyHeader ? 'sticky top-0 z-10' : ''}>
             <tr className="bg-gray-50">
               {columns.map((col) => (
@@ -91,23 +102,7 @@ export default function DataTable({
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {loading ? (
-              <tr>
-                <td colSpan={columns.length} className="px-4 py-12 text-center">
-                  <div className="flex flex-col items-center gap-2 text-gray-500">
-                    <div className="w-6 h-6 border-2 border-[#1D72B8] border-t-transparent rounded-full animate-spin" />
-                    <span className="text-sm">Loading...</span>
-                  </div>
-                </td>
-              </tr>
-            ) : paginated.length === 0 ? (
-              <tr>
-                <td colSpan={columns.length} className="px-4 py-12 text-center text-gray-500 text-sm">
-                  {emptyMessage}
-                </td>
-              </tr>
-            ) : (
-              paginated.map((row) => {
+            {              paginated.map((row) => {
                 const rowBg = rowClassName?.(row) || 'hover:bg-gray-50';
                 return (
                   <tr
@@ -123,7 +118,7 @@ export default function DataTable({
                   </tr>
                 );
               })
-            )}
+            }
             </tbody>
           </table>
         </div>
