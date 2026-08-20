@@ -1,6 +1,6 @@
 {
   "name": "jae-tcrms-client",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "JAE TRMS Desktop Client — Training Records Management System",
   "main": "electron/main.js",
   "scripts": {

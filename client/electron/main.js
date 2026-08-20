@@ -130,5 +130,8 @@ ipcMain.handle('updater:download', () => {
 });
 
 ipcMain.handle('updater:install', () => {
-  autoUpdater.quitAndInstall();
+  // Silent install + reopen the app. Without this, NSIS (oneClick: false)
+  // opens the full Setup wizard after download, so users think they must
+  // reinstall from scratch.
+  autoUpdater.quitAndInstall(true, true);
 });
