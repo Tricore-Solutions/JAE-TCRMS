@@ -13,8 +13,12 @@ function UpdateModal({ open, onClose, version, releaseNotes, releaseDate, status
       <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col max-h-[80vh]">
         <div className="flex items-start justify-between gap-4 px-6 py-4 border-b border-gray-200">
           <div className="min-w-0">
-            <h2 className="text-base font-semibold text-gray-900">Update Available</h2>
-            <p className="text-sm text-gray-500 mt-0.5">A new version is ready</p>
+            <h2 className="text-base font-semibold text-gray-900">
+              {status === 'error' ? 'Update Failed' : status === 'ready' ? 'Update Ready' : status === 'downloading' ? 'Downloading Update' : 'Update Available'}
+            </h2>
+            <p className="text-sm text-gray-500 mt-0.5">
+              {status === 'error' ? 'Something went wrong while checking or downloading' : 'A new version is ready'}
+            </p>
           </div>
           <button
             onClick={onClose}
@@ -159,6 +163,7 @@ export default function UpdateButton() {
         case 'error':
           setStatus('error');
           setErrorMsg(data.message || 'Update failed');
+          setModalOpen(true);
           break;
       }
     });
